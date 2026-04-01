@@ -1,0 +1,88 @@
+<?php
+
+/**
+ * This file is part of the Spryker Suite.
+ * For full license information, please view the LICENSE file that was distributed with this source code.
+ */
+
+namespace SprykerEco\Zed\PunchoutGateway;
+
+use Spryker\Zed\Kernel\AbstractBundleDependencyProvider;
+use Spryker\Zed\Kernel\Container;
+
+/**
+ * @method \SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig getConfig()
+ */
+class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
+{
+    public const string FACADE_QUOTE = 'FACADE_QUOTE';
+
+    public const string FACADE_STORE = 'FACADE_STORE';
+
+    public const string FACADE_CUSTOMER = 'FACADE_CUSTOMER';
+
+    public const string PLUGINS_PUNCHOUT_SESSION_IN_QUOTE_EXPANDER = 'PLUGINS_PUNCHOUT_SESSION_IN_QUOTE_EXPANDER';
+
+    public function provideBusinessLayerDependencies(Container $container): Container
+    {
+        $container = parent::provideBusinessLayerDependencies($container);
+        $container = $this->addPunchoutSessionInQuoteExpanderPlugins($container);
+        $container = $this->addQuoteFacade($container);
+        $container = $this->addStoreFacade($container);
+        $container = $this->addCustomerFacade($container);
+
+        return $container;
+    }
+
+    public function provideCommunicationLayerDependencies(Container $container): Container
+    {
+        $container = parent::provideCommunicationLayerDependencies($container);
+        $container = $this->addQuoteFacade($container);
+
+        return $container;
+    }
+
+    protected function addPunchoutSessionInQuoteExpanderPlugins(Container $container): Container
+    {
+        $container->set(static::PLUGINS_PUNCHOUT_SESSION_IN_QUOTE_EXPANDER, function (): array {
+            return $this->getPunchoutSessionInQuoteExpanderPlugins();
+        });
+
+        return $container;
+    }
+
+    protected function addQuoteFacade(Container $container): Container
+    {
+        $container->set(static::FACADE_QUOTE, function (Container $container) {
+            return $container->getLocator()->quote()->facade();
+        });
+
+        return $container;
+    }
+
+    protected function addStoreFacade(Container $container): Container
+    {
+        $container->set(static::FACADE_STORE, function (Container $container) {
+            return $container->getLocator()->store()->facade();
+        });
+
+        return $container;
+    }
+
+    protected function addCustomerFacade(Container $container): Container
+    {
+        $container->set(static::FACADE_CUSTOMER, function (Container $container) {
+            return $container->getLocator()->customer()->facade();
+        });
+
+        return $container;
+    }
+
+    /**
+     * @return array<\SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutSessionInQuoteExpanderPluginInterface>
+     */
+    protected function getPunchoutSessionInQuoteExpanderPlugins(): array
+    {
+        return [];
+    }
+}
