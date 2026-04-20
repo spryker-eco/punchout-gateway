@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Spryker Suite.
- * For full license information, please view the LICENSE file that was distributed with this source code.
+ * Copyright © 2016-present Spryker Systems GmbH. All rights reserved.
+ * Use of this software requires acceptance of the Evaluation License Agreement. See LICENSE file.
  */
 
 declare(strict_types = 1);
@@ -82,6 +82,7 @@ class PunchoutCxmlSetupRequestProcessor implements PunchoutCxmlSetupRequestProce
 
         $this->punchoutLogger->logConnectionFound($connectionTransfer);
 
+        /** @var \SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPluginInterface $processorPlugin */
         $processorPlugin = $this->processorPluginResolver->resolveProcessorPlugin($connectionTransfer, PunchoutCxmlProcessorPluginInterface::class);
 
         $punchoutCxmlSetupRequestTransfer = $processorPlugin->parseCxmlRequest($punchoutCxmlSetupRequestTransfer, $cxml);

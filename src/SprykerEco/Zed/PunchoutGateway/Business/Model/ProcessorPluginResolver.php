@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Spryker Suite.
- * For full license information, please view the LICENSE file that was distributed with this source code.
+ * Copyright © 2016-present Spryker Systems GmbH. All rights reserved.
+ * Use of this software requires acceptance of the Evaluation License Agreement. See LICENSE file.
  */
 
 declare(strict_types = 1);
@@ -33,7 +33,7 @@ class ProcessorPluginResolver implements ProcessorPluginResolverInterface
             ));
         }
 
-        if (!is_subclass_of($pluginClassName, $expectedPluginInterface)) {
+        if (!is_subclass_of($pluginClassName, $expectedPluginInterface) || !is_subclass_of($pluginClassName, PunchoutProcessorPluginInterface::class)) {
             throw new WrongProcessorException(sprintf(
                 'Processor %s for the connection %s #%s is not of a valid interface %s.',
                 $pluginClassName,

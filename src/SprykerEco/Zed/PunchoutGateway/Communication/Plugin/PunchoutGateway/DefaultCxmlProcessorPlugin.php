@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Spryker Suite.
- * For full license information, please view the LICENSE file that was distributed with this source code.
+ * Copyright © 2016-present Spryker Systems GmbH. All rights reserved.
+ * Use of this software requires acceptance of the Evaluation License Agreement. See LICENSE file.
  */
 
 declare(strict_types = 1);
@@ -30,12 +30,12 @@ use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPlugin
 class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlProcessorPluginInterface
 {
 /**
-     * {@inheritDoc}
-     * - Extracts sender identity, shared secret, buyer cookie, items,
-     *   contact, shipping address, extrinsics, and other protocol fields.
-     *
-     * @api
-     */
+ * {@inheritDoc}
+ * - Extracts sender identity, shared secret, buyer cookie, items,
+ *   contact, shipping address, extrinsics, and other protocol fields.
+ *
+ * @api
+ */
     public function parseCxmlRequest(
         PunchoutCxmlSetupRequestTransfer $cxmlSetupRequestTransfer,
         CXml $cxml,

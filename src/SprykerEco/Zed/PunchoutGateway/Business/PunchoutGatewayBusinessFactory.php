@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Spryker Suite.
- * For full license information, please view the LICENSE file that was distributed with this source code.
+ * Copyright © 2016-present Spryker Systems GmbH. All rights reserved.
+ * Use of this software requires acceptance of the Evaluation License Agreement. See LICENSE file.
  */
 
 declare(strict_types = 1);
@@ -27,10 +27,10 @@ use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Processor\PunchoutCxmlSetupRequ
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Processor\PunchoutCxmlSetupRequestProcessorInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote\CxmlPunchoutQuoteExpander;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote\CxmlPunchoutQuoteExpanderInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Response\CxmlPunchoutResponseExpander;
-use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Response\CxmlPunchoutResponseExpanderInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote\CxmlPunchoutQuoteFinder;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote\CxmlPunchoutQuoteFinderInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Response\CxmlPunchoutResponseExpander;
+use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Response\CxmlPunchoutResponseExpanderInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\CxmlPunchoutSessionResolver;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\CxmlPunchoutSessionResolverInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\PunchoutSessionStarter;
@@ -41,10 +41,10 @@ use SprykerEco\Zed\PunchoutGateway\Business\Oci\Authenticator\PunchoutOciAuthent
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Authenticator\PunchoutOciAuthenticatorInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Customer\OciCustomerResolver;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Customer\OciCustomerResolverInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Oci\Quote\OciPunchoutQuoteFinder;
-use SprykerEco\Zed\PunchoutGateway\Business\Oci\Quote\OciPunchoutQuoteFinderInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Processor\PunchoutOciLoginProcessor;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Processor\PunchoutOciLoginProcessorInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Oci\Quote\OciPunchoutQuoteFinder;
+use SprykerEco\Zed\PunchoutGateway\Business\Oci\Quote\OciPunchoutQuoteFinderInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Session\OciPunchoutSessionResolver;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Session\OciPunchoutSessionResolverInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Quote\PunchoutQuoteExpander;
