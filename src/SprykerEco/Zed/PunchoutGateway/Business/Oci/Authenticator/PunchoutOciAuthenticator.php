@@ -5,15 +5,14 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Business\Oci\Authenticator;
 
-use Generated\Shared\Transfer\PunchoutConnectionConditionsTransfer;
-use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutOciConfigurationTransfer;
-use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
+use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface;
 
 class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
@@ -24,7 +23,9 @@ class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
 
     protected const string FAILURE_REASON_NO_CONNECTION_FOUND = 'No active connection found for credential';
 
-    protected const string FAILURE_REASON_INVALID_REQUEST_URL = 'Request URL does not match connection';
+    protected const string OCI_DEFAULT_USERNAME_FIELD = 'USERNAME';
+
+    protected const string OCI_DEFAULT_PASSWORD_FIELD = 'PASSWORD';
 
     public function __construct(
         protected PunchoutGatewayRepositoryInterface $punchoutGatewayRepository,
@@ -32,67 +33,28 @@ class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
     ) {
     }
 
-    public function authenticate(PunchoutOciLoginRequestTransfer $ociLoginRequestTransfer): ?PunchoutConnectionTransfer
-    {
-        $formData = $ociLoginRequestTransfer->getFormData();
-        $username = $formData[PunchoutGatewayConstants::OCI_DEFAULT_USERNAME_FIELD] ?? null;
-        $password = $formData[PunchoutGatewayConstants::OCI_DEFAULT_PASSWORD_FIELD] ?? null;
-
-        if ($username === null || $password === null) {
-            return null;
-        }
-
-        $this->punchoutLogger->logAuthenticationAttempt($username);
-
-        $credentialTransfer = $this->punchoutGatewayRepository->findActiveCredentialByUsername($username);
-
-        if ($credentialTransfer === null) {
-            $this->punchoutLogger->logAuthenticationFailure($username, static::FAILURE_REASON_NO_CREDENTIAL_FOUND);
-
-            return null;
-        }
-
-        if (!password_verify($password, $credentialTransfer->getPasswordHashOrFail())) {
-            $this->punchoutLogger->logAuthenticationFailure($username, static::FAILURE_REASON_INVALID_PASSWORD);
-
-            return null;
-        }
-
-        $connectionTransfer = $this->findActiveConnection($credentialTransfer->getIdPunchoutConnectionOrFail());
-
-        if ($connectionTransfer === null) {
-            $this->punchoutLogger->logAuthenticationFailure($username, static::FAILURE_REASON_NO_CONNECTION_FOUND);
-
-            return null;
-        }
-
-        if (!$this->isAllowedRequestUrl($connectionTransfer, $ociLoginRequestTransfer)) {
-            $this->punchoutLogger->logRequestUrlFailure($ociLoginRequestTransfer->getRequestUrl(), static::FAILURE_REASON_INVALID_REQUEST_URL);
-
-            return null;
-        }
-
-        $connectionTransfer->getOciConfiguration()->setIdCustomer($credentialTransfer->getIdCustomer());
-
-        $this->punchoutLogger->logAuthenticationSuccess($connectionTransfer);
-
-        return $connectionTransfer;
-    }
-
     public function authenticateConnection(
-        PunchoutOciLoginRequestTransfer $ociLoginRequestTransfer,
-        PunchoutConnectionTransfer $connectionTransfer,
+        PunchoutSetupRequestTransfer $setupRequestTransfer
     ): ?PunchoutConnectionTransfer {
-        $formData = $ociLoginRequestTransfer->getFormData();
+        $connectionTransfer = $setupRequestTransfer->getConnection();
+
+        $formData = $setupRequestTransfer->getOciLoginRequest()->getFormData();
         $ociConfiguration = $connectionTransfer->getOciConfiguration();
 
-        $usernameField = $ociConfiguration?->getUsernameField() ?? PunchoutGatewayConstants::OCI_DEFAULT_USERNAME_FIELD;
-        $passwordField = $ociConfiguration?->getPasswordField() ?? PunchoutGatewayConstants::OCI_DEFAULT_PASSWORD_FIELD;
+        $usernameField = $ociConfiguration?->getUsernameField() ?? static::OCI_DEFAULT_USERNAME_FIELD;
+        $passwordField = $ociConfiguration?->getPasswordField() ?? static::OCI_DEFAULT_PASSWORD_FIELD;
 
         $username = $formData[$usernameField] ?? null;
         $password = $formData[$passwordField] ?? null;
 
         if ($username === null || $password === null) {
+
+            if ($password !== null) {
+                $formData[$passwordField] = $this->maskPassword($password);
+            }
+
+            $this->punchoutLogger->logGenericInfoMessage(sprintf('Username (field %s) and/or password(field %s) are empty', $usernameField, $passwordField), $formData);
+
             return null;
         }
 
@@ -122,42 +84,15 @@ class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
             $connectionTransfer->setOciConfiguration(new PunchoutOciConfigurationTransfer());
         }
 
-        $connectionTransfer->getOciConfiguration()->setIdCustomer($credentialTransfer->getIdCustomer());
+        $connectionTransfer->setIdCustomer($credentialTransfer->getIdCustomer());
 
         $this->punchoutLogger->logAuthenticationSuccess($connectionTransfer);
 
         return $connectionTransfer;
     }
 
-    protected function findActiveConnection(int $idPunchoutConnection): ?PunchoutConnectionTransfer
+    protected function maskPassword(string $password): string
     {
-        $conditionsTransfer = new PunchoutConnectionConditionsTransfer();
-        $conditionsTransfer->addIdPunchoutConnection($idPunchoutConnection);
-        $conditionsTransfer->addProtocolType(PunchoutGatewayConstants::PROTOCOL_TYPE_OCI);
-        $conditionsTransfer->setIsActive(true);
-
-        $criteriaTransfer = new PunchoutConnectionCriteriaTransfer();
-        $criteriaTransfer->setPunchoutConnectionConditions($conditionsTransfer);
-
-        $connectionCollection = $this->punchoutGatewayRepository->getPunchoutConnectionCollection($criteriaTransfer);
-
-        if ($connectionCollection->getPunchoutConnections()->count() === 0) {
-            return null;
-        }
-
-        return $connectionCollection->getPunchoutConnections()->offsetGet(0);
-    }
-
-    protected function isAllowedRequestUrl(
-        PunchoutConnectionTransfer $connectionTransfer,
-        PunchoutOciLoginRequestTransfer $ociLoginRequestTransfer,
-    ): bool {
-        $requestUrl = $ociLoginRequestTransfer->getRequestUrl();
-
-        if ($requestUrl === null || $requestUrl === '') {
-            return true;
-        }
-
-        return str_starts_with($requestUrl, $connectionTransfer->getRequestUrl());
+        return sprintf('%s***%s', substr($password, 0, 2), substr($password, -2));
     }
 }

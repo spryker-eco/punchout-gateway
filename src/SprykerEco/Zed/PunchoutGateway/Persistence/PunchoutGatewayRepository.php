@@ -5,52 +5,32 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Persistence;
 
 use DateTime;
-use Generated\Shared\Transfer\PunchoutConnectionCollectionTransfer;
-use Generated\Shared\Transfer\PunchoutConnectionConditionsTransfer;
-use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutCredentialTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
-use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnectionQuery;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutSession;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Spryker\Zed\Kernel\Persistence\AbstractRepository;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 /**
  * @method \SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayPersistenceFactory getFactory()
  */
 class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGatewayRepositoryInterface
 {
-    public function getPunchoutConnectionCollection(
-        PunchoutConnectionCriteriaTransfer $punchoutConnectionCriteriaTransfer,
-    ): PunchoutConnectionCollectionTransfer {
-        $punchoutConnectionQuery = $this->getFactory()
-            ->createSpyPunchoutConnectionQuery();
-
-        $punchoutConnectionQuery = $this->applyPunchoutConnectionConditions(
-            $punchoutConnectionQuery,
-            $punchoutConnectionCriteriaTransfer->getPunchoutConnectionConditions(),
-        );
-
-        return $this->getFactory()
-            ->createPunchoutConnectionMapper()
-            ->mapPunchoutConnectionEntitiesToPunchoutConnectionCollectionTransfer(
-                $punchoutConnectionQuery->find(),
-                new PunchoutConnectionCollectionTransfer(),
-            );
-    }
-
     public function findActiveCxmlConnectionBySenderIdentity(string $senderIdentity): ?PunchoutConnectionTransfer
     {
         $punchoutConnectionEntity = $this->getFactory()
             ->createSpyPunchoutConnectionQuery()
             ->filterBySenderIdentity($senderIdentity)
-            ->filterByProtocolType(PunchoutGatewayConstants::PROTOCOL_TYPE_CXML)
+            ->filterByProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_CXML)
             ->filterByIsActive(true)
+            ->joinWithSpyStore()
             ->findOne();
 
         if ($punchoutConnectionEntity === null) {
@@ -67,8 +47,9 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
         $punchoutConnectionEntity = $this->getFactory()
             ->createSpyPunchoutConnectionQuery()
             ->filterByRequestUrl($requestUrl)
-            ->filterByProtocolType(PunchoutGatewayConstants::PROTOCOL_TYPE_OCI)
+            ->filterByProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_OCI)
             ->filterByIsActive(true)
+            ->joinWithSpyStore()
             ->findOne();
 
         if ($punchoutConnectionEntity === null) {
@@ -140,7 +121,7 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
             ->endUse()
             ->findOne();
 
-        return $this->handleSessionEntity($punchoutSessionEntity);
+        return $this->mapSessionEntityToTransfer($punchoutSessionEntity);
     }
 
     public function findPunchoutSessionByToken(string $sessionToken): ?PunchoutSessionTransfer
@@ -150,10 +131,10 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
             ->filterBySessionToken($sessionToken)
             ->findOne();
 
-        return $this->handleSessionEntity($punchoutSessionEntity);
+        return $this->mapSessionEntityToTransfer($punchoutSessionEntity);
     }
 
-    protected function handleSessionEntity(?SpyPunchoutSession $punchoutSessionEntity): ?PunchoutSessionTransfer
+    protected function mapSessionEntityToTransfer(?SpyPunchoutSession $punchoutSessionEntity): ?PunchoutSessionTransfer
     {
         if ($punchoutSessionEntity === null) {
             return null;
@@ -170,46 +151,5 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
         );
 
         return $punchoutSessionTransfer;
-    }
-
-    protected function applyPunchoutConnectionConditions(
-        SpyPunchoutConnectionQuery $punchoutConnectionQuery,
-        ?PunchoutConnectionConditionsTransfer $punchoutConnectionConditionsTransfer,
-    ): SpyPunchoutConnectionQuery {
-        if ($punchoutConnectionConditionsTransfer === null) {
-            return $punchoutConnectionQuery;
-        }
-
-        if (count($punchoutConnectionConditionsTransfer->getPunchoutConnectionIds()) > 0) {
-            $punchoutConnectionQuery->filterByIdPunchoutConnection_In(
-                $punchoutConnectionConditionsTransfer->getPunchoutConnectionIds(),
-            );
-        }
-
-        if ($punchoutConnectionConditionsTransfer->getFkStores()) {
-            $punchoutConnectionQuery->filterByFkStore_In(
-                $punchoutConnectionConditionsTransfer->getFkStores(),
-            );
-        }
-
-        if (count($punchoutConnectionConditionsTransfer->getProtocolTypes()) > 0) {
-            $punchoutConnectionQuery->filterByProtocolType_In(
-                $punchoutConnectionConditionsTransfer->getProtocolTypes(),
-            );
-        }
-
-        if ($punchoutConnectionConditionsTransfer->getSenderIdentities()) {
-            $punchoutConnectionQuery->filterBySenderIdentity_In(
-                $punchoutConnectionConditionsTransfer->getSenderIdentities(),
-            );
-        }
-
-        if ($punchoutConnectionConditionsTransfer->getIsActive() !== null) {
-            $punchoutConnectionQuery->filterByIsActive(
-                $punchoutConnectionConditionsTransfer->getIsActive(),
-            );
-        }
-
-        return $punchoutConnectionQuery;
     }
 }

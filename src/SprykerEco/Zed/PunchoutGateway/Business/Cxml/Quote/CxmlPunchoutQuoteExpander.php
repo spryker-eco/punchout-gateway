@@ -5,6 +5,8 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote;
 
 use ArrayObject;
@@ -15,7 +17,8 @@ use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutItemTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
+use Generated\Shared\Transfer\ShipmentTransfer;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class CxmlPunchoutQuoteExpander implements CxmlPunchoutQuoteExpanderInterface
 {
@@ -29,7 +32,7 @@ class CxmlPunchoutQuoteExpander implements CxmlPunchoutQuoteExpanderInterface
 
         $quoteTransfer = $this->mapShippingAddress($quoteTransfer, $cxmlRequest);
 
-        if ($cxmlRequest->getOperation() === PunchoutGatewayConstants::OPERATION_EDIT) {
+        if ($cxmlRequest->getOperation() === PunchoutGatewayConfig::OPERATION_EDIT) {
             $quoteTransfer = $this->mapItems($quoteTransfer, $cxmlRequest);
         }
 
@@ -48,6 +51,13 @@ class CxmlPunchoutQuoteExpander implements CxmlPunchoutQuoteExpanderInterface
 
         $addressTransfer = $this->mapPunchoutAddressToAddressTransfer($punchoutAddressTransfer);
         $quoteTransfer->setShippingAddress($addressTransfer);
+        foreach ($quoteTransfer->getItems() as $itemTransfer) {
+            if ($itemTransfer->getShipment() === null) {
+                $itemTransfer->setShipment(new ShipmentTransfer());
+            }
+
+            $itemTransfer->getShipment()->setShippingAddress($addressTransfer);
+        }
 
         return $quoteTransfer;
     }
@@ -97,8 +107,8 @@ class CxmlPunchoutQuoteExpander implements CxmlPunchoutQuoteExpanderInterface
     {
         $itemTransfer = new ItemTransfer();
         $itemTransfer->setSku($punchoutItemTransfer->getSupplierPartId());
-        $itemTransfer->setQuantity($punchoutItemTransfer->getQuantity());
-        $itemTransfer->setUnitPrice((int)$punchoutItemTransfer->getUnitPrice());
+        $itemTransfer->setQuantity($punchoutItemTransfer->getQuantity()->toInt());
+        $itemTransfer->setUnitPrice($punchoutItemTransfer->getUnitPrice()->toInt());
 
         return $itemTransfer;
     }

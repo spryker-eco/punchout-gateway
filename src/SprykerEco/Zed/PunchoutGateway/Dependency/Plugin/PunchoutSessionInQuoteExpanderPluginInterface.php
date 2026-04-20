@@ -5,11 +5,18 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Dependency\Plugin;
 
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 
+/**
+ * Provides extension capabilities to extend active PunchOut session data.
+ *
+ * @api
+ */
 interface PunchoutSessionInQuoteExpanderPluginInterface
 {
     /**

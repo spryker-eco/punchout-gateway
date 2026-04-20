@@ -7,9 +7,12 @@
         <property name="idPunchoutConnection" type="int"/>
         <property name="idStore" type="int"/>
         <property name="name" type="string"/>
+        <property name="storeName" type="string"/>
         <property name="protocolType" type="string"/>
         <property name="isActive" type="bool"/>
+        <property name="allowIframe" type="bool"/>
         <property name="requestUrl" type="string"/>
+        <property name="idCustomer" type="int"/>
         <property name="cxmlConfiguration" type="PunchoutCxmlConfiguration"/>
         <property name="ociConfiguration" type="PunchoutOciConfiguration"/>
         <property name="protocolConfiguration" type="string"/>
@@ -26,23 +29,8 @@
 
     <transfer name="PunchoutOciConfiguration" strict="true">
         <property name="formMethod" type="string"/>
-        <property name="idCustomer" type="int"/>
-        <property name="username" type="string"/>
-        <property name="password" type="string"/>
         <property name="usernameField" type="string"/>
         <property name="passwordField" type="string"/>
-    </transfer>
-
-    <transfer name="PunchoutConnectionCriteria" strict="true">
-        <property name="punchoutConnectionConditions" type="PunchoutConnectionConditions"/>
-    </transfer>
-
-    <transfer name="PunchoutConnectionConditions" strict="true">
-        <property name="punchoutConnectionIds" type="int[]" singular="idPunchoutConnection"/>
-        <property name="fkStores" type="int[]" singular="fkStore"/>
-        <property name="protocolTypes" type="string[]" singular="protocolType"/>
-        <property name="senderIdentities" type="string[]" singular="senderIdentity"/>
-        <property name="isActive" type="bool"/>
     </transfer>
 
     <transfer name="PunchoutConnectionCollection" strict="true">
@@ -65,14 +53,13 @@
         <property name="operation" type="string"/>
         <property name="buyerCookie" type="string"/>
         <property name="browserFormPostUrl" type="string"/>
-        <property name="extrinsics" type="array" singular="extrinsic"/>
+        <property name="extrinsicFields" type="array" singular="extrinsicField"/>
         <property name="contact" type="PunchoutContact"/>
         <property name="shipTo" type="PunchoutAddress"/>
         <property name="items" type="PunchoutItem[]" singular="item"/>
     </transfer>
 
     <transfer name="PunchoutOciLoginRequest" strict="true">
-        <property name="httpHeaders" type="array" singular="httpHeader"/>
         <property name="requestUrl" type="string"/>
         <property name="idPunchoutConnection" type="int"/>
         <property name="idStore" type="int"/>
@@ -86,6 +73,12 @@
         <property name="cxmlSetupRequest" type="PunchoutCxmlSetupRequest"/>
         <property name="ociLoginRequest" type="PunchoutOciLoginRequest"/>
         <property name="customer" type="Customer"/>
+        <property name="quote" type="Quote"/>
+    </transfer>
+
+    <transfer name="PunchoutSessionData" strict="true">
+        <property name="cxmlSetupRequest" type="PunchoutCxmlSetupRequest"/>
+        <property name="ociLoginRequest" type="PunchoutOciLoginRequest"/>
     </transfer>
 
     <transfer name="PunchoutCredential" strict="true">
@@ -99,6 +92,8 @@
 
     <transfer name="PunchoutSetupResponse" strict="true">
         <property name="isSuccess" type="bool"/>
+        <property name="statusCode" type="string"/>
+        <property name="statusText" type="string"/>
         <property name="startPageUrl" type="string"/>
         <property name="errorMessage" type="string"/>
         <property name="payloadId" type="string"/>
@@ -113,10 +108,12 @@
         <property name="idCustomer" type="int"/>
         <property name="buyerCookie" type="string"/>
         <property name="browserFormPostUrl" type="string"/>
+        <property name="allowIframe" type="bool"/>
         <property name="operation" type="string"/>
-        <property name="extrinsics" type="array" singular="extrinsic"/>
+<!--        <property name="extrinsicFields" type="array" singular="extrinsicField"/>-->
         <property name="sessionToken" type="string"/>
         <property name="validTo" type="string"/>
+        <property name="punchoutData" type="PunchoutSessionData"/>
         <property name="createdAt" type="string"/>
         <property name="updatedAt" type="string"/>
     </transfer>
@@ -165,9 +162,65 @@
         <property name="quote" type="Quote"/>
     </transfer>
 
-    <!-- Existing Spryker transfer we depend on -->
+    <transfer name="PunchoutFormData" strict="true">
+        <property name="formTarget" type="string"/>
+        <property name="actionUrl" type="string"/>
+        <property name="fields" type="string[]" associative="true" singular="field"/>
+    </transfer>
+
+    <!-- Existing Spryker transfers this module depends on -->
+    <transfer name="Customer">
+        <property name="idCustomer" type="int"/>
+        <property name="email" type="string"/>
+        <property name="customerReference" type="string"/>
+    </transfer>
+
+    <transfer name="CustomerCriteria">
+        <property name="idCustomer" type="int"/>
+        <property name="withExpanders" type="bool"/>
+    </transfer>
+
+    <transfer name="CustomerResponse">
+        <property name="hasCustomer" type="bool"/>
+        <property name="isSuccess" type="bool"/>
+        <property name="customerTransfer" type="Customer"/>
+    </transfer>
+
     <transfer name="Quote">
+        <property name="idQuote" type="int"/>
+        <property name="uuid" type="string"/>
+        <property name="customer" type="Customer"/>
+        <property name="store" type="Store"/>
+        <property name="currency" type="Currency"/>
+        <property name="shippingAddress" type="Address"/>
+        <property name="items" type="Item[]" singular="item"/>
         <property name="punchoutSession" type="PunchoutSession"/>
+    </transfer>
+
+    <transfer name="QuoteResponse">
+        <property name="quoteTransfer" type="Quote"/>
+        <property name="isSuccessful" type="bool"/>
+    </transfer>
+
+    <transfer name="Item">
+        <property name="sku" type="string"/>
+        <property name="name" type="string"/>
+        <property name="quantity" type="int"/>
+        <property name="unitPrice" type="int"/>
+    </transfer>
+
+    <transfer name="Currency">
+        <property name="code" type="string"/>
+    </transfer>
+
+    <transfer name="Address">
+        <property name="address1" type="string"/>
+        <property name="address2" type="string"/>
+        <property name="address3" type="string"/>
+        <property name="city" type="string"/>
+        <property name="state" type="string"/>
+        <property name="zipCode" type="string"/>
+        <property name="iso2Code" type="string"/>
     </transfer>
 
     <transfer name="Store">

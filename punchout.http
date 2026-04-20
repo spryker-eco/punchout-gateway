@@ -1,7 +1,5 @@
 ### cXML setup
 POST http://yves.eu.spryker.local/punchout-gateway/cxml/setup
-Referer: https://some-platform.com/internal-url/with-a-path/
-Cookie: XDEBUG_SESSION=PHPSTORM
 
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE cXML SYSTEM "http://xml.cxml.org/schemas/cXML/1.2.041/cXML.dtd">
@@ -123,15 +121,13 @@ Cookie: XDEBUG_SESSION=PHPSTORM
 
 
 ### cXML Start
-GET http://yves.eu.spryker.local/punchout-gateway/cxml/start?session=69c40d4ec0a37
-Cookie: XDEBUG_SESSION=PHPSTORM
+GET http://yves.eu.spryker.local/punchout-gateway/cxml/start?session=ea957966d43d95ba7908724e3c519487e3e0e5d20581992b988d802fe729579a
+#Cookie: XDEBUG_SESSION=PHPSTORM
 
 
 ### OCI setup
 POST http://yves.eu.spryker.local/punchout-gateway/oci/company1
-Cookie: XDEBUG_SESSION=PHPSTORM
+#Cookie: XDEBUG_SESSION=PHPSTORM
 Content-Type: application/x-www-form-urlencoded
 
 USERNAME=username&PASSWORD=password&HOOK_URL=https%3A%2F%2Fpunchoutcommerce.com%2Ftools%2Foci-roundtrip-return&%7ETARGET=_top&%7EOkCode=ADDI&%7ECALLER=CTLG
-
-

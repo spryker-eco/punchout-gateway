@@ -5,20 +5,19 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
-namespace SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session;
+declare(strict_types = 1);
+
+namespace SprykerEco\Zed\PunchoutGateway\Business\Oci\Session;
 
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 
-interface CxmlPunchoutSessionExpanderInterface
+interface OciPunchoutSessionResolverInterface
 {
-    /**
-     * Expands punchout session with cXML-specific data: buyerCookie, browserFormPostUrl, operation.
-     */
-    public function expand(
+    public function resolve(
         PunchoutSessionTransfer $punchoutSessionTransfer,
         PunchoutSetupRequestTransfer $setupRequestTransfer,
         QuoteTransfer $quoteTransfer,
-    ): PunchoutSessionTransfer;
+    ): ?PunchoutSessionTransfer;
 }

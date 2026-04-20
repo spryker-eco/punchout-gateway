@@ -5,6 +5,8 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Yves\PunchoutGateway\Model;
 
 use Generated\Shared\Transfer\CustomerTransfer;
@@ -41,14 +43,20 @@ class LoginModel implements LoginModelInterface
 
     public function loginCustomerFromSession(PunchoutSessionStartResponseTransfer $sessionStartResponseTransfer): void
     {
-        $customerTransfer = $sessionStartResponseTransfer->getCustomer();
+        if ($sessionStartResponseTransfer->getQuote()) {
+            $this->quoteClient->setQuote($sessionStartResponseTransfer->getQuote());
+        }
+
+        $customerTransfer = $sessionStartResponseTransfer->getCustomerOrFail();
+
+        if ($sessionStartResponseTransfer->getStoreName()) {
+            $customerTransfer->setStoreName($sessionStartResponseTransfer->getStoreName());
+        }
 
         $this->authenticateCustomer($customerTransfer);
 
-        $this->sessionClient->set(static::SESSION_KEY_CURRENT_STORE, $sessionStartResponseTransfer->getStoreName());
-
-        if ($sessionStartResponseTransfer->getQuote()) {
-            $this->quoteClient->setQuote($sessionStartResponseTransfer->getQuote());
+        if ($sessionStartResponseTransfer->getStoreName() !== null) {
+            $this->sessionClient->set(static::SESSION_KEY_CURRENT_STORE, $sessionStartResponseTransfer->getStoreName());
         }
     }
 

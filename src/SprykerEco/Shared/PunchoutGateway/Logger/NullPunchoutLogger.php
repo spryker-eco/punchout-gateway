@@ -5,6 +5,8 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Shared\PunchoutGateway\Logger;
 
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
@@ -12,6 +14,7 @@ use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionStartResponseTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\PunchoutSetupResponseTransfer;
+use Generated\Shared\Transfer\QuoteResponseTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Throwable;
 
@@ -53,6 +56,10 @@ class NullPunchoutLogger implements PunchoutLoggerInterface
     {
     }
 
+    public function logQuoteCreationFailed(QuoteResponseTransfer $quoteResponseTransfer): void
+    {
+    }
+
     public function logSessionCreated(PunchoutSessionTransfer $punchoutSessionTransfer): void
     {
     }
@@ -65,14 +72,20 @@ class NullPunchoutLogger implements PunchoutLoggerInterface
     {
     }
 
-    public function logError(string $message, Throwable $throwable): void
+    public function logThrowable(string $message, Throwable $throwable): void
     {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function logGenericErrorMessage(string $message, array $context = []): void
     {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function logGenericInfoMessage(string $message, array $context = []): void
     {
     }

@@ -5,17 +5,16 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
-namespace SprykerEco\Zed\PunchoutGateway\Business\Oci\Session;
+namespace SprykerEco\Zed\PunchoutGateway\Business\Session;
 
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
-use Generated\Shared\Transfer\QuoteTransfer;
+use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInterface;
 
-interface OciPunchoutSessionExpanderInterface
+interface SessionCreatorInterface
 {
-    public function expand(
-        PunchoutSessionTransfer $punchoutSessionTransfer,
+    public function createSession(
+        PunchoutProcessorPluginInterface $processorPlugin,
         PunchoutSetupRequestTransfer $setupRequestTransfer,
-        QuoteTransfer $quoteTransfer,
-    ): PunchoutSessionTransfer;
+    ): ?PunchoutSessionTransfer;
 }

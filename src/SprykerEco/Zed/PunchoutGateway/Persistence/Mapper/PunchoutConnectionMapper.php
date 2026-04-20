@@ -5,45 +5,30 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Persistence\Mapper;
 
-use Generated\Shared\Transfer\PunchoutConnectionCollectionTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlConfigurationTransfer;
 use Generated\Shared\Transfer\PunchoutOciConfigurationTransfer;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnection;
-use Propel\Runtime\Collection\ObjectCollection;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
+use Spryker\Service\UtilEncoding\UtilEncodingServiceInterface;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class PunchoutConnectionMapper
 {
+    public function __construct(protected UtilEncodingServiceInterface $utilEncodingService)
+    {
+    }
+
     protected const string CONFIGURATION_KEY_SENDER_SHARED_SECRET = 'senderSharedSecret';
 
     protected const string CONFIGURATION_KEY_FORM_METHOD = 'formMethod';
 
-    protected const string CONFIGURATION_KEY_USERNAME = 'username';
-
-    protected const string CONFIGURATION_KEY_PASSWORD = 'password';
-
     protected const string CONFIGURATION_KEY_USERNAME_FIELD = 'usernameField';
 
     protected const string CONFIGURATION_KEY_PASSWORD_FIELD = 'passwordField';
-
-    /**
-     * @param \Propel\Runtime\Collection\ObjectCollection<\Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnection> $punchoutConnectionEntities
-     */
-    public function mapPunchoutConnectionEntitiesToPunchoutConnectionCollectionTransfer(
-        ObjectCollection $punchoutConnectionEntities,
-        PunchoutConnectionCollectionTransfer $punchoutConnectionCollectionTransfer,
-    ): PunchoutConnectionCollectionTransfer {
-        foreach ($punchoutConnectionEntities as $punchoutConnectionEntity) {
-            $punchoutConnectionCollectionTransfer->addPunchoutConnection(
-                $this->mapPunchoutConnectionEntityToTransfer($punchoutConnectionEntity, new PunchoutConnectionTransfer()),
-            );
-        }
-
-        return $punchoutConnectionCollectionTransfer;
-    }
 
     public function mapPunchoutConnectionEntityToTransfer(
         ?SpyPunchoutConnection $punchoutConnectionEntity,
@@ -55,18 +40,19 @@ class PunchoutConnectionMapper
 
         $punchoutConnectionTransfer->fromArray($punchoutConnectionEntity->toArray(), true);
         $punchoutConnectionTransfer->setIdStore($punchoutConnectionEntity->getFkStore());
+        $punchoutConnectionTransfer->setStoreName($punchoutConnectionEntity->getSpyStore()->getName());
 
         $protocolConfiguration = $this->decodeProtocolConfiguration(
             $punchoutConnectionEntity->getConfiguration(),
         );
 
-        if ($punchoutConnectionEntity->getProtocolType() === PunchoutGatewayConstants::PROTOCOL_TYPE_CXML) {
+        if ($punchoutConnectionEntity->getProtocolType() === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
             $punchoutConnectionTransfer->setCxmlConfiguration(
                 $this->mapCxmlConfiguration($protocolConfiguration, $punchoutConnectionEntity),
             );
         }
 
-        if ($punchoutConnectionEntity->getProtocolType() === PunchoutGatewayConstants::PROTOCOL_TYPE_OCI) {
+        if ($punchoutConnectionEntity->getProtocolType() === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
             $punchoutConnectionTransfer->setOciConfiguration(
                 $this->mapOciConfiguration($protocolConfiguration),
             );
@@ -97,8 +83,6 @@ class PunchoutConnectionMapper
     {
         $ociConfigurationTransfer = new PunchoutOciConfigurationTransfer();
         $ociConfigurationTransfer->setFormMethod($protocolConfiguration[static::CONFIGURATION_KEY_FORM_METHOD] ?? null);
-        $ociConfigurationTransfer->setUsername($protocolConfiguration[static::CONFIGURATION_KEY_USERNAME] ?? null);
-        $ociConfigurationTransfer->setPassword($protocolConfiguration[static::CONFIGURATION_KEY_PASSWORD] ?? null);
         $ociConfigurationTransfer->setUsernameField($protocolConfiguration[static::CONFIGURATION_KEY_USERNAME_FIELD] ?? null);
         $ociConfigurationTransfer->setPasswordField($protocolConfiguration[static::CONFIGURATION_KEY_PASSWORD_FIELD] ?? null);
 
@@ -114,6 +98,6 @@ class PunchoutConnectionMapper
             return [];
         }
 
-        return json_decode($protocolConfiguration, true) ?: [];
+        return $this->utilEncodingService->decodeJson($protocolConfiguration, true) ?: [];
     }
 }

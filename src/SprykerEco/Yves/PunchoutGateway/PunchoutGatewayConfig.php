@@ -5,10 +5,13 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Yves\PunchoutGateway;
 
 use Spryker\Shared\Application\ApplicationConstants;
 use Spryker\Yves\Kernel\AbstractBundleConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 use Symfony\Component\HttpFoundation\Response;
 
 class PunchoutGatewayConfig extends AbstractBundleConfig
@@ -26,7 +29,7 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
      */
     public function isLoggingEnabled(): bool
     {
-        return true;
+        return (bool)$this->get(PunchoutGatewayConstants::ENABLE_LOGGING, true);
     }
 
     /**

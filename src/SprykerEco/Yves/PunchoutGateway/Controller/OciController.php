@@ -5,6 +5,8 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Yves\PunchoutGateway\Controller;
 
 use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
@@ -14,10 +16,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
+ * @method \SprykerEco\Yves\PunchoutGateway\PunchoutGatewayConfig getConfig()
  * @method \SprykerEco\Yves\PunchoutGateway\PunchoutGatewayFactory getFactory()
  */
 class OciController extends AbstractController
 {
+    protected const string FALLBACK_SESSION_START_URL = '/';
+
     public function indexAction(Request $request): Response
     {
         $punchoutLogger = $this->getFactory()->createPunchoutLogger();
@@ -27,7 +32,6 @@ class OciController extends AbstractController
         $punchoutSetupRequestTransfer = new PunchoutOciLoginRequestTransfer();
         $punchoutSetupRequestTransfer->setFormData($request->request->all());
         $punchoutSetupRequestTransfer->setRequestUrl($request->getPathInfo());
-        $punchoutSetupRequestTransfer->setHttpHeaders($request->headers->all());
 
         $sessionStartResponseTransfer = $this->getFactory()
             ->getPunchoutGatewayClient()
@@ -45,11 +49,11 @@ class OciController extends AbstractController
             ->createLoginModel()
             ->loginCustomerFromSession($sessionStartResponseTransfer);
 
-        if (!$sessionStartResponseTransfer->getRedirectUrl()) {
-            return new Response('', $this->getFactory()->getConfig()->getErrorResponseHttpCode());
-        }
+        $this->getFactory()
+            ->createPunchoutSecurityHeaderSessionWriter()
+            ->writeFromResponse($sessionStartResponseTransfer);
 
-        $redirectUrl = $sessionStartResponseTransfer->getRedirectUrl();
+        $redirectUrl = $sessionStartResponseTransfer->getRedirectUrl() ?? static::FALLBACK_SESSION_START_URL;
 
         $punchoutLogger->logGenericInfoMessage('OCI session processed.', [
             'redirectUrl' => $redirectUrl,

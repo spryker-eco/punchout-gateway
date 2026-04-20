@@ -5,6 +5,8 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway;
 
 use Spryker\Zed\Kernel\AbstractBundleDependencyProvider;
@@ -23,6 +25,10 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
 
     public const string PLUGINS_PUNCHOUT_SESSION_IN_QUOTE_EXPANDER = 'PLUGINS_PUNCHOUT_SESSION_IN_QUOTE_EXPANDER';
 
+    public const string SERVICE_UTIL_ENCODING = 'SERVICE_UTIL_ENCODING';
+
+    public const string SERVICE_PUNCHOUT_GATEWAY = 'SERVICE_PUNCHOUT_GATEWAY';
+
     public function provideBusinessLayerDependencies(Container $container): Container
     {
         $container = parent::provideBusinessLayerDependencies($container);
@@ -30,6 +36,15 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
         $container = $this->addQuoteFacade($container);
         $container = $this->addStoreFacade($container);
         $container = $this->addCustomerFacade($container);
+        $container = $this->addPunchoutGatewayService($container);
+
+        return $container;
+    }
+
+    public function providePersistenceLayerDependencies(Container $container): Container
+    {
+        $container = parent::providePersistenceLayerDependencies($container);
+        $container = $this->addUtilEncodingService($container);
 
         return $container;
     }
@@ -73,6 +88,24 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     {
         $container->set(static::FACADE_CUSTOMER, function (Container $container) {
             return $container->getLocator()->customer()->facade();
+        });
+
+        return $container;
+    }
+
+    protected function addUtilEncodingService(Container $container): Container
+    {
+        $container->set(static::SERVICE_UTIL_ENCODING, function (Container $container) {
+            return $container->getLocator()->utilEncoding()->service();
+        });
+
+        return $container;
+    }
+
+    protected function addPunchoutGatewayService(Container $container): Container
+    {
+        $container->set(static::SERVICE_PUNCHOUT_GATEWAY, function (Container $container) {
+            return $container->getLocator()->punchoutGateway()->service();
         });
 
         return $container;

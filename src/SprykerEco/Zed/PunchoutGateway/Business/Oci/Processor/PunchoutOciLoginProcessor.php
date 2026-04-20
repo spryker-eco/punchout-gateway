@@ -5,33 +5,35 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Business\Oci\Processor;
 
+use Exception;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionStartResponseTransfer;
-use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
-use Generated\Shared\Transfer\QuoteTransfer;
-use Spryker\Zed\Quote\Business\QuoteFacadeInterface;
-use Spryker\Zed\Store\Business\StoreFacadeInterface;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
-use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutOciProcessorPluginInterface;
-use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayEntityManagerInterface;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
+use SprykerEco\Zed\PunchoutGateway\Business\Model\ProcessorPluginResolverInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Quote\QuoteCreatorInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Session\SessionCreatorInterface;
+use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInterface;
 use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
-use Throwable;
 
 class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
 {
+    protected const string PUNCH_OUT_OCI_LOGIN_PROCESSING_FAILED = 'PunchOut OCI login processing failed';
+
     public function __construct(
-        protected QuoteFacadeInterface $quoteFacade,
-        protected StoreFacadeInterface $storeFacade,
-        protected PunchoutGatewayConfig $config,
-        protected PunchoutGatewayEntityManagerInterface $entityManager,
+        protected QuoteCreatorInterface $quoteCreator,
+        protected SessionCreatorInterface $sessionCreator,
+        protected ProcessorPluginResolverInterface $processorPluginResolver,
         protected PunchoutLoggerInterface $punchoutLogger,
         protected PunchoutGatewayRepositoryInterface $repository,
+        protected PunchoutGatewayConfig $config,
     ) {
     }
 
@@ -40,11 +42,10 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
     ): PunchoutSessionStartResponseTransfer {
         try {
             return $this->executeProcessLoginRequest($ociLoginRequestTransfer);
-        } catch (Throwable $throwable) {
-            $this->punchoutLogger->logError('PunchOut OCI login processing failed', $throwable);
+        } catch (Exception $exception) {
+            $this->punchoutLogger->logThrowable(static::PUNCH_OUT_OCI_LOGIN_PROCESSING_FAILED, $exception);
 
-            return (new PunchoutSessionStartResponseTransfer())
-                ->setIsSuccess(false);
+            return $this->createErrorResponse(static::PUNCH_OUT_OCI_LOGIN_PROCESSING_FAILED);
         }
     }
 
@@ -56,24 +57,23 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
         $connectionTransfer = $this->repository->findActiveOciConnectionByRequestUrl($requestUrl);
 
         if ($connectionTransfer === null) {
-            $this->punchoutLogger->logRequestUrlFailure($requestUrl, PunchoutGatewayConstants::ERROR_CONNECTION_NOT_FOUND);
+            $this->punchoutLogger->logRequestUrlFailure($requestUrl, SharedPunchoutGatewayConfig::ERROR_CONNECTION_NOT_FOUND);
 
-            return (new PunchoutSessionStartResponseTransfer())
-                ->setIsSuccess(false)
-                ->setErrorMessage(PunchoutGatewayConstants::ERROR_CONNECTION_NOT_FOUND);
+            return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_CONNECTION_NOT_FOUND);
         }
 
         $this->punchoutLogger->logConnectionFound($connectionTransfer);
 
-        $processorPlugin = $this->resolveProcessorPlugin($connectionTransfer);
+        $processorPlugin = $this->processorPluginResolver->resolveProcessorPlugin($connectionTransfer, PunchoutProcessorPluginInterface::class);
 
-        $connectionTransfer = $processorPlugin->authenticate($ociLoginRequestTransfer, $connectionTransfer);
+        $setupRequestTransfer = $this->buildSetupRequestTransfer($ociLoginRequestTransfer, $connectionTransfer);
+
+        $connectionTransfer = $processorPlugin->authenticate($setupRequestTransfer);
 
         if ($connectionTransfer === null) {
-            $this->punchoutLogger->logAuthenticationFailure($requestUrl, PunchoutGatewayConstants::ERROR_AUTHENTICATION_FAILED);
+            $this->punchoutLogger->logAuthenticationFailure($requestUrl, SharedPunchoutGatewayConfig::ERROR_AUTHENTICATION_FAILED);
 
-            return (new PunchoutSessionStartResponseTransfer())
-                ->setIsSuccess(false);
+            return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_AUTHENTICATION_FAILED);
         }
 
         $this->punchoutLogger->logAuthenticationSuccess($connectionTransfer);
@@ -81,52 +81,36 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
         $ociLoginRequestTransfer->setIdPunchoutConnection($connectionTransfer->getIdPunchoutConnection());
         $ociLoginRequestTransfer->setIdStore($connectionTransfer->getIdStore());
 
-        $setupRequestTransfer = $this->buildSetupRequestTransfer($ociLoginRequestTransfer, $connectionTransfer);
-
         $customerTransfer = $processorPlugin->resolveCustomer($setupRequestTransfer);
 
         if ($customerTransfer === null) {
-            return (new PunchoutSessionStartResponseTransfer())
-                ->setIsSuccess(false)
-                ->setErrorMessage(PunchoutGatewayConstants::ERROR_CUSTOMER_NOT_RESOLVED);
+            $this->punchoutLogger->logAuthenticationFailure($requestUrl, SharedPunchoutGatewayConfig::ERROR_CUSTOMER_NOT_RESOLVED);
+
+            return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_CUSTOMER_NOT_RESOLVED);
         }
 
         $setupRequestTransfer->setCustomer($customerTransfer);
 
-        $quoteTransfer = $processorPlugin->resolveQuote($setupRequestTransfer);
+        $setupRequestTransfer = $this->quoteCreator->createQuote($processorPlugin, $setupRequestTransfer);
 
-        $storeTransfer = $this->storeFacade->getStoreById($connectionTransfer->getIdStore());
-        $quoteTransfer->setCustomer($customerTransfer);
-        $quoteTransfer->setStore($storeTransfer);
+        if ($setupRequestTransfer->getQuote() === null) {
+            return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_QUOTE_WAS_NOT_CREATED);
+        }
 
-        $quoteTransfer = $processorPlugin->expandQuote($quoteTransfer, $setupRequestTransfer);
-        $quoteTransfer = $this->saveQuote($quoteTransfer);
+        $punchoutSessionTransfer = $this->sessionCreator->createSession($processorPlugin, $setupRequestTransfer);
 
-        $this->punchoutLogger->logQuoteCreated($quoteTransfer);
+        if (!$punchoutSessionTransfer) {
+            $this->punchoutLogger->logGenericErrorMessage(SharedPunchoutGatewayConfig::ERROR_SESSION_CREATION_FAILED);
 
-        $punchoutSessionTransfer = new PunchoutSessionTransfer();
-        $punchoutSessionTransfer->setIdQuote($quoteTransfer->getIdQuote());
-        $punchoutSessionTransfer->setIdPunchoutConnection($connectionTransfer->getIdPunchoutConnection());
-        $punchoutSessionTransfer->setIdCustomer($customerTransfer->getIdCustomer());
-
-        $punchoutSessionTransfer = $processorPlugin->expandSession($punchoutSessionTransfer, $setupRequestTransfer, $quoteTransfer);
-
-        $punchoutSessionTransfer = $this->entityManager->createPunchoutSession($punchoutSessionTransfer);
-
-        $this->punchoutLogger->logSessionCreated($punchoutSessionTransfer);
+            return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_SESSION_CREATION_FAILED);
+        }
 
         return (new PunchoutSessionStartResponseTransfer())
             ->setIsSuccess(true)
             ->setCustomer($customerTransfer)
-            ->setQuote($quoteTransfer)
-            ->setRedirectUrl($this->config->getOciDefaultStartUrl());
-    }
-
-    protected function resolveProcessorPlugin(PunchoutConnectionTransfer $connectionTransfer): PunchoutOciProcessorPluginInterface
-    {
-        $pluginClass = $connectionTransfer->getProcessorPluginClassOrFail();
-
-        return new $pluginClass();
+            ->setQuote($setupRequestTransfer->getQuote()->setPunchoutSession($punchoutSessionTransfer))
+            ->setRedirectUrl($this->config->getOciDefaultStartUrl())
+            ->setStoreName($setupRequestTransfer->getQuote()->getStore()->getName());
     }
 
     protected function buildSetupRequestTransfer(
@@ -134,7 +118,7 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
         PunchoutConnectionTransfer $connectionTransfer,
     ): PunchoutSetupRequestTransfer {
         $setupRequestTransfer = new PunchoutSetupRequestTransfer();
-        $setupRequestTransfer->setProtocolType(PunchoutGatewayConstants::PROTOCOL_TYPE_OCI);
+        $setupRequestTransfer->setProtocolType(SharedPunchoutGatewayConfig::PROTOCOL_TYPE_OCI);
         $setupRequestTransfer->setConnection($connectionTransfer);
         $setupRequestTransfer->setIdStore($connectionTransfer->getIdStore());
         $setupRequestTransfer->setOciLoginRequest($ociLoginRequestTransfer);
@@ -142,12 +126,10 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
         return $setupRequestTransfer;
     }
 
-    protected function saveQuote(QuoteTransfer $quoteTransfer): QuoteTransfer
+    protected function createErrorResponse(string $message): PunchoutSessionStartResponseTransfer
     {
-        if ($quoteTransfer->getIdQuote() !== null) {
-            return $this->quoteFacade->updateQuote($quoteTransfer)->getQuoteTransfer();
-        }
-
-        return $this->quoteFacade->createQuote($quoteTransfer)->getQuoteTransfer();
+        return (new PunchoutSessionStartResponseTransfer())
+            ->setIsSuccess(false)
+            ->setErrorMessage($message);
     }
 }

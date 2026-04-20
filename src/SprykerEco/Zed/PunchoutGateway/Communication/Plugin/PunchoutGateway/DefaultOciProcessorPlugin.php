@@ -5,37 +5,48 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway;
 
 use Generated\Shared\Transfer\CustomerTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
-use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Spryker\Zed\Kernel\Communication\AbstractPlugin;
-use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutOciProcessorPluginInterface;
+use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInterface;
 
 /**
- * {@inheritDoc}
- *
  * @api
  *
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayBusinessFactory getBusinessFactory()
  * @method \SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig getConfig()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
  */
-class DefaultOciProcessorPlugin extends AbstractPlugin implements PunchoutOciProcessorPluginInterface
+class DefaultOciProcessorPlugin extends AbstractPlugin implements PunchoutProcessorPluginInterface
 {
+    /**
+     * {@inheritDoc}
+     * - Uses connection's configured username/password field names to extract credentials from form data.
+     * - Verifies credentials against the credential table.
+     * - Returns the connection transfer enriched with credential data (e.g., idCustomer), or null on failure.
+     *
+     * @api
+     */
     public function authenticate(
-        PunchoutOciLoginRequestTransfer $ociLoginRequestTransfer,
-        PunchoutConnectionTransfer $connectionTransfer,
+        PunchoutSetupRequestTransfer $setupRequestTransfer,
     ): ?PunchoutConnectionTransfer {
         return $this->getBusinessFactory()
             ->createPunchoutOciAuthenticator()
-            ->authenticateConnection($ociLoginRequestTransfer, $connectionTransfer);
+            ->authenticateConnection($setupRequestTransfer);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
     public function resolveCustomer(
         PunchoutSetupRequestTransfer $setupRequestTransfer,
     ): ?CustomerTransfer {
@@ -44,12 +55,24 @@ class DefaultOciProcessorPlugin extends AbstractPlugin implements PunchoutOciPro
             ->resolveCustomer($setupRequestTransfer);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
     public function resolveQuote(
         PunchoutSetupRequestTransfer $setupRequestTransfer,
     ): QuoteTransfer {
-        return new QuoteTransfer();
+        return $this->getBusinessFactory()
+            ->createOciPunchoutQuoteFinder()
+            ->resolveQuote($setupRequestTransfer);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
     public function expandQuote(
         QuoteTransfer $quoteTransfer,
         PunchoutSetupRequestTransfer $setupRequestTransfer,
@@ -57,13 +80,19 @@ class DefaultOciProcessorPlugin extends AbstractPlugin implements PunchoutOciPro
         return $quoteTransfer;
     }
 
-    public function expandSession(
+    /**
+     * {@inheritDoc}
+     * - Sets operation, browser form post URL from hook_url form field, etc.
+     *
+     * @api
+     */
+    public function resolveSession(
         PunchoutSessionTransfer $punchoutSessionTransfer,
         PunchoutSetupRequestTransfer $setupRequestTransfer,
         QuoteTransfer $quoteTransfer,
-    ): PunchoutSessionTransfer {
+    ): ?PunchoutSessionTransfer {
         return $this->getBusinessFactory()
-            ->createOciPunchoutSessionExpander()
-            ->expand($punchoutSessionTransfer, $setupRequestTransfer, $quoteTransfer);
+            ->createOciPunchoutSessionResolver()
+            ->resolve($punchoutSessionTransfer, $setupRequestTransfer, $quoteTransfer);
     }
 }

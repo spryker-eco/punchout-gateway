@@ -5,6 +5,8 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Business\Quote;
 
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
@@ -28,7 +30,7 @@ class PunchoutQuoteExpander implements PunchoutQuoteExpanderInterface
             $quoteTransfer->getIdQuote(),
         );
 
-        if (!$punchoutSessionTransfer) {
+        if ($punchoutSessionTransfer === null) {
             return $quoteTransfer;
         }
 
@@ -42,9 +44,11 @@ class PunchoutQuoteExpander implements PunchoutQuoteExpanderInterface
     protected function expandSession(PunchoutSessionTransfer $punchoutSessionTransfer, QuoteTransfer $quoteTransfer): PunchoutSessionTransfer
     {
         foreach ($this->expanderPlugins as $expanderPlugin) {
-            if ($expanderPlugin->isApplicable($punchoutSessionTransfer, $quoteTransfer)) {
-                $punchoutSessionTransfer = $expanderPlugin->expand($punchoutSessionTransfer, $quoteTransfer);
+            if (!$expanderPlugin->isApplicable($punchoutSessionTransfer, $quoteTransfer)) {
+                continue;
             }
+
+            $punchoutSessionTransfer = $expanderPlugin->expand($punchoutSessionTransfer, $quoteTransfer);
         }
 
         return $punchoutSessionTransfer;

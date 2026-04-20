@@ -5,20 +5,19 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Yves\PunchoutGateway\ResponseBuilder;
 
-use CXml\Builder;
 use CXml\Model\Response\PunchOutSetupResponse;
 use CXml\Model\Status;
 use CXml\Model\Url;
-use CXml\Serializer;
 use Generated\Shared\Transfer\PunchoutSetupResponseTransfer;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceInterface;
 
 class CxmlResponseBuilder implements CxmlResponseBuilderInterface
 {
-    protected const string SENDER_USER_AGENT = 'SprykerEco PunchoutGateway';
-
-    public function __construct(protected Serializer $cxmlSerializer)
+    public function __construct(protected PunchoutGatewayServiceInterface $punchoutGatewayService)
     {
     }
 
@@ -28,11 +27,9 @@ class CxmlResponseBuilder implements CxmlResponseBuilderInterface
             new Url($punchoutSetupResponseTransfer->getStartPageUrlOrFail()),
         );
 
-        $cxml = Builder::create(static::SENDER_USER_AGENT)
-            ->payload($punchoutSetupResponse)
-            ->build();
+        $cxml = $this->punchoutGatewayService->buildCxmlPayload($punchoutSetupResponse);
 
-        return $this->cxmlSerializer->serialize($cxml);
+        return $this->punchoutGatewayService->encodeCxml($cxml);
     }
 
     public function buildErrorResponseXml(PunchoutSetupResponseTransfer $punchoutSetupResponseTransfer): string
@@ -43,10 +40,8 @@ class CxmlResponseBuilder implements CxmlResponseBuilderInterface
             $punchoutSetupResponseTransfer->getErrorMessage(),
         );
 
-        $cxml = Builder::create(static::SENDER_USER_AGENT)
-            ->status($status)
-            ->build();
+        $cxml = $this->punchoutGatewayService->buildCxmlStatus($status);
 
-        return $this->cxmlSerializer->serialize($cxml);
+        return $this->punchoutGatewayService->encodeCxml($cxml);
     }
 }

@@ -5,11 +5,12 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Persistence;
 
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutSession;
-use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutSessionQuery;
 use Spryker\Zed\Kernel\Persistence\AbstractEntityManager;
 
 /**
@@ -17,11 +18,13 @@ use Spryker\Zed\Kernel\Persistence\AbstractEntityManager;
  */
 class PunchoutGatewayEntityManager extends AbstractEntityManager implements PunchoutGatewayEntityManagerInterface
 {
-    public function deletePunchoutSessionIfExists(PunchoutSessionTransfer $punchoutSessionTransfer): int
-    {
-        $query = SpyPunchoutSessionQuery::create();
+    protected const string DATE_TIME_FORMAT = 'Y-m-d H:i:s';
 
-        $query->filterByBuyerCookie($punchoutSessionTransfer->getBuyerCookieOrFail());
+    public function deletePunchoutSessionByToken(PunchoutSessionTransfer $punchoutSessionTransfer): int
+    {
+        $query = $this->getFactory()->createSpyPunchoutSessionQuery();
+
+        $query->filterBySessionToken($punchoutSessionTransfer->getSessionTokenOrFail());
 
         if ($punchoutSessionTransfer->getIdPunchoutSession()) {
             $query->_or()
@@ -31,27 +34,44 @@ class PunchoutGatewayEntityManager extends AbstractEntityManager implements Punc
         return $query->delete();
     }
 
+    public function deletePunchoutSessionById(PunchoutSessionTransfer $punchoutSessionTransfer): int
+    {
+        $query = $this->getFactory()->createSpyPunchoutSessionQuery();
+
+        $query->filterByIdPunchoutSession($punchoutSessionTransfer->getIdPunchoutSessionOrFail());
+
+        return $query->delete();
+    }
+
+    public function deletePunchoutSessionByBuyerCookie(PunchoutSessionTransfer $punchoutSessionTransfer): int
+    {
+        $query = $this->getFactory()->createSpyPunchoutSessionQuery();
+
+        $query->filterByBuyerCookie($punchoutSessionTransfer->getBuyerCookieOrFail());
+
+        return $query->delete();
+    }
+
     public function createPunchoutSession(PunchoutSessionTransfer $punchoutSessionTransfer): PunchoutSessionTransfer
     {
         $punchoutSessionEntity = new SpyPunchoutSession();
+
         $data = $punchoutSessionTransfer->toArray();
-        unset($data[PunchoutSessionTransfer::EXTRINSICS]);
         $punchoutSessionEntity->fromArray($data);
 
         $punchoutSessionEntity->setFkQuote($punchoutSessionTransfer->getIdQuote());
         $punchoutSessionEntity->setFkPunchoutConnection($punchoutSessionTransfer->getIdPunchoutConnection());
         $punchoutSessionEntity->setFkCustomer($punchoutSessionTransfer->getIdCustomer());
-
-        $extrinsics = $punchoutSessionTransfer->getExtrinsics();
-        if ($extrinsics !== []) {
-            $punchoutSessionEntity->setExtrinsics(json_encode($extrinsics));
+        $sessionDataTransfer = $punchoutSessionTransfer->getPunchoutData();
+        if ($sessionDataTransfer !== null) {
+            $punchoutSessionEntity->setSessionData($this->getFactory()->getServiceUtilEncoding()->encodeJson($sessionDataTransfer->modifiedToArray()) ?? '[]');
         }
 
         $punchoutSessionEntity->save();
 
         $punchoutSessionTransfer->setIdPunchoutSession($punchoutSessionEntity->getIdPunchoutSession());
-        $punchoutSessionTransfer->setCreatedAt($punchoutSessionEntity->getCreatedAt()?->format('Y-m-d H:i:s'));
-        $punchoutSessionTransfer->setUpdatedAt($punchoutSessionEntity->getUpdatedAt()?->format('Y-m-d H:i:s'));
+        $punchoutSessionTransfer->setCreatedAt($punchoutSessionEntity->getCreatedAt()?->format(static::DATE_TIME_FORMAT));
+        $punchoutSessionTransfer->setUpdatedAt($punchoutSessionEntity->getUpdatedAt()?->format(static::DATE_TIME_FORMAT));
 
         return $punchoutSessionTransfer;
     }

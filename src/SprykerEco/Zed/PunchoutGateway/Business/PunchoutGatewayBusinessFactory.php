@@ -5,13 +5,15 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Business;
 
-use CXml\Serializer;
 use Spryker\Zed\Customer\Business\CustomerFacadeInterface;
 use Spryker\Zed\Kernel\Business\AbstractBusinessFactory;
 use Spryker\Zed\Quote\Business\QuoteFacadeInterface;
 use Spryker\Zed\Store\Business\StoreFacadeInterface;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceInterface;
 use SprykerEco\Shared\PunchoutGateway\Logger\NullPunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
@@ -25,22 +27,32 @@ use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Processor\PunchoutCxmlSetupRequ
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Processor\PunchoutCxmlSetupRequestProcessorInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote\CxmlPunchoutQuoteExpander;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote\CxmlPunchoutQuoteExpanderInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Response\CxmlPunchoutResponseExpander;
+use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Response\CxmlPunchoutResponseExpanderInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote\CxmlPunchoutQuoteFinder;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote\CxmlPunchoutQuoteFinderInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\CxmlPunchoutSessionExpander;
-use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\CxmlPunchoutSessionExpanderInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\CxmlPunchoutSessionResolver;
+use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\CxmlPunchoutSessionResolverInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\PunchoutSessionStarter;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\PunchoutSessionStarterInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Model\ProcessorPluginResolver;
+use SprykerEco\Zed\PunchoutGateway\Business\Model\ProcessorPluginResolverInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Authenticator\PunchoutOciAuthenticator;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Authenticator\PunchoutOciAuthenticatorInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Customer\OciCustomerResolver;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Customer\OciCustomerResolverInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Oci\Quote\OciPunchoutQuoteFinder;
+use SprykerEco\Zed\PunchoutGateway\Business\Oci\Quote\OciPunchoutQuoteFinderInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Processor\PunchoutOciLoginProcessor;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Processor\PunchoutOciLoginProcessorInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Oci\Session\OciPunchoutSessionExpander;
-use SprykerEco\Zed\PunchoutGateway\Business\Oci\Session\OciPunchoutSessionExpanderInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Oci\Session\OciPunchoutSessionResolver;
+use SprykerEco\Zed\PunchoutGateway\Business\Oci\Session\OciPunchoutSessionResolverInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Quote\PunchoutQuoteExpander;
 use SprykerEco\Zed\PunchoutGateway\Business\Quote\PunchoutQuoteExpanderInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Quote\QuoteCreator;
+use SprykerEco\Zed\PunchoutGateway\Business\Quote\QuoteCreatorInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Session\SessionCreator;
+use SprykerEco\Zed\PunchoutGateway\Business\Session\SessionCreatorInterface;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayDependencyProvider;
 
 /**
@@ -50,13 +62,30 @@ use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayDependencyProvider;
  */
 class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
 {
+    public function createSessionCreator(): SessionCreatorInterface
+    {
+        return new SessionCreator(
+            $this->createPunchoutLogger(),
+            $this->getEntityManager(),
+        );
+    }
+
+    public function createQuoteCreator(): QuoteCreatorInterface
+    {
+        return new QuoteCreator(
+            $this->getQuoteFacade(),
+            $this->getStoreFacade(),
+            $this->createPunchoutLogger(),
+        );
+    }
+
     public function createPunchoutCxmlSetupRequestProcessor(): PunchoutCxmlSetupRequestProcessorInterface
     {
         return new PunchoutCxmlSetupRequestProcessor(
-            $this->getQuoteFacade(),
-            $this->getStoreFacade(),
-            $this->getCxmlSerializer(),
-            $this->getEntityManager(),
+            $this->getPunchoutGatewayService(),
+            $this->createQuoteCreator(),
+            $this->createSessionCreator(),
+            $this->createProcessorPluginResolver(),
             $this->createPunchoutLogger(),
             $this->getRepository(),
         );
@@ -65,12 +94,12 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     public function createPunchoutOciLoginProcessor(): PunchoutOciLoginProcessorInterface
     {
         return new PunchoutOciLoginProcessor(
-            $this->getQuoteFacade(),
-            $this->getStoreFacade(),
-            $this->getConfig(),
-            $this->getEntityManager(),
+            $this->createQuoteCreator(),
+            $this->createSessionCreator(),
+            $this->createProcessorPluginResolver(),
             $this->createPunchoutLogger(),
             $this->getRepository(),
+            $this->getConfig(),
         );
     }
 
@@ -79,11 +108,9 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return new PunchoutSessionStarter(
             $this->getCustomerFacade(),
             $this->getQuoteFacade(),
-            $this->getStoreFacade(),
-            $this->getConfig(),
-            $this->getEntityManager(),
             $this->createPunchoutLogger(),
             $this->getRepository(),
+            $this->getConfig(),
         );
     }
 
@@ -107,6 +134,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     {
         return new CxmlCustomerResolver(
             $this->getCustomerFacade(),
+            $this->createPunchoutLogger(),
         );
     }
 
@@ -114,6 +142,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     {
         return new OciCustomerResolver(
             $this->getCustomerFacade(),
+            $this->createPunchoutLogger(),
         );
     }
 
@@ -122,11 +151,16 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return new CxmlPunchoutQuoteExpander();
     }
 
-    public function createCxmlPunchoutSessionExpander(): CxmlPunchoutSessionExpanderInterface
+    public function createCxmlPunchoutSessionResolver(): CxmlPunchoutSessionResolverInterface
     {
-        return new CxmlPunchoutSessionExpander(
+        return new CxmlPunchoutSessionResolver(
             $this->getConfig(),
         );
+    }
+
+    public function createCxmlPunchoutResponseExpander(): CxmlPunchoutResponseExpanderInterface
+    {
+        return new CxmlPunchoutResponseExpander();
     }
 
     public function createCxmlPunchoutQuoteFinder(): CxmlPunchoutQuoteFinderInterface
@@ -134,18 +168,25 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return new CxmlPunchoutQuoteFinder(
             $this->getQuoteFacade(),
             $this->getRepository(),
+            $this->createPunchoutLogger(),
         );
     }
 
-    public function createOciPunchoutSessionExpander(): OciPunchoutSessionExpanderInterface
+    public function createOciPunchoutQuoteFinder(): OciPunchoutQuoteFinderInterface
     {
-        return new OciPunchoutSessionExpander();
+        return new OciPunchoutQuoteFinder();
+    }
+
+    public function createOciPunchoutSessionResolver(): OciPunchoutSessionResolverInterface
+    {
+        return new OciPunchoutSessionResolver(
+            $this->createPunchoutLogger(),
+        );
     }
 
     public function createPunchoutCxmlAuthenticator(): PunchoutCxmlAuthenticatorInterface
     {
         return new PunchoutCxmlAuthenticator(
-            $this->getRepository(),
             $this->createPunchoutLogger(),
         );
     }
@@ -159,14 +200,14 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return new PunchoutLogger();
     }
 
-    public function getCxmlSerializer(): Serializer
-    {
-        return Serializer::create();
-    }
-
     public function createDefaultCxmlContentParser(): DefaultCxmlContentParserInterface
     {
         return new DefaultCxmlContentParser();
+    }
+
+    public function createProcessorPluginResolver(): ProcessorPluginResolverInterface
+    {
+        return new ProcessorPluginResolver();
     }
 
     /**
@@ -190,5 +231,10 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     public function getCustomerFacade(): CustomerFacadeInterface
     {
         return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_CUSTOMER);
+    }
+
+    public function getPunchoutGatewayService(): PunchoutGatewayServiceInterface
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::SERVICE_PUNCHOUT_GATEWAY);
     }
 }

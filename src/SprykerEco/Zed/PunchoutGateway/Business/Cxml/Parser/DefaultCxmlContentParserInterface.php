@@ -5,6 +5,8 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Business\Cxml\Parser;
 
 use CXml\Model\CXml;
@@ -14,6 +16,6 @@ interface DefaultCxmlContentParserInterface
 {
     public function parseCxmlData(
         PunchoutCxmlSetupRequestTransfer $punchoutSetupRequestTransfer,
-        CXml $cxml
+        CXml $cxml,
     ): PunchoutCxmlSetupRequestTransfer;
 }

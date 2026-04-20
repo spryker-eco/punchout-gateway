@@ -5,6 +5,8 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway;
 
 use CXml\Model\CXml;
@@ -16,12 +18,9 @@ use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSetupResponseTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Spryker\Zed\Kernel\Communication\AbstractPlugin;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPluginInterface;
 
 /**
- * {@inheritDoc}
- *
  * @api
  *
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayBusinessFactory getBusinessFactory()
@@ -30,6 +29,13 @@ use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPlugin
  */
 class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlProcessorPluginInterface
 {
+/**
+     * {@inheritDoc}
+     * - Extracts sender identity, shared secret, buyer cookie, items,
+     *   contact, shipping address, extrinsics, and other protocol fields.
+     *
+     * @api
+     */
     public function parseCxmlRequest(
         PunchoutCxmlSetupRequestTransfer $cxmlSetupRequestTransfer,
         CXml $cxml,
@@ -39,15 +45,24 @@ class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlP
             ->parseCxmlData($cxmlSetupRequestTransfer, $cxml);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
     public function authenticate(
-        PunchoutCxmlSetupRequestTransfer $cxmlSetupRequestTransfer,
-        PunchoutConnectionTransfer $connectionTransfer,
+        PunchoutSetupRequestTransfer $setupRequestTransfer,
     ): ?PunchoutConnectionTransfer {
         return $this->getBusinessFactory()
             ->createPunchoutCxmlAuthenticator()
-            ->authenticateConnection($cxmlSetupRequestTransfer, $connectionTransfer);
+            ->authenticateConnection($setupRequestTransfer);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
     public function resolveCustomer(
         PunchoutSetupRequestTransfer $setupRequestTransfer,
     ): ?CustomerTransfer {
@@ -56,6 +71,12 @@ class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlP
             ->resolveCustomerByEmail($setupRequestTransfer);
     }
 
+    /**
+     * {@inheritDoc}
+     * - Used to resume an edit session when a matching quote exists.
+     *
+     * @api
+     */
     public function resolveQuote(
         PunchoutSetupRequestTransfer $setupRequestTransfer,
     ): QuoteTransfer {
@@ -64,6 +85,11 @@ class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlP
             ->resolveQuote($setupRequestTransfer);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
     public function expandQuote(
         QuoteTransfer $quoteTransfer,
         PunchoutSetupRequestTransfer $setupRequestTransfer,
@@ -73,25 +99,34 @@ class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlP
             ->expand($quoteTransfer, $setupRequestTransfer);
     }
 
-    public function expandSession(
+    /**
+     * {@inheritDoc}
+     * - Sets buyer cookie, browser form post URL, operation, validity, session token, etc.
+     *
+     * @api
+     */
+    public function resolveSession(
         PunchoutSessionTransfer $punchoutSessionTransfer,
         PunchoutSetupRequestTransfer $setupRequestTransfer,
         QuoteTransfer $quoteTransfer,
     ): PunchoutSessionTransfer {
         return $this->getBusinessFactory()
-            ->createCxmlPunchoutSessionExpander()
-            ->expand($punchoutSessionTransfer, $setupRequestTransfer, $quoteTransfer);
+            ->createCxmlPunchoutSessionResolver()
+            ->resolve($punchoutSessionTransfer, $setupRequestTransfer, $quoteTransfer);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
     public function expandResponse(
         PunchoutSessionTransfer $punchoutSessionTransfer,
         PunchoutSetupResponseTransfer $responseTransfer,
-        PunchoutCxmlSetupRequestTransfer $punchoutCxmlSetupRequestTransfer
+        PunchoutCxmlSetupRequestTransfer $punchoutCxmlSetupRequestTransfer,
     ): PunchoutSetupResponseTransfer {
-        $responseTransfer->setPayloadId($punchoutCxmlSetupRequestTransfer->getPayloadId());
-        $responseTransfer->setTimestamp($punchoutCxmlSetupRequestTransfer->getTimestamp());
-        $responseTransfer->setStartPageUrl(sprintf(PunchoutGatewayConstants::CXML_SESSION_START_URL, $punchoutSessionTransfer->getSessionToken()));
-
-        return $responseTransfer;
+        return $this->getBusinessFactory()
+            ->createCxmlPunchoutResponseExpander()
+            ->expand($punchoutSessionTransfer, $responseTransfer, $punchoutCxmlSetupRequestTransfer);
     }
 }

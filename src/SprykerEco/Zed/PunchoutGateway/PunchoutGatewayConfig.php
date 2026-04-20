@@ -5,9 +5,12 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway;
 
 use Spryker\Zed\Kernel\AbstractBundleConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 
 class PunchoutGatewayConfig extends AbstractBundleConfig
 {
@@ -16,13 +19,13 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
      */
     public function isLoggingEnabled(): bool
     {
-        return true;
+        return (bool)$this->get(PunchoutGatewayConstants::ENABLE_LOGGING, true);
     }
 
     /**
      * @api
      */
-    public function getCxmlSessionStartUrlSeconds(): int
+    public function getCxmlSessionStartUrlValidityInSeconds(): int
     {
         return 10 * 60;
     }
@@ -38,8 +41,8 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
     /**
      * @api
      */
-    public function isCxmlSessionDeletedOnStart(): bool
+    public function getCxmlSessionTokenLength(): int
     {
-        return false;
+        return 32;
     }
 }

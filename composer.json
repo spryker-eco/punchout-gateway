@@ -1,45 +1,41 @@
 {
     "name": "spryker-eco/punchout-gateway",
     "type": "library",
-    "description": "PunchOut module",
+    "description": "PunchoutGateway module",
     "license": "proprietary",
     "require": {
+        "friendsofcxml/cxml-php": "^2.2",
         "php": ">=8.3",
+        "spryker-shop/customer-page": "*",
         "spryker/application": "^3.9.0",
         "spryker/customer": "^7.10.0",
         "spryker/kernel": "^3.52.0",
         "spryker/log": "^3.17.0",
-        "spryker/messenger": "^3.1.0",
+        "spryker/propel-orm": "^1.0.0",
         "spryker/quote": "^2.0.0",
         "spryker/quote-extension": "^1.0.0",
-        "spryker/router": "^1.5.0",
         "spryker/session": "^4.0.0",
         "spryker/store": "^1.19.0",
         "spryker/symfony": "^3.1.0",
-        "spryker/transfer": "^3.27.0",
-        "spryker/zed-request": "^3.0.0",
-        "friendsofcxml/cxml-php": "^2.2",
-        "spryker/propel-orm": "^1.0.0"
+        "spryker/zed-request": "^3.0.0"
     },
     "require-dev": {
         "spryker/code-sniffer": "*",
-        "spryker/container": "*",
-        "spryker/event-dispatcher": "*",
-        "spryker/propel": "*",
-        "spryker/security": "*",
-        "spryker/silex": "*",
-        "spryker/storage": "*",
-        "spryker/storage-redis": "*",
+        "spryker/router": "*",
         "spryker/testify": "*"
+    },
+    "suggest": {
+        "spryker/router": "In order to integrate the module into Yves"
     },
     "autoload": {
         "psr-4": {
-            "SprykerEco\\": "src/SprykerEco/"
+            "SprykerEco\\": "src/SprykerEco/",
+            "SprykerEcoTest\\Shared\\PunchoutGateway\\Helper\\": "tests/SprykerEcoTest/Shared/PunchoutGateway/_support/Helper/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "SprykerEcTest\\": "tests/SprykerEcoTest/"
+            "SprykerEcoTest\\": "tests/SprykerEcoTest/"
         }
     },
     "minimum-stability": "dev",

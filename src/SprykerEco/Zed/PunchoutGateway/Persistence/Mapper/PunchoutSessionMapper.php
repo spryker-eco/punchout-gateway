@@ -5,13 +5,21 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Persistence\Mapper;
 
+use Generated\Shared\Transfer\PunchoutSessionDataTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutSession;
+use Spryker\Service\UtilEncoding\UtilEncodingServiceInterface;
 
 class PunchoutSessionMapper
 {
+    public function __construct(protected UtilEncodingServiceInterface $utilEncodingService)
+    {
+    }
+
     public function mapPunchoutSessionEntityToTransfer(
         SpyPunchoutSession $punchoutSessionEntity,
         PunchoutSessionTransfer $punchoutSessionTransfer,
@@ -21,17 +29,17 @@ class PunchoutSessionMapper
         $punchoutSessionTransfer->setIdPunchoutConnection($punchoutSessionEntity->getFkPunchoutConnection());
         $punchoutSessionTransfer->setIdCustomer($punchoutSessionEntity->getFkCustomer());
 
-        $extrinsics = $punchoutSessionEntity->getExtrinsics();
+        $sessionDataTransfer = new PunchoutSessionDataTransfer();
+        $punchoutSessionTransfer->setPunchoutData($sessionDataTransfer);
 
-        if ($extrinsics !== null && $extrinsics !== '') {
-            $decoded = json_decode($extrinsics, true);
+        $sessionData = $punchoutSessionEntity->getSessionData();
+        if ($sessionData) {
+            $decodedData = $this->utilEncodingService->decodeJson($sessionData, true);
 
-            if (is_array($decoded)) {
-                $punchoutSessionTransfer->setExtrinsics($decoded);
+            if ($decodedData) {
+                $sessionDataTransfer->fromArray($decodedData, true);
             }
         }
-
-        $punchoutSessionTransfer->setConnection();
 
         return $punchoutSessionTransfer;
     }

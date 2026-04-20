@@ -5,20 +5,25 @@
  * For full license information, please view the LICENSE file that was distributed with this source code.
  */
 
+declare(strict_types = 1);
+
 namespace SprykerEco\Zed\PunchoutGateway\Business\Cxml\Parser;
 
 use CXml\Model\CXml;
+use CXml\Model\ItemOut;
 use CXml\Model\Request\PunchOutSetupRequest;
 use Generated\Shared\Transfer\PunchoutAddressTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutItemTransfer;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class DefaultCxmlContentParser implements DefaultCxmlContentParserInterface
 {
+    protected const string TIMESTAMP_FORMAT = 'c';
+
     public function parseCxmlData(
         PunchoutCxmlSetupRequestTransfer $punchoutSetupRequestTransfer,
-        CXml $cxml
+        CXml $cxml,
     ): PunchoutCxmlSetupRequestTransfer {
         $header = $cxml->header;
 
@@ -31,7 +36,7 @@ class DefaultCxmlContentParser implements DefaultCxmlContentParserInterface
         }
 
         $punchoutSetupRequestTransfer->setPayloadId($cxml->payloadId);
-        $punchoutSetupRequestTransfer->setTimestamp($cxml->timestamp->format('c'));
+        $punchoutSetupRequestTransfer->setTimestamp($cxml->timestamp->format(static::TIMESTAMP_FORMAT));
 
         $request = $cxml->request;
 
@@ -44,11 +49,11 @@ class DefaultCxmlContentParser implements DefaultCxmlContentParserInterface
         $punchoutSetupRequestTransfer->setOperation($punchoutSetupRequest->operation);
         $punchoutSetupRequestTransfer->setBuyerCookie($punchoutSetupRequest->buyerCookie);
         $punchoutSetupRequestTransfer->setBrowserFormPostUrl($punchoutSetupRequest->browserFormPost->url);
-        $punchoutSetupRequestTransfer->setExtrinsics($punchoutSetupRequest->getExtrinsicsAsKeyValue());
+        $punchoutSetupRequestTransfer->setExtrinsicFields($punchoutSetupRequest->getExtrinsicsAsKeyValue());
 
         $this->mapShipTo($punchoutSetupRequest, $punchoutSetupRequestTransfer);
 
-        if ($punchoutSetupRequest->operation === PunchoutGatewayConstants::OPERATION_EDIT) {
+        if ($punchoutSetupRequest->operation === PunchoutGatewayConfig::OPERATION_EDIT) {
             $this->mapItems($punchoutSetupRequest, $punchoutSetupRequestTransfer);
         }
 
@@ -96,25 +101,30 @@ class DefaultCxmlContentParser implements DefaultCxmlContentParserInterface
             $itemTransfer->setSupplierPartAuxiliaryId($itemOut->itemId->supplierPartAuxiliaryId ?? null);
 
             if ($itemOut->itemDetail !== null) {
-                $itemTransfer->setDescription((string)($itemOut->itemDetail->description->value ?? null));
-                $itemTransfer->setUnitOfMeasure($itemOut->itemDetail->unitOfMeasure?->value ?? null);
-
-                if ($itemOut->itemDetail->unitPrice !== null) {
-                    $itemTransfer->setUnitPrice($itemOut->itemDetail->unitPrice->money->value);
-                    $itemTransfer->setCurrency($itemOut->itemDetail->unitPrice->money->currency);
-                }
-
-                $classifications = $itemOut->itemDetail->getClassifications();
-
-                if ($classifications !== []) {
-                    $itemTransfer->setClassification($classifications[0]->value ?? null);
-                }
-
-                $itemTransfer->setManufacturerPartId($itemOut->itemDetail->getManufacturerPartId());
-                $itemTransfer->setManufacturerName($itemOut->itemDetail->getManufacturerName());
+                $itemTransfer = $this->mapItemDetails($itemTransfer, $itemOut);
             }
 
             $punchoutSetupRequestTransfer->addItem($itemTransfer);
         }
+    }
+
+    protected function mapItemDetails(PunchoutItemTransfer $itemTransfer, ItemOut $itemOut): PunchoutItemTransfer
+    {
+        $itemTransfer->setDescription((string)($itemOut->itemDetail->description->value ?? null));
+        $itemTransfer->setUnitOfMeasure($itemOut->itemDetail->unitOfMeasure ?? null);
+
+        $itemTransfer->setUnitPrice($itemOut->itemDetail->unitPrice->money->value);
+        $itemTransfer->setCurrency($itemOut->itemDetail->unitPrice->money->currency);
+
+        $classifications = $itemOut->itemDetail->getClassifications();
+
+        if ($classifications !== []) {
+            $itemTransfer->setClassification($classifications[0]->value ?? null);
+        }
+
+        $itemTransfer->setManufacturerPartId($itemOut->itemDetail->getManufacturerPartId());
+        $itemTransfer->setManufacturerName($itemOut->itemDetail->getManufacturerName());
+
+        return $itemTransfer;
     }
 }
