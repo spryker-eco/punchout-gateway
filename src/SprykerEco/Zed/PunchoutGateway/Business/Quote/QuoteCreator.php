@@ -9,6 +9,7 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Business\Quote;
 
+use Generated\Shared\Transfer\CurrencyTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Spryker\Zed\Quote\Business\QuoteFacadeInterface;
@@ -34,6 +35,8 @@ class QuoteCreator implements QuoteCreatorInterface
         $storeTransfer = $this->storeFacade->getStoreById($setupRequestTransfer->getConnection()->getIdStore());
         $quoteTransfer->setCustomer($setupRequestTransfer->getCustomer());
         $quoteTransfer->setStore($storeTransfer);
+        $currencyTransfer = (new CurrencyTransfer())->setCode($storeTransfer->getDefaultCurrencyIsoCode());
+        $quoteTransfer->setCurrency($currencyTransfer);
 
         $quoteTransfer = $processorPlugin->expandQuote($quoteTransfer, $setupRequestTransfer);
         $quoteTransfer = $this->saveQuote($quoteTransfer);
