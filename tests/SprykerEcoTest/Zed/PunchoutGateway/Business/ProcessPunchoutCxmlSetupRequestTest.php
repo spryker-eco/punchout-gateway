@@ -80,6 +80,55 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $this->assertTrue($quoteResponseTransfer->getIsSuccessful());
     }
 
+    public function testProcessCxmlSetupRequestCreateOperationWithExistingItemsClearsQuoteItems(): void
+    {
+        $senderIdentity = sprintf('TestIdentity_%s', uniqid());
+        $sharedSecret = 'test-secret';
+        $requestUrl = 'https://test.local/punchout';
+        $email = sprintf('test_%s@example.com', uniqid());
+        $buyerCookie = sprintf('cookie_%s', uniqid());
+
+        $customerTransfer = $this->tester->haveConfirmedCustomer(['email' => $email, 'storeName' => $this->storeTransfer->getName()]);
+        $connectionTransfer = $this->tester->havePunchoutConnection([
+            'fk_store' => $this->storeTransfer->getIdStore(),
+            'sender_identity' => $senderIdentity,
+            'shared_secret' => $sharedSecret,
+            'request_url' => $requestUrl,
+        ]);
+
+        $existingQuoteTransfer = $this->createQuoteForCustomer($customerTransfer);
+        $existingQuoteTransfer->addItem(
+            (new ItemTransfer())->setSku('EXISTING-SKU-001')->setQuantity(1)->setUnitPrice(500),
+        );
+        $this->tester->getLocator()->quote()->facade()->updateQuote($existingQuoteTransfer);
+
+        $this->tester->havePunchoutSession([
+            'fk_quote' => $existingQuoteTransfer->getIdQuote(),
+            'fk_punchout_connection' => $connectionTransfer->getIdPunchoutConnection(),
+            'fk_customer' => $customerTransfer->getIdCustomer(),
+            'buyer_cookie' => $buyerCookie,
+        ]);
+
+        $rawXml = CxmlRequestBuilder::buildSetupRequest(
+            $this->buildCxmlSetupRequestTransfer($senderIdentity, $sharedSecret, 'create', $email, $buyerCookie),
+        );
+
+        $responseTransfer = $this->tester->getFacade()->processPunchoutCxmlSetupRequest(
+            $this->buildRequestTransfer($rawXml, $requestUrl . '/entry'),
+        );
+
+        $this->assertTrue($responseTransfer->getIsSuccess());
+
+        $sessionToken = $this->extractSessionToken($responseTransfer->getStartPageUrl());
+        $sessionTransfer = $this->tester->findPunchoutSessionBySessionToken($sessionToken);
+
+        $this->assertNotNull($sessionTransfer);
+        $this->assertSame($existingQuoteTransfer->getIdQuote(), $sessionTransfer->getIdQuote());
+
+        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
+        $this->assertCount(0, $quoteResponseTransfer->getQuoteTransfer()->getItems());
+    }
+
     public function testProcessCxmlSetupRequestCreateOperationWithExistingQuoteReusesQuote(): void
     {
         $senderIdentity = sprintf('TestIdentity_%s', uniqid());

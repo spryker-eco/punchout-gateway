@@ -36,6 +36,10 @@ class CxmlPunchoutQuoteExpander implements CxmlPunchoutQuoteExpanderInterface
             $quoteTransfer = $this->mapItems($quoteTransfer, $cxmlRequest);
         }
 
+        if ($cxmlRequest->getOperation() === PunchoutGatewayConfig::OPERATION_CREATE) {
+            $quoteTransfer->setItems(new ArrayObject());
+        }
+
         return $quoteTransfer;
     }
 

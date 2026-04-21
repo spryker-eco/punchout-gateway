@@ -79,6 +79,35 @@ class ProcessPunchoutOciLoginRequestTest extends Unit
         $this->assertSame($hookUrl, $sessionTransfer->getPunchoutData()->getOciLoginRequest()->getFormData()['HOOK_URL']);
     }
 
+    public function testProcessOciLoginRequestWithValidCredentialsReturnsEmptyQuote(): void
+    {
+        $requestUrl = sprintf('https://test.local/oci/%s', uniqid());
+        $username = sprintf('TestUser_%s', uniqid());
+        $password = 'test-password';
+
+        $customerTransfer = $this->tester->haveConfirmedCustomer(['storeName' => $this->storeTransfer->getName()]);
+        $connectionTransfer = $this->createOciConnection(['request_url' => $requestUrl]);
+
+        $this->tester->havePunchoutCredential([
+            'fk_punchout_connection' => $connectionTransfer->getIdPunchoutConnection(),
+            'fk_customer' => $customerTransfer->getIdCustomer(),
+            'username' => $username,
+            'password' => $password,
+        ]);
+
+        $responseTransfer = $this->tester->getFacade()->processPunchoutOciLoginRequest(
+            $this->buildOciLoginRequestTransfer($requestUrl, [
+                'USERNAME' => $username,
+                'PASSWORD' => $password,
+                'HOOK_URL' => 'https://buyer.example.com/punchout/return',
+            ]),
+        );
+
+        $this->assertTrue($responseTransfer->getIsSuccess(), $responseTransfer->getErrorMessage() ?? '');
+        $this->assertNotNull($responseTransfer->getQuote());
+        $this->assertCount(0, $responseTransfer->getQuote()->getItems());
+    }
+
     public function testProcessOciLoginRequestWithNoMatchingConnectionReturnsError(): void
     {
         $responseTransfer = $this->tester->getFacade()->processPunchoutOciLoginRequest(

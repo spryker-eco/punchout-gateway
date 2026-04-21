@@ -11,6 +11,12 @@ jobs:
     validation:
         name: "Validation"
         runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                php-version:
+                    - '8.3'
+                    - '8.4'
 
         env:
             APPLICATION_ENV: devtest

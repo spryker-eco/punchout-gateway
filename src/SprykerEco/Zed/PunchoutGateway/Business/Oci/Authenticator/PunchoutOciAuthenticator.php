@@ -13,6 +13,7 @@ use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutOciConfigurationTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface;
 
 class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
@@ -22,10 +23,6 @@ class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
     protected const string FAILURE_REASON_INVALID_PASSWORD = 'Password does not match';
 
     protected const string FAILURE_REASON_NO_CONNECTION_FOUND = 'No active connection found for credential';
-
-    protected const string OCI_DEFAULT_USERNAME_FIELD = 'USERNAME';
-
-    protected const string OCI_DEFAULT_PASSWORD_FIELD = 'PASSWORD';
 
     public function __construct(
         protected PunchoutGatewayRepositoryInterface $punchoutGatewayRepository,
@@ -41,8 +38,8 @@ class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
         $formData = $setupRequestTransfer->getOciLoginRequest()->getFormData();
         $ociConfiguration = $connectionTransfer->getOciConfiguration();
 
-        $usernameField = $ociConfiguration?->getUsernameField() ?? static::OCI_DEFAULT_USERNAME_FIELD;
-        $passwordField = $ociConfiguration?->getPasswordField() ?? static::OCI_DEFAULT_PASSWORD_FIELD;
+        $usernameField = $ociConfiguration?->getUsernameField() ?? PunchoutGatewayConfig::OCI_DEFAULT_USERNAME_FIELD;
+        $passwordField = $ociConfiguration?->getPasswordField() ?? PunchoutGatewayConfig::OCI_DEFAULT_PASSWORD_FIELD;
 
         $username = $formData[$usernameField] ?? null;
         $password = $formData[$passwordField] ?? null;
