@@ -93,7 +93,7 @@ class CxmlController extends AbstractController
         if ($responseTransfer->getIsSuccess()) {
             return new Response(
                 $cxmlResponseBuilder->buildSuccessResponseXml($responseTransfer),
-                $config->getSuccessResponseHttpCode(),
+                Response::HTTP_OK,
                 ['Content-Type' => static::CONTENT_TYPE_XML],
             );
         }

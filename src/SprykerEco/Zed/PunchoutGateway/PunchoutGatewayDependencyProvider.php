@@ -17,6 +17,8 @@ use Spryker\Zed\Kernel\Container;
  */
 class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
 {
+    public const string FACADE_CURRENCY = 'FACADE_CURRENCY';
+
     public const string FACADE_QUOTE = 'FACADE_QUOTE';
 
     public const string FACADE_STORE = 'FACADE_STORE';
@@ -29,6 +31,12 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
 
     public const string SERVICE_PUNCHOUT_GATEWAY = 'SERVICE_PUNCHOUT_GATEWAY';
 
+    public const string FACADE_CALCULATION = 'FACADE_CALCULATION';
+
+    public const string FACADE_PRICE = 'FACADE_PRICE';
+
+    public const string FACADE_CART = 'FACADE_CART';
+
     public function provideBusinessLayerDependencies(Container $container): Container
     {
         $container = parent::provideBusinessLayerDependencies($container);
@@ -36,7 +44,11 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
         $container = $this->addQuoteFacade($container);
         $container = $this->addStoreFacade($container);
         $container = $this->addCustomerFacade($container);
+        $container = $this->addCurrencyFacade($container);
+        $container = $this->addCalculationFacade($container);
+        $container = $this->addPriceFacade($container);
         $container = $this->addPunchoutGatewayService($container);
+        $container = $this->addCartFacade($container);
 
         return $container;
     }
@@ -93,6 +105,33 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
         return $container;
     }
 
+    protected function addCurrencyFacade(Container $container): Container
+    {
+        $container->set(static::FACADE_CURRENCY, function (Container $container) {
+            return $container->getLocator()->currency()->facade();
+        });
+
+        return $container;
+    }
+
+    protected function addCalculationFacade(Container $container): Container
+    {
+        $container->set(static::FACADE_CALCULATION, function (Container $container) {
+            return $container->getLocator()->calculation()->facade();
+        });
+
+        return $container;
+    }
+
+    protected function addPriceFacade(Container $container): Container
+    {
+        $container->set(static::FACADE_PRICE, function (Container $container) {
+            return $container->getLocator()->price()->facade();
+        });
+
+        return $container;
+    }
+
     protected function addUtilEncodingService(Container $container): Container
     {
         $container->set(static::SERVICE_UTIL_ENCODING, function (Container $container) {
@@ -106,6 +145,15 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     {
         $container->set(static::SERVICE_PUNCHOUT_GATEWAY, function (Container $container) {
             return $container->getLocator()->punchoutGateway()->service();
+        });
+
+        return $container;
+    }
+
+    protected function addCartFacade(Container $container): Container
+    {
+        $container->set(static::FACADE_CART, function (Container $container) {
+            return $container->getLocator()->cart()->facade();
         });
 
         return $container;

@@ -11,6 +11,7 @@ namespace SprykerEco\Zed\PunchoutGateway\Business\Cxml\Quote;
 
 use ArrayObject;
 use Generated\Shared\Transfer\AddressTransfer;
+use Generated\Shared\Transfer\CartChangeTransfer;
 use Generated\Shared\Transfer\ItemTransfer;
 use Generated\Shared\Transfer\PunchoutAddressTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
@@ -18,10 +19,15 @@ use Generated\Shared\Transfer\PunchoutItemTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Generated\Shared\Transfer\ShipmentTransfer;
+use Spryker\Zed\Cart\Business\CartFacadeInterface;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class CxmlPunchoutQuoteExpander implements CxmlPunchoutQuoteExpanderInterface
 {
+    public function __construct(protected CartFacadeInterface $cartFacade)
+    {
+    }
+
     public function expand(QuoteTransfer $quoteTransfer, PunchoutSetupRequestTransfer $setupRequestTransfer): QuoteTransfer
     {
         $cxmlRequest = $setupRequestTransfer->getCxmlSetupRequest();
@@ -98,13 +104,18 @@ class CxmlPunchoutQuoteExpander implements CxmlPunchoutQuoteExpanderInterface
     ): QuoteTransfer {
         $quoteTransfer->setItems(new ArrayObject());
 
+        $cartChangeTransfer = (new CartChangeTransfer())
+            ->setQuote($quoteTransfer);
+
         foreach ($requestTransfer->getItems() as $punchoutItemTransfer) {
-            $quoteTransfer->addItem(
+            $cartChangeTransfer->addItem(
                 $this->mapPunchoutItemToItemTransfer($punchoutItemTransfer),
             );
         }
 
-        return $quoteTransfer;
+        $qr = $this->cartFacade->addToCart($cartChangeTransfer);
+
+        return $qr->getQuoteTransfer();
     }
 
     protected function mapPunchoutItemToItemTransfer(PunchoutItemTransfer $punchoutItemTransfer): ItemTransfer
@@ -112,7 +123,7 @@ class CxmlPunchoutQuoteExpander implements CxmlPunchoutQuoteExpanderInterface
         $itemTransfer = new ItemTransfer();
         $itemTransfer->setSku($punchoutItemTransfer->getSupplierPartId());
         $itemTransfer->setQuantity($punchoutItemTransfer->getQuantity()->toInt());
-        $itemTransfer->setUnitPrice($punchoutItemTransfer->getUnitPrice()->toInt());
+        $itemTransfer->setUnitGrossPrice((int)($punchoutItemTransfer->getUnitPrice()->toFloat() * 100));
 
         return $itemTransfer;
     }

@@ -22,8 +22,6 @@ class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
 
     protected const string FAILURE_REASON_INVALID_PASSWORD = 'Password does not match';
 
-    protected const string FAILURE_REASON_NO_CONNECTION_FOUND = 'No active connection found for credential';
-
     public function __construct(
         protected PunchoutGatewayRepositoryInterface $punchoutGatewayRepository,
         protected PunchoutLoggerInterface $punchoutLogger,
@@ -56,16 +54,13 @@ class PunchoutOciAuthenticator implements PunchoutOciAuthenticatorInterface
 
         $this->punchoutLogger->logAuthenticationAttempt($username);
 
-        $credentialTransfer = $this->punchoutGatewayRepository->findActiveCredentialByUsername($username);
+        $credentialTransfer = $this->punchoutGatewayRepository->findActiveCredentialByUsernameAndConnection(
+            $username,
+            $connectionTransfer->getIdPunchoutConnectionOrFail(),
+        );
 
         if ($credentialTransfer === null) {
             $this->punchoutLogger->logAuthenticationFailure($username, static::FAILURE_REASON_NO_CREDENTIAL_FOUND);
-
-            return null;
-        }
-
-        if ($credentialTransfer->getIdPunchoutConnectionOrFail() !== $connectionTransfer->getIdPunchoutConnectionOrFail()) {
-            $this->punchoutLogger->logAuthenticationFailure($username, static::FAILURE_REASON_NO_CONNECTION_FOUND);
 
             return null;
         }

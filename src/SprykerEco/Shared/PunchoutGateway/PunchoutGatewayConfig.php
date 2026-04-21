@@ -51,7 +51,7 @@ interface PunchoutGatewayConfig
 
     public const string SESSION_KEY_PUNCHOUT_CSP_FRAGMENT = 'punchout_csp_fragment';
 
-    public const string CXML_SESSION_START_URL = '/punchout-gateway/cxml/start?session=%s';
+    public const string CXML_SESSION_START_URL = '/punchout-cxml-start?session=%s';
 
     public const string OCI_DEFAULT_USERNAME_FIELD = 'USERNAME';
 

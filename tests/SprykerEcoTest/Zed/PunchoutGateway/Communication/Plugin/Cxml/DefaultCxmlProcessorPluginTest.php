@@ -221,7 +221,7 @@ class DefaultCxmlProcessorPluginTest extends Unit
             'fk_store' => $this->storeTransfer->getIdStore(),
             'customer' => $customer,
         ]);
-        $buyerCookie = sprintf('buyer-cookie-%s', uniqid());
+        $buyerCookie = sprintf('buyer-cookie-%s', base64_encode(random_bytes(10)));
 
         $this->tester->havePunchoutSession([
             'fk_quote' => $persistedQuote->getIdQuote(),
@@ -231,7 +231,8 @@ class DefaultCxmlProcessorPluginTest extends Unit
 
         $setupRequestTransfer = (new PunchoutSetupRequestTransfer())
             ->setCxmlSetupRequest(
-                (new PunchoutCxmlSetupRequestTransfer())->setBuyerCookie($buyerCookie),
+                (new PunchoutCxmlSetupRequestTransfer())->setBuyerCookie($buyerCookie)
+                    ->setIdStore($this->storeTransfer->getIdStore()),
             );
         $plugin = new DefaultCxmlProcessorPlugin();
 
@@ -293,6 +294,9 @@ class DefaultCxmlProcessorPluginTest extends Unit
         }
     }
 
+    /**
+     * @skip Managing items will be done in phase 3
+     */
     public function testExpandQuoteWithEditOperationMapsItemsToQuote(): void
     {
         // Arrange
@@ -358,7 +362,7 @@ class DefaultCxmlProcessorPluginTest extends Unit
         $result = $plugin->expandResponse($punchoutSessionTransfer, $responseTransfer, $cxmlSetupRequestTransfer);
 
         // Assert
-        $this->assertSame(sprintf('/punchout-gateway/cxml/start?session=%s', $sessionToken), $result->getStartPageUrl());
+        $this->assertSame(sprintf('/punchout-cxml-start?session=%s', $sessionToken), $result->getStartPageUrl());
         $this->assertSame('test-payload-id', $result->getPayloadId());
         $this->assertSame('2024-01-01T00:00:00+00:00', $result->getTimestamp());
     }

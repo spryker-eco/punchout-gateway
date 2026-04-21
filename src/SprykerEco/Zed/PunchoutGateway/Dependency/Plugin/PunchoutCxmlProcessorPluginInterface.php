@@ -15,7 +15,7 @@ use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\PunchoutSetupResponseTransfer;
 
 /**
- * Provides extension capabilities to handle Cxml-specific PunchOut flow.
+ * Provides extension capabilities to handle cXML-specific PunchOut flow.
  *
  * @api
  */
@@ -23,7 +23,7 @@ interface PunchoutCxmlProcessorPluginInterface extends PunchoutProcessorPluginIn
 {
     /**
      * Specification:
-     * - Parses the deserialized cXML object into a structured transfer.
+     * - Parses the deserialized CXml object into a structured transfer.
      *
      * @api
      */

@@ -19,7 +19,7 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
      */
     public function isLoggingEnabled(): bool
     {
-        return (bool)$this->get(PunchoutGatewayConstants::ENABLE_LOGGING, true);
+        return (bool)$this->get(PunchoutGatewayConstants::ENABLE_LOGGING, false);
     }
 
     /**

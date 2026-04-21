@@ -22,6 +22,8 @@ suites:
                 - \SprykerTest\Zed\Testify\Helper\Business\BusinessHelper
                 - \SprykerTest\Shared\Customer\Helper\CustomerDataHelper
                 - \SprykerEcoTest\Shared\PunchoutGateway\Helper\PunchoutGatewayDataHelper
+                - \SprykerTest\Shared\Product\Helper\ProductDataHelper
+                - \SprykerTest\Shared\PriceProduct\Helper\PriceProductDataHelper
     Communication:
         path: Communication
         actor: PunchoutGatewayCommunicationTester

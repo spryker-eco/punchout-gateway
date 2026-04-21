@@ -73,7 +73,7 @@ class OciFormFieldBuilder implements OciFormFieldBuilderInterface
         $index = 1;
 
         foreach ($quoteTransfer->getItems() as $itemTransfer) {
-            $this->addSingleItemFields($formDataTransfer, $itemTransfer, $index, $currencyCode, $quoteTransfer->getCurrency()->getFractionDigits());
+            $this->addSingleItemFields($formDataTransfer, $itemTransfer, $index, $currencyCode, $quoteTransfer->getCurrency()->getFractionDigitsOrFail());
             $index++;
         }
     }

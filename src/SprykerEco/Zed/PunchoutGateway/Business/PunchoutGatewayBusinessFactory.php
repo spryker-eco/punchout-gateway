@@ -9,8 +9,12 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Business;
 
+use Spryker\Zed\Calculation\Business\CalculationFacadeInterface;
+use Spryker\Zed\Cart\Business\CartFacadeInterface;
+use Spryker\Zed\Currency\Business\CurrencyFacadeInterface;
 use Spryker\Zed\Customer\Business\CustomerFacadeInterface;
 use Spryker\Zed\Kernel\Business\AbstractBusinessFactory;
+use Spryker\Zed\Price\Business\PriceFacadeInterface;
 use Spryker\Zed\Quote\Business\QuoteFacadeInterface;
 use Spryker\Zed\Store\Business\StoreFacadeInterface;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceInterface;
@@ -75,6 +79,9 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return new QuoteCreator(
             $this->getQuoteFacade(),
             $this->getStoreFacade(),
+            $this->getCurrencyFacade(),
+            $this->getCalculationFacade(),
+            $this->getPriceFacade(),
             $this->createPunchoutLogger(),
         );
     }
@@ -148,7 +155,9 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
 
     public function createCxmlPunchoutQuoteExpander(): CxmlPunchoutQuoteExpanderInterface
     {
-        return new CxmlPunchoutQuoteExpander();
+        return new CxmlPunchoutQuoteExpander(
+            $this->getCartFacade(),
+        );
     }
 
     public function createCxmlPunchoutSessionResolver(): CxmlPunchoutSessionResolverInterface
@@ -233,8 +242,28 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_CUSTOMER);
     }
 
+    public function getCurrencyFacade(): CurrencyFacadeInterface
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_CURRENCY);
+    }
+
     public function getPunchoutGatewayService(): PunchoutGatewayServiceInterface
     {
         return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::SERVICE_PUNCHOUT_GATEWAY);
+    }
+
+    public function getCalculationFacade(): CalculationFacadeInterface
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_CALCULATION);
+    }
+
+    public function getPriceFacade(): PriceFacadeInterface
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_PRICE);
+    }
+
+    public function getCartFacade(): CartFacadeInterface
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_CART);
     }
 }

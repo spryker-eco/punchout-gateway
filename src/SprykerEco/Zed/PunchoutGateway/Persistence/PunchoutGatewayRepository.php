@@ -93,11 +93,12 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
             ->mapPunchoutSessionEntityToTransfer($punchoutSessionEntity, new PunchoutSessionTransfer());
     }
 
-    public function findActiveCredentialByUsername(string $username): ?PunchoutCredentialTransfer
+    public function findActiveCredentialByUsernameAndConnection(string $username, int $idPunchoutConnection): ?PunchoutCredentialTransfer
     {
         $credentialEntity = $this->getFactory()
             ->createSpyPunchoutCredentialQuery()
             ->filterByUsername($username)
+            ->filterByFkPunchoutConnection($idPunchoutConnection)
             ->filterByIsActive(true)
             ->findOne();
 

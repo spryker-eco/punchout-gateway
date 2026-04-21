@@ -28,7 +28,9 @@ class PunchoutGatewayRouteProviderPlugin extends AbstractRouteProviderPlugin
      */
     protected function addPunchoutGatewayCxmlSetupRoute(RouteCollection $routeCollection): RouteCollection
     {
-        $route = $this->buildPostRoute('/punchout-gateway/cxml/setup', 'PunchoutGateway', 'Cxml', 'setup');
+        $route = $this->buildPostRoute('/punchout-cxml-setup/{connectionSlug}', 'PunchoutGateway', 'Cxml', 'setup');
+        $routeCollection->add('punchout-gateway-cxml-setup-slug', $route);
+        $route = $this->buildPostRoute('/punchout-cxml-setup', 'PunchoutGateway', 'Cxml', 'setup');
         $routeCollection->add('punchout-gateway-cxml-setup', $route);
 
         return $routeCollection;
@@ -39,7 +41,7 @@ class PunchoutGatewayRouteProviderPlugin extends AbstractRouteProviderPlugin
      */
     protected function addPunchoutGatewayCxmlStartRoute(RouteCollection $routeCollection): RouteCollection
     {
-        $route = $this->buildGetRoute('/punchout-gateway/cxml/start', 'PunchoutGateway', 'Cxml', 'start');
+        $route = $this->buildGetRoute('/punchout-cxml-start', 'PunchoutGateway', 'Cxml', 'start');
         $routeCollection->add('punchout-gateway-cxml-start', $route);
 
         return $routeCollection;

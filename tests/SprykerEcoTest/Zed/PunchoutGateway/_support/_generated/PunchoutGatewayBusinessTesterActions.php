@@ -1,4 +1,4 @@
-<?php  //[STAMP] 3fe9b200850015950146822f3a2bab28
+<?php  //[STAMP] a5797c18597a053c2a8b8d1fb1c3c297
 // phpcs:ignoreFile
 namespace SprykerEcoTest\Zed\PunchoutGateway\_generated;
 
@@ -2221,5 +2221,145 @@ trait PunchoutGatewayBusinessTesterActions
      */
     public function havePunchoutSession(array $seed = []): \Generated\Shared\Transfer\PunchoutSessionTransfer {
         return $this->getScenario()->runStep(new \Codeception\Step\Action('havePunchoutSession', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\Product\Helper\ProductDataHelper::haveProduct()
+     */
+    public function haveProduct(array $productConcreteOverride = [], array $productAbstractOverride = [], ?string $locale = NULL): \Generated\Shared\Transfer\ProductConcreteTransfer {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('haveProduct', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\Product\Helper\ProductDataHelper::haveProductConcrete()
+     */
+    public function haveProductConcrete(array $productConcreteOverride = []): \Generated\Shared\Transfer\ProductConcreteTransfer {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('haveProductConcrete', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\Product\Helper\ProductDataHelper::haveProductConcreteWithLocalizedAttributes()
+     */
+    public function haveProductConcreteWithLocalizedAttributes(array $productConcreteOverride = []): \Generated\Shared\Transfer\ProductConcreteTransfer {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('haveProductConcreteWithLocalizedAttributes', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\Product\Helper\ProductDataHelper::haveProductAbstract()
+     */
+    public function haveProductAbstract(array $productAbstractOverride = [], bool $localized = false): \Generated\Shared\Transfer\ProductAbstractTransfer {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('haveProductAbstract', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\Product\Helper\ProductDataHelper::haveFullProduct()
+     */
+    public function haveFullProduct(array $productConcreteOverride = [], array $productAbstractOverride = []): \Generated\Shared\Transfer\ProductConcreteTransfer {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('haveFullProduct', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * @param int $idProductAbstract
+     *
+     * @return array<string>
+     * @see \SprykerTest\Shared\Product\Helper\ProductDataHelper::getProductAbstractStoreNamesByIdProductAbstract()
+     */
+    public function getProductAbstractStoreNamesByIdProductAbstract(int $idProductAbstract): array {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('getProductAbstractStoreNamesByIdProductAbstract', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * @param \Generated\Shared\Transfer\ProductAbstractTransfer $productAbstractTransfer
+     * @param array<\Generated\Shared\Transfer\LocalizedAttributesTransfer> $localizedAttributes
+     *
+     * @return void
+     * @see \SprykerTest\Shared\Product\Helper\ProductDataHelper::addLocalizedAttributesToProductAbstract()
+     */
+    public function addLocalizedAttributesToProductAbstract(\Generated\Shared\Transfer\ProductAbstractTransfer $productAbstractTransfer, array $localizedAttributes): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('addLocalizedAttributesToProductAbstract', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * @param \Generated\Shared\Transfer\ProductConcreteTransfer $productConcreteTransfer
+     * @param array<\Generated\Shared\Transfer\LocalizedAttributesTransfer> $localizedAttributes
+     *
+     * @return void
+     * @see \SprykerTest\Shared\Product\Helper\ProductDataHelper::addLocalizedAttributesToProductConcrete()
+     */
+    public function addLocalizedAttributesToProductConcrete(\Generated\Shared\Transfer\ProductConcreteTransfer $productConcreteTransfer, array $localizedAttributes): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('addLocalizedAttributesToProductConcrete', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\PriceProduct\Helper\PriceProductDataHelper::havePriceProduct()
+     */
+    public function havePriceProduct(array $priceProductOverride = []): \Generated\Shared\Transfer\PriceProductTransfer {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('havePriceProduct', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\PriceProduct\Helper\PriceProductDataHelper::havePriceProductAbstract()
+     */
+    public function havePriceProductAbstract(int $idProductAbstract, array $priceProductOverride = []): \Generated\Shared\Transfer\PriceProductTransfer {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('havePriceProductAbstract', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\PriceProduct\Helper\PriceProductDataHelper::havePriceType()
+     */
+    public function havePriceType(array $priceTypeData = []): \Generated\Shared\Transfer\PriceTypeTransfer {
+        return $this->getScenario()->runStep(new \Codeception\Step\Action('havePriceType', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     *
+     * @see \SprykerTest\Shared\PriceProduct\Helper\PriceProductDataHelper::updatePriceProductStore()
+     */
+    public function updatePriceProductStore(int $fkPriceProduct, int $grossPrice, int $netPrice): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('updatePriceProductStore', func_get_args()));
     }
 }

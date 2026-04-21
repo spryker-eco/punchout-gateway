@@ -35,15 +35,23 @@ class CxmlPunchoutQuoteFinder implements CxmlPunchoutQuoteFinderInterface
             return $this->createDefaultQuote();
         }
 
-        $existingQuote = $this->findQuoteByBuyerCookie($buyerCookie);
+        $existingQuoteTransfer = $this->findQuoteByBuyerCookie($buyerCookie);
 
-        if ($existingQuote === null) {
+        if ($existingQuoteTransfer === null) {
             $this->punchoutLogger->logGenericInfoMessage('Quote not found by BuyerCookie, create new quote.', ['BuyerCookie' => $buyerCookie]);
 
             return $this->createDefaultQuote();
         }
 
-        return $existingQuote;
+        if ($existingQuoteTransfer->getStore()->getIdStore() !== $setupRequestTransfer->getCxmlSetupRequest()->getIdStore()) {
+            $this->quoteFacade->deleteQuote($existingQuoteTransfer);
+
+            $this->punchoutLogger->logGenericInfoMessage('Deleting old quote, create new quote.', ['BuyerCookie' => $buyerCookie]);
+
+            return $this->createDefaultQuote();
+        }
+
+        return $existingQuoteTransfer;
     }
 
     protected function createDefaultQuote(): QuoteTransfer

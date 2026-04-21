@@ -9,9 +9,11 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Business\Quote;
 
-use Generated\Shared\Transfer\CurrencyTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
+use Spryker\Zed\Calculation\Business\CalculationFacadeInterface;
+use Spryker\Zed\Currency\Business\CurrencyFacadeInterface;
+use Spryker\Zed\Price\Business\PriceFacadeInterface;
 use Spryker\Zed\Quote\Business\QuoteFacadeInterface;
 use Spryker\Zed\Store\Business\StoreFacadeInterface;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
@@ -22,6 +24,9 @@ class QuoteCreator implements QuoteCreatorInterface
     public function __construct(
         protected QuoteFacadeInterface $quoteFacade,
         protected StoreFacadeInterface $storeFacade,
+        protected CurrencyFacadeInterface $currencyFacade,
+        protected CalculationFacadeInterface $calculationFacade,
+        protected PriceFacadeInterface $priceFacade,
         protected PunchoutLoggerInterface $punchoutLogger,
     ) {
     }
@@ -35,10 +40,11 @@ class QuoteCreator implements QuoteCreatorInterface
         $storeTransfer = $this->storeFacade->getStoreById($setupRequestTransfer->getConnection()->getIdStore());
         $quoteTransfer->setCustomer($setupRequestTransfer->getCustomer());
         $quoteTransfer->setStore($storeTransfer);
-        $currencyTransfer = (new CurrencyTransfer())->setCode($storeTransfer->getDefaultCurrencyIsoCode());
-        $quoteTransfer->setCurrency($currencyTransfer);
+        $quoteTransfer->setCurrency($this->currencyFacade->fromIsoCode($storeTransfer->getDefaultCurrencyIsoCode()));
+        $quoteTransfer->setPriceMode($this->priceFacade->getDefaultPriceMode());
 
         $quoteTransfer = $processorPlugin->expandQuote($quoteTransfer, $setupRequestTransfer);
+        $this->calculationFacade->recalculateQuote($quoteTransfer);
         $quoteTransfer = $this->saveQuote($quoteTransfer);
 
         $setupRequestTransfer->setQuote($quoteTransfer);
