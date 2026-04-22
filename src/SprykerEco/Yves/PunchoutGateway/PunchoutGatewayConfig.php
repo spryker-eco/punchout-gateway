@@ -12,7 +12,6 @@ namespace SprykerEco\Yves\PunchoutGateway;
 use Spryker\Shared\Application\ApplicationConstants;
 use Spryker\Yves\Kernel\AbstractBundleConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
-use Symfony\Component\HttpFoundation\Response;
 
 class PunchoutGatewayConfig extends AbstractBundleConfig
 {
@@ -30,13 +29,5 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
     public function isLoggingEnabled(): bool
     {
         return (bool)$this->get(PunchoutGatewayConstants::ENABLE_LOGGING, false);
-    }
-
-    /**
-     * @api
-     */
-    public function getErrorResponseHttpCode(): int
-    {
-        return Response::HTTP_UNAUTHORIZED;
     }
 }

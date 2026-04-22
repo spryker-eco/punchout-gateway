@@ -9,6 +9,8 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Shared\PunchoutGateway;
 
+use Symfony\Component\HttpFoundation\Response;
+
 interface PunchoutGatewayConfig
 {
     public const string PROTOCOL_TYPE_CXML = 'cxml';
@@ -56,4 +58,6 @@ interface PunchoutGatewayConfig
     public const string OCI_DEFAULT_USERNAME_FIELD = 'USERNAME';
 
     public const string OCI_DEFAULT_PASSWORD_FIELD = 'PASSWORD';
+
+    public const int HTTP_ERROR_CODE_UNAUTHORIZED = Response::HTTP_UNAUTHORIZED;
 }

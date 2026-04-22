@@ -11,6 +11,7 @@ namespace SprykerEco\Yves\PunchoutGateway\Controller;
 
 use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
 use Spryker\Yves\Kernel\Controller\AbstractController;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,7 +41,7 @@ class OciController extends AbstractController
         if (!$sessionStartResponseTransfer->getIsSuccess() || !$sessionStartResponseTransfer->getCustomer()) {
             $punchoutLogger->logSessionStartFailed($sessionStartResponseTransfer);
 
-            return new Response('', $this->getFactory()->getConfig()->getErrorResponseHttpCode());
+            return new Response('', PunchoutGatewayConfig::HTTP_ERROR_CODE_UNAUTHORIZED);
         }
 
         $punchoutLogger->logSessionStarted($sessionStartResponseTransfer);

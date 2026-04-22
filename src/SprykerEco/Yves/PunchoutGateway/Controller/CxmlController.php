@@ -13,6 +13,7 @@ use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionStartRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSetupResponseTransfer;
 use Spryker\Yves\Kernel\Controller\AbstractController;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -62,7 +63,7 @@ class CxmlController extends AbstractController
         if (!$sessionStartResponseTransfer->getIsSuccess() || !$sessionStartResponseTransfer->getCustomer()) {
             $punchoutLogger->logSessionStartFailed($sessionStartResponseTransfer);
 
-            return new Response('', $this->getFactory()->getConfig()->getErrorResponseHttpCode());
+            return new Response('', PunchoutGatewayConfig::HTTP_ERROR_CODE_UNAUTHORIZED);
         }
 
         $punchoutLogger->logSessionStarted($sessionStartResponseTransfer);
@@ -88,8 +89,6 @@ class CxmlController extends AbstractController
     {
         $cxmlResponseBuilder = $this->getFactory()->createCxmlResponseBuilder();
 
-        $config = $this->getFactory()->getConfig();
-
         if ($responseTransfer->getIsSuccess()) {
             return new Response(
                 $cxmlResponseBuilder->buildSuccessResponseXml($responseTransfer),
@@ -100,7 +99,7 @@ class CxmlController extends AbstractController
 
         return new Response(
             $cxmlResponseBuilder->buildErrorResponseXml($responseTransfer),
-            $config->getErrorResponseHttpCode(),
+            PunchoutGatewayConfig::HTTP_ERROR_CODE_UNAUTHORIZED,
             ['Content-Type' => static::CONTENT_TYPE_XML],
         );
     }
