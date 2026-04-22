@@ -1,0 +1,16 @@
+{% define data = {
+    formData: _widget.formData,
+} %}
+
+{% if data.formData and data.formData.actionUrl %}
+<div class="box">
+    <form method="POST" action="{{ data.formData.actionUrl }}" id="punchout-cart-form"{% if data.formData.formTarget %} target="{{ data.formData.formTarget }}"{% endif %}>
+        {% for fieldName, fieldValue in data.formData.fields %}
+            <input type="hidden" name="{{ fieldName }}" value="{{ fieldValue }}">
+        {% endfor %}
+        <button type="submit" class="button button--expand">
+            {{ 'punchout_gateway.cart.submit' | trans }}
+        </button>
+    </form>
+</div>
+{% endif %}

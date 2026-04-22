@@ -1,0 +1,6 @@
+{
+    "include": {
+        "spryker/transfer": "Provides transfer objects functionality.",
+        "spryker-shop/cart-page": "Adds a widget to the cart page."
+    }
+}

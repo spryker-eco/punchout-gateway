@@ -1,0 +1,13 @@
+namespace: SprykerEcoTest\Yves\PunchoutGateway
+paths:
+    tests: .
+    data: ../../../_data
+    support: _support
+    output: ../../../_output
+suites:
+    Plugin:
+        path: Plugin
+        actor: PunchoutGatewayYvesTester
+        modules:
+            enabled:
+                - Asserts

@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<database xmlns="spryker:schema-01"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          name="zed"
+          xsi:schemaLocation="spryker:schema-01 https://static.spryker.com/schema-01.xsd"
+          namespace="Orm\Zed\PunchoutGateway\Persistence"
+          package="src.Orm.Zed.PunchoutGateway.Persistence">
+
+    <table name="spy_punchout_connection" idMethod="native" allowPkInsert="true">
+        <column name="id_punchout_connection" required="true" type="INTEGER" autoIncrement="true" primaryKey="true"/>
+        <column name="fk_store" required="true" type="INTEGER"/>
+        <column name="name" required="true" size="255" type="VARCHAR"/>
+        <column name="is_active" required="true" type="BOOLEAN" default="false"/>
+        <column name="allow_iframe" required="false" type="BOOLEAN" default="false"/>
+        <column name="protocol_type" required="true" size="10" type="VARCHAR"/>
+        <column name="request_url" required="false" size="255" type="VARCHAR"/>
+        <column name="sender_identity" required="false" size="255" type="VARCHAR"/>
+        <column name="configuration" required="false" type="LONGVARCHAR"/>
+        <column name="processor_plugin_class" required="false" size="512" type="VARCHAR"/>
+
+        <behavior name="timestampable"/>
+
+        <foreign-key name="spy_punchout_connection-fk_store" foreignTable="spy_store">
+            <reference local="fk_store" foreign="id_store"/>
+        </foreign-key>
+
+        <index name="spy_punchout_connection-index-fk_store">
+            <index-column name="fk_store"/>
+        </index>
+
+        <unique name="spy_punchout_connection-unique-fk_store-request_url">
+            <unique-column name="fk_store"/>
+            <unique-column name="request_url"/>
+        </unique>
+
+        <unique name="spy_punchout_connection-unique-sender_identity">
+            <unique-column name="sender_identity"/>
+        </unique>
+
+        <index name="spy_punchout_connection-index-is_active">
+            <index-column name="is_active"/>
+        </index>
+
+        <id-method-parameter value="spy_punchout_connection_pk_seq"/>
+    </table>
+
+    <table name="spy_punchout_credential" idMethod="native">
+        <column name="id_punchout_credential" required="true" type="INTEGER" autoIncrement="true" primaryKey="true"/>
+        <column name="fk_punchout_connection" required="true" type="INTEGER"/>
+        <column name="fk_customer" required="false" type="INTEGER"/>
+        <column name="username" required="true" type="VARCHAR" size="255"/>
+        <column name="password_hash" required="true" type="VARCHAR" size="255"/>
+        <column name="is_active" required="true" type="BOOLEAN" defaultValue="true"/>
+
+        <foreign-key name="spy_punchout_credential-fk_punchout_connection" foreignTable="spy_punchout_connection" onDelete="CASCADE">
+            <reference local="fk_punchout_connection" foreign="id_punchout_connection"/>
+        </foreign-key>
+        <foreign-key name="spy_punchout_credential-fk_customer" foreignTable="spy_customer">
+            <reference local="fk_customer" foreign="id_customer"/>
+        </foreign-key>
+
+        <index name="spy_punchout_credential-username">
+            <index-column name="username"/>
+        </index>
+
+        <behavior name="timestampable"/>
+    </table>
+
+    <table name="spy_punchout_session" idMethod="native">
+        <column name="id_punchout_session" required="true" type="INTEGER" autoIncrement="true" primaryKey="true"/>
+        <column name="fk_quote" required="true" type="INTEGER"/>
+        <column name="fk_customer" required="false" type="INTEGER"/>
+        <column name="fk_punchout_connection" required="true" type="INTEGER"/>
+        <column name="buyer_cookie" required="false" type="VARCHAR" size="256"/>
+        <column name="browser_form_post_url" required="true" type="LONGVARCHAR"/>
+        <column name="operation" required="true" type="VARCHAR" size="32"/>
+<!--        <column name="extrinsics" required="false" type="LONGVARCHAR"/>-->
+        <column name="session_token" required="false" type="VARCHAR" size="255"/>
+        <column name="valid_to" required="true" type="TIMESTAMP"/>
+        <column name="session_data" required="false" type="CLOB"/>
+
+        <foreign-key name="spy_punchout_session-fk_quote" foreignTable="spy_quote" onDelete="CASCADE">
+            <reference local="fk_quote" foreign="id_quote"/>
+        </foreign-key>
+        <foreign-key name="spy_punchout_session-fk_punchout_connection" foreignTable="spy_punchout_connection" onDelete="CASCADE">
+            <reference local="fk_punchout_connection" foreign="id_punchout_connection"/>
+        </foreign-key>
+        <foreign-key name="spy_punchout_session-fk_customer" foreignTable="spy_customer" onDelete="CASCADE">
+            <reference local="fk_customer" foreign="id_customer"/>
+        </foreign-key>
+
+        <index name="spy_punchout_session-fk_quote">
+            <index-column name="fk_quote"/>
+        </index>
+        <index name="spy_punchout_session-buyer_cookie">
+            <index-column name="buyer_cookie"/>
+        </index>
+        <unique name="spy_punchout_session-session_token">
+            <unique-column name="session_token"/>
+        </unique>
+
+        <behavior name="timestampable"/>
+    </table>
+
+</database>

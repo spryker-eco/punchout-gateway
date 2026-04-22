@@ -1,0 +1,65 @@
+{
+    "name": "spryker-eco/punchout-gateway",
+    "type": "library",
+    "description": "PunchoutGateway module",
+    "license": "proprietary",
+    "require": {
+        "friendsofcxml/cxml-php": "^2.2.1",
+        "php": ">=8.3",
+        "spryker-shop/cart-page": "^3.58.0",
+        "spryker-shop/customer-page": "^2.74.0",
+        "spryker/application": "^3.9.0",
+        "spryker/application-extension": "^1.1.0",
+        "spryker/customer": "^7.10.0",
+        "spryker/calculation": "^4.0.0",
+        "spryker/kernel": "^3.76.0",
+        "spryker/log": "^3.17.0",
+        "spryker/propel-orm": "^1.0.0",
+        "spryker/quote": "^2.0.0",
+        "spryker/quote-extension": "^1.0.0",
+        "spryker/session": "^4.0.0",
+        "spryker/store": "^1.19.0",
+        "spryker/symfony": "^3.1.0",
+        "spryker/transfer": "^3.42.0",
+        "spryker/util-encoding": "^2.1.1",
+        "spryker/zed-request": "^3.0.0"
+    },
+    "require-dev": {
+        "spryker/code-sniffer": "*",
+        "spryker/container": "*",
+        "spryker/propel": "*",
+        "spryker/router": "*",
+        "spryker/testify": "*"
+    },
+    "suggest": {
+        "spryker/router": "In order to integrate the module into Yves"
+    },
+    "autoload": {
+        "psr-4": {
+            "SprykerEco\\": "src/SprykerEco/",
+            "SprykerEcoTest\\Shared\\PunchoutGateway\\Helper\\": "tests/SprykerEcoTest/Shared/PunchoutGateway/_support/Helper/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SprykerEcoTest\\": "tests/SprykerEcoTest/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "cs-check": "phpcs -p -s src/ tests/",
+        "cs-fix": "phpcbf -p src/ tests/"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

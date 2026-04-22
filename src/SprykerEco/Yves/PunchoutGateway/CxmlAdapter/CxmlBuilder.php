@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * Copyright © 2016-present Spryker Systems GmbH. All rights reserved.
+ * Use of this software requires acceptance of the Evaluation License Agreement. See LICENSE file.
+ */
+
+declare(strict_types = 1);
+
+namespace SprykerEco\Yves\PunchoutGateway\CxmlAdapter;
+
+use CXml\Builder;
+use CXml\Model\CXml;
+use CXml\Model\Response\PunchOutSetupResponse;
+use CXml\Model\Status;
+
+class CxmlBuilder implements CxmlBuilderInterface
+{
+    protected const string SENDER_USER_AGENT = 'SprykerEco PunchoutGateway';
+
+    public function buildCxmlPayload(PunchOutSetupResponse $payload): CXml
+    {
+        return Builder::create(static::SENDER_USER_AGENT)
+            ->payload($payload)
+            ->build();
+    }
+
+    public function buildCxmlStatus(Status $status): CXml
+    {
+        return Builder::create(static::SENDER_USER_AGENT)
+            ->status($status)
+            ->build();
+    }
+}
