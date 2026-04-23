@@ -28,7 +28,8 @@
             <index-column name="fk_store"/>
         </index>
 
-        <unique name="spy_punchout_connection-unique-fk_store-request_url">
+        <unique name="spy_punchout_connection-unique-fk_store-request_url-protocol_type">
+            <unique-column name="protocol_type"/>
             <unique-column name="fk_store"/>
             <unique-column name="request_url"/>
         </unique>
