@@ -23,14 +23,14 @@
         "spryker/transfer": "^3.42.0",
         "spryker/util-encoding": "^2.1.1",
         "spryker/zed-request": "^3.0.0",
-        "spryker/cart": "",
-        "spryker/currency": "",
-        "spryker/price": ""
+        "spryker/cart": "^7.0.0",
+        "spryker/currency": "^4.0.0",
+        "spryker/price": ":"^5.0.0"
     },
     "require-dev": {
-        "spryker/price-product": "",
-        "spryker/product": "",
-        "spryker/product-cart-connector": "",
+        "spryker/price-product": "*",
+        "spryker/product": "*",
+        "spryker/product-cart-connector": "*",
         "spryker/code-sniffer": "*",
         "spryker/container": "*",
         "spryker/propel": "*",
