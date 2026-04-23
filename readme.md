@@ -323,3 +323,6 @@ UPDATE spy_punchout_connection
 SET processor_plugin_class = '\\Pyz\\Zed\\PunchoutGateway\\Communication\\Plugin\\PunchoutGateway\\CustomOciProcessorPlugin'
 WHERE name = 'my-connection-name';
 ```
+
+
+TODO:  document what we send back for cXML/OCI by default
