@@ -25,7 +25,7 @@
         "spryker/zed-request": "^3.0.0",
         "spryker/cart": "^7.0.0",
         "spryker/currency": "^4.0.0",
-        "spryker/price": ":"^5.0.0"
+        "spryker/price": "^5.0.0"
     },
     "require-dev": {
         "spryker/price-product": "*",
