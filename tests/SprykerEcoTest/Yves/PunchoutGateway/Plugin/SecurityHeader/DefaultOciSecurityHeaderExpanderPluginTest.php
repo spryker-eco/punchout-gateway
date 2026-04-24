@@ -61,20 +61,6 @@ class DefaultOciSecurityHeaderExpanderPluginTest extends Unit
         $this->assertFalse($plugin->isApplicable($sessionTransfer));
     }
 
-    public function testExpandAppendsFrameAncestorsDirectiveWhenAllowIframeIsTrue(): void
-    {
-        // Arrange
-        $plugin = new DefaultOciSecurityHeaderExpanderPlugin();
-        $sessionTransfer = $this->buildSessionWithOciRequest();
-        $sessionTransfer->setAllowIframe(true);
-
-        // Act
-        $result = $plugin->expand([], $sessionTransfer, static::ORIGIN);
-
-        // Assert
-        $this->assertContains(sprintf('frame-ancestors %s', static::ORIGIN), $result);
-    }
-
     public function testExpandAppendsFrameAncestorsDirectiveWhenTargetFormDataIsPresent(): void
     {
         // Arrange

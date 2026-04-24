@@ -14,6 +14,7 @@ use Spryker\Yves\Kernel\Container;
 use SprykerEco\Yves\PunchoutGateway\Plugin\Form\DefaultCxmlPunchoutFormHandlerPlugin;
 use SprykerEco\Yves\PunchoutGateway\Plugin\Form\DefaultOciPunchoutFormHandlerPlugin;
 use SprykerEco\Yves\PunchoutGateway\Plugin\SecurityHeader\DefaultOciSecurityHeaderExpanderPlugin;
+use SprykerEco\Yves\PunchoutGateway\Plugin\SecurityHeader\DefaultSecurityHeaderExpanderPlugin;
 
 /**
  * @method \SprykerEco\Yves\PunchoutGateway\PunchoutGatewayConfig getConfig()
@@ -123,6 +124,7 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     protected function getPunchoutSecurityHeaderExpanderPlugins(): array
     {
         return [
+            new DefaultSecurityHeaderExpanderPlugin(),
             new DefaultOciSecurityHeaderExpanderPlugin(),
         ];
     }

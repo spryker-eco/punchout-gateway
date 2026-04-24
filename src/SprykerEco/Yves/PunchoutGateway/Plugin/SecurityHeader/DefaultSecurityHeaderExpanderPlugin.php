@@ -10,17 +10,16 @@ declare(strict_types = 1);
 namespace SprykerEco\Yves\PunchoutGateway\Plugin\SecurityHeader;
 
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\SecurityHeader\SecurityHeaderHelperTrait;
 use SprykerEco\Yves\PunchoutGateway\Dependency\Plugin\PunchoutSecurityHeaderExpanderPluginInterface;
 
-class DefaultOciSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderExpanderPluginInterface
+class DefaultSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderExpanderPluginInterface
 {
     use SecurityHeaderHelperTrait;
 
     public function isApplicable(PunchoutSessionTransfer $punchoutSession): bool
     {
-        return $punchoutSession->getPunchoutData()?->getOciLoginRequest() !== null && !$punchoutSession->getAllowIframe();
+        return $punchoutSession->getAllowIframe();
     }
 
     /**
@@ -41,8 +40,6 @@ class DefaultOciSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderEx
 
     protected function needsFrameAncestors(PunchoutSessionTransfer $punchoutSession): bool
     {
-        $formData = $punchoutSession->getPunchoutData()?->getOciLoginRequest()?->getFormData() ?? [];
-
-        return !empty($formData[PunchoutGatewayConfig::FORM_DATA_FIELD_TARGET]);
+        return $punchoutSession->getAllowIframe();
     }
 }
