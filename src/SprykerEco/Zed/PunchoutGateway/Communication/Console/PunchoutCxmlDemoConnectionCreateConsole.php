@@ -63,7 +63,7 @@ class PunchoutCxmlDemoConnectionCreateConsole extends Console
         $entity->setProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_CXML);
         $entity->setSenderIdentity(static::SENDER_IDENTITY);
         $entity->setConfiguration((string)json_encode([
-            static::CONFIGURATION_KEY_SENDER_SHARED_SECRET => static::SENDER_SHARED_SECRET,
+            static::CONFIGURATION_KEY_SENDER_SHARED_SECRET => password_hash(static::SENDER_SHARED_SECRET, PASSWORD_DEFAULT),
         ]));
         $entity->setProcessorPluginClass(DefaultCxmlProcessorPlugin::class);
         $entity->save();

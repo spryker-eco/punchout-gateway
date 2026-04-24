@@ -43,6 +43,10 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             return '';
         }
 
+        if ($quoteTransfer->getItems()->count() === 0) {
+            return '';
+        }
+
         $cxmlSetupRequest = $this->resolveCxmlSetupRequest($punchoutSession);
 
         if ($cxmlSetupRequest === null) {

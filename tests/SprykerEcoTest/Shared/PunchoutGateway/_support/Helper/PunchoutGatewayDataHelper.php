@@ -35,6 +35,7 @@ class PunchoutGatewayDataHelper extends Module
 
         $senderIdentity = $seed['sender_identity'] ?? sprintf('TestIdentity_%s', uniqid());
         $sharedSecret = $seed['shared_secret'] ?? 'test-secret';
+        $sharedSecret = password_hash($sharedSecret, PASSWORD_DEFAULT);
 
         $configuration = $seed['configuration'] ?? json_encode(['senderSharedSecret' => $sharedSecret]);
 

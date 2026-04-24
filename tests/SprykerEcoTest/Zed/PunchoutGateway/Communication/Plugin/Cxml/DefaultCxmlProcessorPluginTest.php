@@ -369,6 +369,8 @@ class DefaultCxmlProcessorPluginTest extends Unit
 
     protected function buildConnectionWithCxmlConfig(string $requestUrl, string $sharedSecret): PunchoutConnectionTransfer
     {
+        $sharedSecret = password_hash($sharedSecret, PASSWORD_DEFAULT);
+
         return (new PunchoutConnectionTransfer())
             ->setRequestUrl($requestUrl)
             ->setCxmlConfiguration(

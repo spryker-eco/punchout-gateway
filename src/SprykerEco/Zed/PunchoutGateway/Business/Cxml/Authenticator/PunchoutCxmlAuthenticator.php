@@ -51,6 +51,6 @@ class PunchoutCxmlAuthenticator implements PunchoutCxmlAuthenticatorInterface
         $storedSecret = $connectionTransfer->getCxmlConfigurationOrFail()->getSenderSharedSecretOrFail();
         $providedSecret = $punchoutSetupRequestTransfer->getSenderSharedSecretOrFail();
 
-        return hash_equals($storedSecret, $providedSecret);
+        return password_verify($providedSecret, $storedSecret);
     }
 }
