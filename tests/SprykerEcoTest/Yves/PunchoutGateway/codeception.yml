@@ -11,3 +11,9 @@ suites:
         modules:
             enabled:
                 - Asserts
+    Model:
+        path: Model
+        actor: PunchoutGatewayYvesTester
+        modules:
+            enabled:
+                - Asserts

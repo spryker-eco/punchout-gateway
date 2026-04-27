@@ -18,11 +18,6 @@ class DefaultOciSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderEx
 {
     use SecurityHeaderHelperTrait;
 
-    public function isApplicable(PunchoutSessionTransfer $punchoutSession): bool
-    {
-        return $punchoutSession->getPunchoutData()?->getOciLoginRequest() !== null;
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -41,10 +36,6 @@ class DefaultOciSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderEx
 
     protected function needsFrameAncestors(PunchoutSessionTransfer $punchoutSession): bool
     {
-        if ($punchoutSession->getAllowIframe()) {
-            return true;
-        }
-
         $formData = $punchoutSession->getPunchoutData()?->getOciLoginRequest()?->getFormData() ?? [];
 
         return !empty($formData[PunchoutGatewayConfig::FORM_DATA_FIELD_TARGET]);

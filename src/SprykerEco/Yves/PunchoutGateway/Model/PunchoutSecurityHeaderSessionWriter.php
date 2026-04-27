@@ -45,17 +45,15 @@ class PunchoutSecurityHeaderSessionWriter implements PunchoutSecurityHeaderSessi
 
         $directives = [sprintf('%s %s', static::DIRECTIVE_FORM_ACTION, $origin)];
 
-        if ($punchoutSession->getAllowIframe()) {
+        if ($punchoutSession->getConnection()?->getAllowIframe()) {
             $directives = $this->addFrameAncestors($directives, $origin);
         }
 
         foreach ($this->securityHeaderExpanderPlugins as $plugin) {
-            if (!$plugin->isApplicable($punchoutSession)) {
-                continue;
-            }
-
             $directives = $plugin->expand($directives, $punchoutSession, $origin);
         }
+
+        $directives = array_unique($directives);
 
         $this->sessionClient->set(PunchoutGatewayConfig::SESSION_KEY_PUNCHOUT_CSP_FRAGMENT, implode('; ', $directives));
     }

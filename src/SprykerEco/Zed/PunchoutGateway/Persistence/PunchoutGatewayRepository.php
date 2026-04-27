@@ -66,15 +66,16 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
         $punchoutSessionEntity = $this->getFactory()
             ->createSpyPunchoutSessionQuery()
             ->filterByFkQuote($idQuote)
+            ->useSpyPunchoutConnectionQuery()
+                ->filterByIsActive(true)
+            ->endUse()
             ->findOne();
 
         if ($punchoutSessionEntity === null) {
             return null;
         }
 
-        return $this->getFactory()
-            ->createPunchoutSessionMapper()
-            ->mapPunchoutSessionEntityToTransfer($punchoutSessionEntity, new PunchoutSessionTransfer());
+        return $this->mapSessionEntityToTransfer($punchoutSessionEntity);
     }
 
     public function findPunchoutSessionByBuyerCookie(string $buyerCookie): ?PunchoutSessionTransfer
@@ -88,9 +89,7 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
             return null;
         }
 
-        return $this->getFactory()
-            ->createPunchoutSessionMapper()
-            ->mapPunchoutSessionEntityToTransfer($punchoutSessionEntity, new PunchoutSessionTransfer());
+        return $this->mapSessionEntityToTransfer($punchoutSessionEntity);
     }
 
     public function findActiveCredentialByUsernameAndConnection(string $username, int $idPunchoutConnection): ?PunchoutCredentialTransfer
@@ -131,6 +130,9 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
         $punchoutSessionEntity = $this->getFactory()
             ->createSpyPunchoutSessionQuery()
             ->filterBySessionToken($sessionToken)
+            ->useSpyPunchoutConnectionQuery()
+                ->filterByIsActive(true)
+            ->endUse()
             ->findOne();
 
         return $this->mapSessionEntityToTransfer($punchoutSessionEntity);
