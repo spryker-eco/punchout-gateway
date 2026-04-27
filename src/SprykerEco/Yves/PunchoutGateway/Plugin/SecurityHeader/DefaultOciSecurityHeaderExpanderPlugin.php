@@ -18,11 +18,6 @@ class DefaultOciSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderEx
 {
     use SecurityHeaderHelperTrait;
 
-    public function isApplicable(PunchoutSessionTransfer $punchoutSession): bool
-    {
-        return $punchoutSession->getPunchoutData()?->getOciLoginRequest() !== null && !$punchoutSession->getConnection()?->getAllowIframe();
-    }
-
     /**
      * {@inheritDoc}
      *

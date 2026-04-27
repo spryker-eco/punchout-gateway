@@ -50,12 +50,10 @@ class PunchoutSecurityHeaderSessionWriter implements PunchoutSecurityHeaderSessi
         }
 
         foreach ($this->securityHeaderExpanderPlugins as $plugin) {
-            if (!$plugin->isApplicable($punchoutSession)) {
-                continue;
-            }
-
             $directives = $plugin->expand($directives, $punchoutSession, $origin);
         }
+
+        $directives = array_unique($directives);
 
         $this->sessionClient->set(PunchoutGatewayConfig::SESSION_KEY_PUNCHOUT_CSP_FRAGMENT, implode('; ', $directives));
     }

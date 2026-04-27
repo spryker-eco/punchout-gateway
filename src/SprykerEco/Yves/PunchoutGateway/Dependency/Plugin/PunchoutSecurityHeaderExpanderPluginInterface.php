@@ -20,14 +20,6 @@ interface PunchoutSecurityHeaderExpanderPluginInterface
 {
     /**
      * Specification:
-     * - Returns true when this plugin handles the punchout session's protocol.
-     *
-     * @api
-     */
-    public function isApplicable(PunchoutSessionTransfer $punchoutSession): bool;
-
-    /**
-     * Specification:
      * - Appends protocol-specific CSP directive strings to the given list.
      * - Must not add duplicate directives.
      *

@@ -31,37 +31,6 @@ class DefaultOciSecurityHeaderExpanderPluginTest extends Unit
 
     protected PunchoutGatewayYvesTester $tester;
 
-    public function testIsApplicableReturnsTrueWhenOciLoginRequestIsSet(): void
-    {
-        // Arrange
-        $plugin = new DefaultOciSecurityHeaderExpanderPlugin();
-        $sessionTransfer = $this->buildSessionWithOciRequest([]);
-
-        // Act & Assert
-        $this->assertTrue($plugin->isApplicable($sessionTransfer));
-    }
-
-    public function testIsApplicableReturnsFalseWhenOciLoginRequestIsNull(): void
-    {
-        // Arrange
-        $plugin = new DefaultOciSecurityHeaderExpanderPlugin();
-        $sessionTransfer = (new PunchoutSessionTransfer())
-            ->setPunchoutData(new PunchoutSessionDataTransfer());
-
-        // Act & Assert
-        $this->assertFalse($plugin->isApplicable($sessionTransfer));
-    }
-
-    public function testIsApplicableReturnsFalseWhenPunchoutDataIsNull(): void
-    {
-        // Arrange
-        $plugin = new DefaultOciSecurityHeaderExpanderPlugin();
-        $sessionTransfer = new PunchoutSessionTransfer();
-
-        // Act & Assert
-        $this->assertFalse($plugin->isApplicable($sessionTransfer));
-    }
-
     public function testExpandAppendsFrameAncestorsDirectiveWhenTargetFormDataIsPresent(): void
     {
         // Arrange
