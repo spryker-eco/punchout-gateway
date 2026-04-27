@@ -20,7 +20,7 @@ class DefaultOciSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderEx
 
     public function isApplicable(PunchoutSessionTransfer $punchoutSession): bool
     {
-        return $punchoutSession->getPunchoutData()?->getOciLoginRequest() !== null && !$punchoutSession->getAllowIframe();
+        return $punchoutSession->getPunchoutData()?->getOciLoginRequest() !== null && !$punchoutSession->getConnection()?->getAllowIframe();
     }
 
     /**

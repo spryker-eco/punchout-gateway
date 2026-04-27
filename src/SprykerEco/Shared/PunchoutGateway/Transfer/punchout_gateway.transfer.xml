@@ -108,9 +108,7 @@
         <property name="idCustomer" type="int"/>
         <property name="buyerCookie" type="string"/>
         <property name="browserFormPostUrl" type="string"/>
-        <property name="allowIframe" type="bool"/>
         <property name="operation" type="string"/>
-<!--        <property name="extrinsicFields" type="array" singular="extrinsicField"/>-->
         <property name="sessionToken" type="string"/>
         <property name="validTo" type="string"/>
         <property name="punchoutData" type="PunchoutSessionData"/>

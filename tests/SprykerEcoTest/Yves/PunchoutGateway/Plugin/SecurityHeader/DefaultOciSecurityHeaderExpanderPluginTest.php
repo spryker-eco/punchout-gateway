@@ -10,6 +10,7 @@ declare(strict_types = 1);
 namespace SprykerEcoTest\Yves\PunchoutGateway\Plugin\SecurityHeader;
 
 use Codeception\Test\Unit;
+use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionDataTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
@@ -34,7 +35,7 @@ class DefaultOciSecurityHeaderExpanderPluginTest extends Unit
     {
         // Arrange
         $plugin = new DefaultOciSecurityHeaderExpanderPlugin();
-        $sessionTransfer = $this->buildSessionWithOciRequest();
+        $sessionTransfer = $this->buildSessionWithOciRequest([]);
 
         // Act & Assert
         $this->assertTrue($plugin->isApplicable($sessionTransfer));
@@ -66,7 +67,6 @@ class DefaultOciSecurityHeaderExpanderPluginTest extends Unit
         // Arrange
         $plugin = new DefaultOciSecurityHeaderExpanderPlugin();
         $sessionTransfer = $this->buildSessionWithOciRequest(['~TARGET' => '_blank']);
-        $sessionTransfer->setAllowIframe(false);
 
         // Act
         $result = $plugin->expand(["form-action 'self'"], $sessionTransfer, static::ORIGIN);
@@ -80,8 +80,7 @@ class DefaultOciSecurityHeaderExpanderPluginTest extends Unit
     {
         // Arrange
         $plugin = new DefaultOciSecurityHeaderExpanderPlugin();
-        $sessionTransfer = $this->buildSessionWithOciRequest();
-        $sessionTransfer->setAllowIframe(false);
+        $sessionTransfer = $this->buildSessionWithOciRequest([]);
 
         // Act
         $result = $plugin->expand(["form-action 'self'"], $sessionTransfer, static::ORIGIN);
@@ -95,7 +94,6 @@ class DefaultOciSecurityHeaderExpanderPluginTest extends Unit
         // Arrange
         $plugin = new DefaultOciSecurityHeaderExpanderPlugin();
         $sessionTransfer = $this->buildSessionWithOciRequest(['~TARGET' => '']);
-        $sessionTransfer->setAllowIframe(false);
 
         // Act
         $result = $plugin->expand([], $sessionTransfer, static::ORIGIN);
@@ -107,7 +105,7 @@ class DefaultOciSecurityHeaderExpanderPluginTest extends Unit
     /**
      * @param array<string, string> $formData
      */
-    protected function buildSessionWithOciRequest(array $formData = []): PunchoutSessionTransfer
+    protected function buildSessionWithOciRequest(array $formData): PunchoutSessionTransfer
     {
         $ociLoginRequest = (new PunchoutOciLoginRequestTransfer())
             ->setFormData($formData);
@@ -115,7 +113,11 @@ class DefaultOciSecurityHeaderExpanderPluginTest extends Unit
         $punchoutData = (new PunchoutSessionDataTransfer())
             ->setOciLoginRequest($ociLoginRequest);
 
+        $connectionTransfer = (new PunchoutConnectionTransfer())
+            ->setAllowIframe(false);
+
         return (new PunchoutSessionTransfer())
-            ->setPunchoutData($punchoutData);
+            ->setPunchoutData($punchoutData)
+            ->setConnection($connectionTransfer);
     }
 }

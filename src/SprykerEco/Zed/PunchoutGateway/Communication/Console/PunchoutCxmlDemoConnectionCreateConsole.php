@@ -36,6 +36,8 @@ class PunchoutCxmlDemoConnectionCreateConsole extends Console
 
     protected const string CONFIGURATION_KEY_SENDER_SHARED_SECRET = 'senderSharedSecret';
 
+    protected const bool ALLOW_IFRAME = true;
+
     protected function configure(): void
     {
         $this->setName(static::COMMAND_NAME)->setDescription(static::DESCRIPTION);
@@ -66,6 +68,7 @@ class PunchoutCxmlDemoConnectionCreateConsole extends Console
             static::CONFIGURATION_KEY_SENDER_SHARED_SECRET => password_hash(static::SENDER_SHARED_SECRET, PASSWORD_DEFAULT),
         ]));
         $entity->setProcessorPluginClass(DefaultCxmlProcessorPlugin::class);
+        $entity->setAllowIframe(static::ALLOW_IFRAME);
         $entity->save();
 
         $output->writeln(sprintf('Created cXML demo connection (id=%d).', $entity->getIdPunchoutConnection()));

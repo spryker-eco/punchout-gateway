@@ -19,7 +19,7 @@ class DefaultSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderExpan
 
     public function isApplicable(PunchoutSessionTransfer $punchoutSession): bool
     {
-        return $punchoutSession->getAllowIframe();
+        return $punchoutSession->getConnection()?->getAllowIframe() ?? false;
     }
 
     /**
@@ -31,15 +31,10 @@ class DefaultSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderExpan
      */
     public function expand(array $directives, PunchoutSessionTransfer $punchoutSession, string $origin): array
     {
-        if ($this->needsFrameAncestors($punchoutSession)) {
+        if ($this->isApplicable($punchoutSession)) {
             $directives = $this->addFrameAncestors($directives, $origin);
         }
 
         return $directives;
-    }
-
-    protected function needsFrameAncestors(PunchoutSessionTransfer $punchoutSession): bool
-    {
-        return $punchoutSession->getAllowIframe();
     }
 }

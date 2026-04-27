@@ -10,6 +10,7 @@ declare(strict_types = 1);
 namespace SprykerEcoTest\Yves\PunchoutGateway\Plugin\SecurityHeader;
 
 use Codeception\Test\Unit;
+use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionDataTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
@@ -34,8 +35,7 @@ class DefaultSecurityHeaderExpanderPluginTest extends Unit
     {
         // Arrange
         $plugin = new DefaultSecurityHeaderExpanderPlugin();
-        $sessionTransfer = new PunchoutSessionTransfer();
-        $sessionTransfer->setAllowIframe(true);
+        $sessionTransfer = $this->buildSessionWithCxmlRequest(true);
 
         // Act & Assert
         $this->assertTrue($plugin->isApplicable($sessionTransfer));
@@ -45,8 +45,7 @@ class DefaultSecurityHeaderExpanderPluginTest extends Unit
     {
         // Arrange
         $plugin = new DefaultSecurityHeaderExpanderPlugin();
-        $sessionTransfer = new PunchoutSessionTransfer();
-        $sessionTransfer->setAllowIframe(false);
+        $sessionTransfer = $this->buildSessionWithCxmlRequest(false);
 
         // Act & Assert
         $this->assertFalse($plugin->isApplicable($sessionTransfer));
@@ -56,8 +55,7 @@ class DefaultSecurityHeaderExpanderPluginTest extends Unit
     {
         // Arrange
         $plugin = new DefaultSecurityHeaderExpanderPlugin();
-        $sessionTransfer = $this->buildSessionWithCxmlRequest();
-        $sessionTransfer->setAllowIframe(true);
+        $sessionTransfer = $this->buildSessionWithCxmlRequest(true);
 
         // Act
         $result = $plugin->expand([], $sessionTransfer, static::ORIGIN);
@@ -70,8 +68,7 @@ class DefaultSecurityHeaderExpanderPluginTest extends Unit
     {
         // Arrange
         $plugin = new DefaultSecurityHeaderExpanderPlugin();
-        $sessionTransfer = $this->buildSessionWithCxmlRequest();
-        $sessionTransfer->setAllowIframe(false);
+        $sessionTransfer = $this->buildSessionWithCxmlRequest(false);
 
         // Act
         $result = $plugin->expand(["form-action 'self'"], $sessionTransfer, static::ORIGIN);
@@ -84,8 +81,7 @@ class DefaultSecurityHeaderExpanderPluginTest extends Unit
     {
         // Arrange
         $plugin = new DefaultSecurityHeaderExpanderPlugin();
-        $sessionTransfer = $this->buildSessionWithCxmlRequest(['~TARGET' => '']);
-        $sessionTransfer->setAllowIframe(false);
+        $sessionTransfer = $this->buildSessionWithCxmlRequest(false);
 
         // Act
         $result = $plugin->expand([], $sessionTransfer, static::ORIGIN);
@@ -94,14 +90,18 @@ class DefaultSecurityHeaderExpanderPluginTest extends Unit
         $this->assertSame([], $result);
     }
 
-    protected function buildSessionWithCxmlRequest(): PunchoutSessionTransfer
+    protected function buildSessionWithCxmlRequest(bool $allowIframe): PunchoutSessionTransfer
     {
         $cxmlSetupRequestTransfer = (new PunchoutCxmlSetupRequestTransfer());
 
         $punchoutData = (new PunchoutSessionDataTransfer())
             ->setCxmlSetupRequest($cxmlSetupRequestTransfer);
 
+        $connectionTransfer = (new PunchoutConnectionTransfer())
+            ->setAllowIframe($allowIframe);
+
         return (new PunchoutSessionTransfer())
+            ->setConnection($connectionTransfer)
             ->setPunchoutData($punchoutData);
     }
 }

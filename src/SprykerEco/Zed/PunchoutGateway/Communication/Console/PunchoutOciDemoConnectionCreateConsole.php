@@ -46,6 +46,8 @@ class PunchoutOciDemoConnectionCreateConsole extends Console
 
     protected const int ID_CUSTOMER = 3;
 
+    protected const bool ALLOW_IFRAME = true;
+
     protected function configure(): void
     {
         $this->setName(static::COMMAND_NAME)->setDescription(static::DESCRIPTION);
@@ -74,6 +76,7 @@ class PunchoutOciDemoConnectionCreateConsole extends Console
         $punchoutConnectionEntity->setAllowIframe(true);
         $punchoutConnectionEntity->setProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_OCI);
         $punchoutConnectionEntity->setRequestUrl(static::REQUEST_URL);
+        $punchoutConnectionEntity->setAllowIframe(static::ALLOW_IFRAME);
 
         $configuration = [];
 
