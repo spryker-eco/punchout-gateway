@@ -18,9 +18,12 @@ use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutItemTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Generated\Shared\Transfer\StoreTransfer;
+use Spryker\Zed\Calculation\CalculationDependencyProvider;
+use Spryker\Zed\Calculation\Communication\Plugin\Calculator\GrandTotalCalculatorPlugin;
+use Spryker\Zed\Calculation\Communication\Plugin\Calculator\RemoveTotalsCalculatorPlugin;
+use Spryker\Zed\Calculation\Communication\Plugin\Calculator\SubtotalCalculatorPlugin;
 use Spryker\Zed\Cart\CartDependencyProvider;
 use Spryker\Zed\ProductCartConnector\Communication\Plugin\ProductExistsCartPreCheckPlugin;
-use Spryker\Zed\Quote\Business\QuoteFacadeInterface;
 use SprykerEcoTest\Zed\PunchoutGateway\Helper\CxmlRequestBuilder;
 use SprykerEcoTest\Zed\PunchoutGateway\PunchoutGatewayBusinessTester;
 use SprykerTest\Shared\Testify\Helper\LocatorHelperTrait;
@@ -40,8 +43,6 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
 
     protected StoreTransfer $storeTransfer;
 
-    protected QuoteFacadeInterface $quoteFacade;
-
     protected function _before(): void
     {
         $this->storeTransfer = $this->getLocator()->store()->facade()->getAllStores()[0];
@@ -51,7 +52,7 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
             new ProductExistsCartPreCheckPlugin(),
         ]);
 
-        $this->quoteFacade = $this->tester->getLocator()->quote()->facade();
+        $this->setupQuoteCalculationPlugins();
     }
 
     public function testProcessCxmlSetupRequestCreateOperationWithoutItemsReturnsSuccessfulResponse(): void
@@ -90,10 +91,13 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $this->assertSame('https://test.local/return', $sessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getBrowserFormPostUrl());
         $this->assertSame($email, $sessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields()['UserEmail']);
 
-        $quoteResponseTransfer = $this->quoteFacade->findQuoteById($sessionTransfer->getIdQuote());
+        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
         $this->assertTrue($quoteResponseTransfer->getIsSuccessful());
     }
 
+    /**
+     * @group fail
+     */
     public function testProcessCxmlSetupRequestCreateOperationWithExistingItemsClearsQuoteItems(): void
     {
         $senderIdentity = sprintf('TestIdentity_%s', uniqid());
@@ -114,7 +118,7 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $existingQuoteTransfer->addItem(
             (new ItemTransfer())->setSku('EXISTING-SKU-001')->setQuantity(1)->setUnitPrice(500),
         );
-        $this->quoteFacade->updateQuote($existingQuoteTransfer);
+        $this->tester->getLocator()->quote()->facade()->updateQuote($existingQuoteTransfer);
 
         $this->tester->havePunchoutSession([
             'fk_quote' => $existingQuoteTransfer->getIdQuote(),
@@ -139,10 +143,10 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $this->assertNotNull($sessionTransfer);
         $this->assertSame($existingQuoteTransfer->getIdQuote(), $sessionTransfer->getIdQuote());
 
-        $quoteResponseTransfer = $this->quoteFacade->findQuoteById($sessionTransfer->getIdQuote());
+        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
         $this->assertCount(0, $quoteResponseTransfer->getQuoteTransfer()->getItems());
-        $this->assertSame(0, $quoteResponseTransfer->getQuoteTransfer()->getTotals()->getGrandTotal());
-        $this->assertSame(0, $quoteResponseTransfer->getQuoteTransfer()->getTotals()->getSubtotal());
+        $this->assertSame(0, $quoteResponseTransfer->getQuoteTransfer()->getTotals()?->getGrandTotal() ?? -1, 'getGrandTotal is null: Totals were not recalculated');
+        $this->assertSame(0, $quoteResponseTransfer->getQuoteTransfer()->getTotals()?->getSubtotal() ?? -1, 'getSubtotal is null: Totals were not recalculated');
     }
 
     public function testProcessCxmlSetupRequestCreateOperationWithExistingQuoteReusesQuote(): void
@@ -225,7 +229,7 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $this->assertSame('edit', $sessionTransfer->getOperation());
         $this->assertSame($email, $sessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields()['UserEmail']);
 
-        $quoteResponseTransfer = $this->quoteFacade->findQuoteById($sessionTransfer->getIdQuote());
+        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
         $this->assertCount(0, $quoteResponseTransfer->getQuoteTransfer()->getItems());
     }
 
@@ -282,7 +286,7 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $this->assertSame('edit', $sessionTransfer->getOperation());
         $this->assertSame($email, $sessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields()['UserEmail']);
 
-        $quoteResponseTransfer = $this->quoteFacade->findQuoteById($sessionTransfer->getIdQuote());
+        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
         $this->assertCount(2, $quoteResponseTransfer->getQuoteTransfer()->getItems());
     }
 
@@ -309,7 +313,7 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $existingQuoteTransfer->addItem(
             (new ItemTransfer())->setSku('001_25904008')->setQuantity(1)->setUnitPrice(1000),
         );
-        $this->quoteFacade->updateQuote($existingQuoteTransfer);
+        $this->tester->getLocator()->quote()->facade()->updateQuote($existingQuoteTransfer);
 
         $this->tester->havePunchoutSession([
             'fk_quote' => $existingQuoteTransfer->getIdQuote(),
@@ -353,7 +357,7 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $this->assertSame($existingQuoteTransfer->getIdQuote(), $sessionTransfer->getIdQuote());
         $this->assertSame($email, $sessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields()['UserEmail']);
 
-        $quoteResponseTransfer = $this->quoteFacade->findQuoteById($sessionTransfer->getIdQuote());
+        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
         $this->assertCount(2, $quoteResponseTransfer->getQuoteTransfer()->getItems());
     }
 
@@ -556,6 +560,15 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
             ->setStore($storeTransfer)
             ->setCurrency($currencyTransfer);
 
-        return $this->quoteFacade->createQuote($quoteTransfer)->getQuoteTransfer();
+        return $this->tester->getLocator()->quote()->facade()->createQuote($quoteTransfer)->getQuoteTransfer();
+    }
+
+    protected function setupQuoteCalculationPlugins(): void
+    {
+        $this->tester->setDependency(CalculationDependencyProvider::QUOTE_CALCULATOR_PLUGIN_STACK, [
+            new RemoveTotalsCalculatorPlugin(),
+            new SubtotalCalculatorPlugin(),
+            new GrandTotalCalculatorPlugin(),
+        ]);
     }
 }
