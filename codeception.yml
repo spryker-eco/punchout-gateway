@@ -2,6 +2,7 @@ namespace: SprykerEcoTest
 include:
     - tests/SprykerEcoTest/Zed/PunchoutGateway
     - tests/SprykerEcoTest/Yves/PunchoutGateway
+    - tests/SprykerEcoTest/Service/PunchoutGateway
 paths:
     tests: tests
     output: tests/_output

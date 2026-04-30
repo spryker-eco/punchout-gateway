@@ -1,0 +1,19 @@
+namespace: SprykerEcoTest\Service\PunchoutGateway
+paths:
+    tests: .
+    data: ../../../_data
+    support: _support
+    output: ../../../_output
+suites:
+    Service:
+        path: .
+        actor: PunchoutGatewayServiceTester
+        modules:
+            enabled:
+                - Asserts
+    Mapper:
+        path: Mapper
+        actor: PunchoutGatewayServiceTester
+        modules:
+            enabled:
+                - Asserts

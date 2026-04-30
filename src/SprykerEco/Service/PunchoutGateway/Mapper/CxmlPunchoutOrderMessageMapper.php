@@ -16,6 +16,7 @@ use CXml\Model\Country;
 use CXml\Model\Credential;
 use CXml\Model\ItemId;
 use CXml\Model\Message\PunchOutOrderMessage;
+use CXml\Model\Message\PunchOutOrderMessageHeader;
 use CXml\Model\PostalAddress;
 use Generated\Shared\Transfer\ItemTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
@@ -53,7 +54,7 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             return '';
         }
 
-        $punchoutOrderMessage = $this->buildPunchoutOrderMessage($quoteTransfer, $punchoutSession);
+        $punchoutOrderMessage = $this->buildPunchoutOrderMessage($quoteTransfer, $punchoutSession, $cxmlSetupRequest);
 
         $cxml = Builder::create(PunchoutGatewayConfig::DEFAULT_CXML_SENDER_USER_AGENT, PunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE)
             ->from(new Credential(PunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getToIdentity()))
@@ -84,6 +85,7 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
     protected function buildPunchoutOrderMessage(
         QuoteTransfer $quoteTransfer,
         PunchoutSessionTransfer $punchoutSession,
+        PunchoutCxmlSetupRequestTransfer $cxmlSetupRequest,
     ): PunchOutOrderMessage {
         $currencyCode = (string)$quoteTransfer->getCurrency()?->getCode();
         $buyerCookie = (string)$punchoutSession->getBuyerCookie();
@@ -97,11 +99,24 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         );
 
         $this->addItems($builder, $quoteTransfer);
+        $this->addDiscount($builder, $quoteTransfer);
         $this->addShipTo($builder, $quoteTransfer);
-        $this->addShipping($builder, $quoteTransfer);
+        $this->addShippingCost($builder, $quoteTransfer);
         $this->addTax($builder, $quoteTransfer);
 
-        return $builder->build();
+        $punchoutOrderMessage = $builder->build();
+        $this->addHeaderExtrinsics($punchoutOrderMessage->punchOutOrderMessageHeader, $cxmlSetupRequest);
+
+        return $punchoutOrderMessage;
+    }
+
+    protected function addHeaderExtrinsics(
+        PunchOutOrderMessageHeader $header,
+        PunchoutCxmlSetupRequestTransfer $cxmlSetupRequest,
+    ): void {
+        foreach ($cxmlSetupRequest->getExtrinsicFields() as $name => $value) {
+            $header->addExtrinsicAsKeyValue((string)$name, (string)$value);
+        }
     }
 
     protected function addItems(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
@@ -127,6 +142,17 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             (int)$item->getUnitPrice(),
             [new Classification(static::CLASSIFICATION_UNIT_OF_MEASURE, '')],
         );
+    }
+
+    protected function addDiscount(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
+    {
+        $totals = $quoteTransfer->getTotals();
+
+        if ($totals === null || !$totals->getDiscountTotal()) {
+            return;
+        }
+
+        $builder->discount((int)$totals->getDiscountTotal());
     }
 
     protected function addShipTo(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
@@ -158,7 +184,7 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         $builder->shipTo($addressName ?: 'Ship To', $postalAddress);
     }
 
-    protected function addShipping(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
+    protected function addShippingCost(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
     {
         $totals = $quoteTransfer->getTotals();
 
