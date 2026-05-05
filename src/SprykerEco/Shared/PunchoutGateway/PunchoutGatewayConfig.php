@@ -60,4 +60,9 @@ interface PunchoutGatewayConfig
     public const string OCI_DEFAULT_PASSWORD_FIELD = 'PASSWORD';
 
     public const int HTTP_ERROR_CODE_UNAUTHORIZED = Response::HTTP_UNAUTHORIZED;
+
+    /**
+     * @uses \Spryker\Shared\Shipment\ShipmentConfig::SHIPMENT_EXPENSE_TYPE
+     */
+    public const string SHIPMENT_EXPENSE_TYPE = 'SHIPMENT_EXPENSE_TYPE';
 }

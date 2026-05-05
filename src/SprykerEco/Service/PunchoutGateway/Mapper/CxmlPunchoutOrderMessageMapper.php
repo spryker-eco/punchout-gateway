@@ -192,7 +192,13 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             return;
         }
 
-        $builder->shipping((int)$totals->getExpenseTotal(), PunchoutGatewayConfig::DEFAULT_CXML_SHIPPING_DESCRIPTION);
+        foreach ($quoteTransfer->getExpenses() as $expenseTransfer) {
+            if ($expenseTransfer->getType() === PunchoutGatewayConfig::SHIPMENT_EXPENSE_TYPE) {
+                $builder->shipping((int)$expenseTransfer->getSumGrossPrice(), PunchoutGatewayConfig::DEFAULT_CXML_SHIPPING_DESCRIPTION);
+
+                break;
+            }
+        }
     }
 
     protected function addTax(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void

@@ -14,6 +14,7 @@ use CXml\Model\Message\PunchOutOrderMessage;
 use CXml\Serializer;
 use Generated\Shared\Transfer\AddressTransfer;
 use Generated\Shared\Transfer\CurrencyTransfer;
+use Generated\Shared\Transfer\ExpenseTransfer;
 use Generated\Shared\Transfer\ItemTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionDataTransfer;
@@ -26,6 +27,7 @@ use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayService;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceFactory;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 /**
  * @group SprykerEcoTest
@@ -126,11 +128,26 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
     public function testBuildCxmlPunchoutOrderMessageTransfersShippingTotal(): void
     {
         $totals = (new TotalsTransfer())->setExpenseTotal(750);
-        $header = $this->buildAndDecode($this->buildQuote(totals: $totals))->punchOutOrderMessageHeader;
+        $quote = $this->buildQuote(totals: $totals);
+        $quote->addExpense((new ExpenseTransfer())->setType(PunchoutGatewayConfig::SHIPMENT_EXPENSE_TYPE)->setSumGrossPrice(600));
+        $quote->addExpense((new ExpenseTransfer())->setType('some other type')->setSumGrossPrice(100));
+
+        $header = $this->buildAndDecode($quote)->punchOutOrderMessageHeader;
 
         $this->assertNotNull($header->shipping);
         $this->assertSame(static::CURRENCY, $header->shipping->money->currency);
-        $this->assertSame(750, $header->shipping->money->getValueCent());
+        $this->assertSame(600, $header->shipping->money->getValueCent());
+    }
+
+    public function testBuildCxmlPunchoutOrderMessageTransfersNoShippingTotal(): void
+    {
+        $totals = (new TotalsTransfer())->setExpenseTotal(750);
+        $quote = $this->buildQuote(totals: $totals);
+        $quote->addExpense((new ExpenseTransfer())->setType('some other type')->setSumGrossPrice(600));
+
+        $header = $this->buildAndDecode($quote)->punchOutOrderMessageHeader;
+
+        $this->assertNull($header->shipping);
     }
 
     public function testBuildCxmlPunchoutOrderMessageTransfersTaxTotal(): void
