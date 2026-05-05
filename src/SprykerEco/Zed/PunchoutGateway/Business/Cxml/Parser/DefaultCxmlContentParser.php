@@ -98,7 +98,6 @@ class DefaultCxmlContentParser implements DefaultCxmlContentParserInterface
             $itemTransfer->setLineNumber($itemOut->lineNumber);
             $itemTransfer->setQuantity((string)$itemOut->quantity);
             $itemTransfer->setSupplierPartId($itemOut->itemId->supplierPartId);
-            $itemTransfer->setSupplierPartAuxiliaryId($itemOut->itemId->supplierPartAuxiliaryId ?? null);
 
             if ($itemOut->itemDetail !== null) {
                 $itemTransfer = $this->mapItemDetails($itemTransfer, $itemOut);
