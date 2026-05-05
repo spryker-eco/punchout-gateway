@@ -65,6 +65,9 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     {
         $container = parent::provideCommunicationLayerDependencies($container);
         $container = $this->addQuoteFacade($container);
+        $container = $this->addStoreFacade($container);
+        $container = $this->addCustomerFacade($container);
+        $container = $this->addUtilEncodingService($container);
 
         return $container;
     }

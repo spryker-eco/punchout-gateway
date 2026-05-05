@@ -11,6 +11,7 @@ namespace SprykerEco\Yves\PunchoutGateway\Plugin\Router;
 
 use Spryker\Yves\Router\Plugin\RouteProvider\AbstractRouteProviderPlugin;
 use Spryker\Yves\Router\Route\RouteCollection;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class PunchoutGatewayRouteProviderPlugin extends AbstractRouteProviderPlugin
 {
@@ -52,8 +53,8 @@ class PunchoutGatewayRouteProviderPlugin extends AbstractRouteProviderPlugin
      */
     protected function addPunchoutGatewayOciSetupRoute(RouteCollection $routeCollection): RouteCollection
     {
-        $route = $this->buildPostRoute('/punchout-gateway/oci/{connectionSlug}', 'PunchoutGateway', 'Oci', 'index');
-        $route->setRequirement('connectionSlug', '[a-zA-Z0-9_-]+');
+        $route = $this->buildPostRoute(PunchoutGatewayConfig::OCI_URL_PREFIX . '{connectionSlug}', 'PunchoutGateway', 'Oci', 'index');
+        $route->setRequirement('connectionSlug', PunchoutGatewayConfig::OCI_URL_SLUG);
         $routeCollection->add('punchout-gateway-oci-setup', $route);
 
         return $routeCollection;

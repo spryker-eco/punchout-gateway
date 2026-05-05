@@ -1,0 +1,81 @@
+{% extends '@Gui/Layout/layout.twig' %}
+
+{% set widget_title = 'View Punchout Connection' | trans %}
+
+{% block section_title widget_title %}
+{% block head_title widget_title %}
+
+{% block action %}
+    {{ backActionButton('/punchout-gateway/list/index', 'Back to Connections' | trans) }}
+    {% if punchoutConnection.protocolType === 'oci' %}
+        {{ createActionButton('/punchout-gateway/credential/add-credential?id-punchout-connection=' ~ punchoutConnection.idPunchoutConnection, 'Add Credential' | trans) }}
+    {% endif %}
+    {{ editActionButton('/punchout-gateway/edit/index?id-punchout-connection=' ~ punchoutConnection.idPunchoutConnection, 'Edit' | trans) }}
+{% endblock %}
+
+{% block content %}
+    {% embed '@Gui/Partials/widget.twig' with { widget_title: 'Connection Details' | trans } %}
+        {% block widget_content %}
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <th>{{ 'ID' | trans }}</th>
+                        <td>{{ punchoutConnection.idPunchoutConnection }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Name' | trans }}</th>
+                        <td>{{ punchoutConnection.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Store' | trans }}</th>
+                        <td>{{ punchoutConnection.storeName }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Protocol Type' | trans }}</th>
+                        <td>{{ punchoutConnection.protocolType | upper }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Status' | trans }}</th>
+                        <td>
+                            {% if punchoutConnection.isActive %}
+                                <span class="label label-success">{{ 'Active' | trans }}</span>
+                            {% else %}
+                                <span class="label label-danger">{{ 'Inactive' | trans }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Allow iFrame' | trans }}</th>
+                        <td>{{ punchoutConnection.allowIframe ? 'Yes' : 'No' | trans }}</td>
+                    </tr>
+                    {% if punchoutConnection.protocolType === 'oci' %}
+                    <tr>
+                        <th>{{ 'Request URL' | trans }}</th>
+                        <td>{{ punchoutConnection.requestUrl }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>{{ 'Processor Plugin Class' | trans }}</th>
+                        <td>{{ punchoutConnection.processorPluginClass }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Created At' | trans }}</th>
+                        <td>{{ punchoutConnection.createdAt }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Updated At' | trans }}</th>
+                        <td>{{ punchoutConnection.updatedAt }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
+
+    {% if punchoutConnection.protocolType === 'oci' %}
+        {% embed '@Gui/Partials/widget.twig' with { widget_title: 'Credentials' | trans } %}
+            {% block widget_content %}
+                {{ credentialTable | raw }}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+{% endblock %}

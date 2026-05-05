@@ -26,6 +26,7 @@ use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPlugin
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayBusinessFactory getBusinessFactory()
  * @method \SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig getConfig()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
  */
 class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlProcessorPluginInterface
 {

@@ -21,6 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @method \SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface getRepository()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
  */
 class PunchoutOciDemoConnectionCreateConsole extends Console
 {

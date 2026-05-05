@@ -23,6 +23,7 @@ use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInte
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayBusinessFactory getBusinessFactory()
  * @method \SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig getConfig()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
  */
 class DefaultOciProcessorPlugin extends AbstractPlugin implements PunchoutProcessorPluginInterface
 {

@@ -55,6 +55,10 @@ interface PunchoutGatewayConfig
 
     public const string CXML_SESSION_START_URL = '/punchout-cxml-start?session=%s';
 
+    public const string OCI_URL_PREFIX = '/punchout-gateway/oci/';
+
+    public const string OCI_URL_SLUG = '[a-zA-Z0-9_-]+';
+
     public const string OCI_DEFAULT_USERNAME_FIELD = 'USERNAME';
 
     public const string OCI_DEFAULT_PASSWORD_FIELD = 'PASSWORD';

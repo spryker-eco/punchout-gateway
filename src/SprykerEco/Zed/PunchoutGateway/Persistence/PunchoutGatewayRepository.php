@@ -10,7 +10,11 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Persistence;
 
 use DateTime;
+use Generated\Shared\Transfer\PunchoutConnectionCollectionTransfer;
+use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
+use Generated\Shared\Transfer\PunchoutCredentialCollectionTransfer;
+use Generated\Shared\Transfer\PunchoutCredentialCriteriaTransfer;
 use Generated\Shared\Transfer\PunchoutCredentialTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutSession;
@@ -23,6 +27,113 @@ use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
  */
 class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGatewayRepositoryInterface
 {
+    public function getPunchoutConnectionCollection(PunchoutConnectionCriteriaTransfer $criteriaTransfer): PunchoutConnectionCollectionTransfer
+    {
+        $collectionTransfer = new PunchoutConnectionCollectionTransfer();
+
+        $query = $this->getFactory()
+            ->createSpyPunchoutConnectionQuery()
+            ->joinWithSpyStore();
+
+        if ($criteriaTransfer->getIdStore() !== null) {
+            $query->filterByFkStore($criteriaTransfer->getIdStore());
+        }
+
+        if ($criteriaTransfer->getProtocolType() !== null) {
+            $query->filterByProtocolType($criteriaTransfer->getProtocolType());
+        }
+
+        if ($criteriaTransfer->getIsActive() !== null) {
+            $query->filterByIsActive($criteriaTransfer->getIsActive());
+        }
+
+        if ($criteriaTransfer->getSearchTerm() !== null) {
+            $query->filterByName('%' . $criteriaTransfer->getSearchTerm() . '%', Criteria::LIKE);
+        }
+
+        $paginationTransfer = $criteriaTransfer->getPagination();
+
+        if ($paginationTransfer !== null && $paginationTransfer->getLimit() !== null) {
+            $query->limit($paginationTransfer->getLimit());
+
+            if ($paginationTransfer->getOffset() !== null) {
+                $query->offset($paginationTransfer->getOffset());
+            }
+        }
+
+        $connectionMapper = $this->getFactory()->createPunchoutConnectionMapper();
+
+        foreach ($query->find() as $connectionEntity) {
+            $collectionTransfer->addPunchoutConnection(
+                $connectionMapper->mapPunchoutConnectionEntityToTransfer($connectionEntity, new PunchoutConnectionTransfer()),
+            );
+        }
+
+        return $collectionTransfer;
+    }
+
+    public function findPunchoutConnectionById(int $idPunchoutConnection): ?PunchoutConnectionTransfer
+    {
+        $connectionEntity = $this->getFactory()
+            ->createSpyPunchoutConnectionQuery()
+            ->joinWithSpyStore()
+            ->filterByIdPunchoutConnection($idPunchoutConnection)
+            ->findOne();
+
+        if ($connectionEntity === null) {
+            return null;
+        }
+
+        return $this->getFactory()
+            ->createPunchoutConnectionMapper()
+            ->mapPunchoutConnectionEntityToTransfer($connectionEntity, new PunchoutConnectionTransfer());
+    }
+
+    public function getPunchoutCredentialCollection(PunchoutCredentialCriteriaTransfer $criteriaTransfer): PunchoutCredentialCollectionTransfer
+    {
+        $collectionTransfer = new PunchoutCredentialCollectionTransfer();
+
+        $query = $this->getFactory()
+            ->createSpyPunchoutCredentialQuery()
+            ->filterByFkPunchoutConnection($criteriaTransfer->getIdPunchoutConnectionOrFail());
+
+        $paginationTransfer = $criteriaTransfer->getPagination();
+
+        if ($paginationTransfer !== null && $paginationTransfer->getLimit() !== null) {
+            $query->limit($paginationTransfer->getLimit());
+
+            if ($paginationTransfer->getOffset() !== null) {
+                $query->offset($paginationTransfer->getOffset());
+            }
+        }
+
+        $credentialMapper = $this->getFactory()->createPunchoutCredentialMapper();
+
+        foreach ($query->find() as $credentialEntity) {
+            $collectionTransfer->addPunchoutCredential(
+                $credentialMapper->mapCredentialEntityToTransfer($credentialEntity, new PunchoutCredentialTransfer()),
+            );
+        }
+
+        return $collectionTransfer;
+    }
+
+    public function findPunchoutCredentialById(int $idPunchoutCredential): ?PunchoutCredentialTransfer
+    {
+        $credentialEntity = $this->getFactory()
+            ->createSpyPunchoutCredentialQuery()
+            ->filterByIdPunchoutCredential($idPunchoutCredential)
+            ->findOne();
+
+        if ($credentialEntity === null) {
+            return null;
+        }
+
+        return $this->getFactory()
+            ->createPunchoutCredentialMapper()
+            ->mapCredentialEntityToTransfer($credentialEntity, new PunchoutCredentialTransfer());
+    }
+
     public function findActiveCxmlConnectionBySenderIdentity(string $senderIdentity): ?PunchoutConnectionTransfer
     {
         $punchoutConnectionEntity = $this->getFactory()
