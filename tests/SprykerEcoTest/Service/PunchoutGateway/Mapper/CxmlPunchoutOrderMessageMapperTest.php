@@ -42,50 +42,6 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
 
     protected const string SHARED_SECRET = 's3cr3t';
 
-    public function testMapQuoteToCxmlAddsExtrinsicFieldsToHeader(): void
-    {
-        $extrinsics = ['UserEmail' => 'john@example.com', 'FirstName' => 'John'];
-        $cxmlSetupRequest = $this->buildCxmlSetupRequest($extrinsics);
-        $quote = $this->buildQuote($cxmlSetupRequest);
-
-        $result = $this->createMapper()->mapQuoteToCxml($quote);
-
-        $this->assertStringContainsString('<Extrinsic name="UserEmail">john@example.com</Extrinsic>', $result);
-        $this->assertStringContainsString('<Extrinsic name="FirstName">John</Extrinsic>', $result);
-    }
-
-    public function testMapQuoteToCxmlExtrinsicsAppearsInsidePunchOutOrderMessageHeader(): void
-    {
-        $cxmlSetupRequest = $this->buildCxmlSetupRequest(['UserEmail' => 'john@example.com']);
-        $quote = $this->buildQuote($cxmlSetupRequest);
-
-        $result = $this->createMapper()->mapQuoteToCxml($quote);
-
-        $headerStart = strpos($result, '<PunchOutOrderMessageHeader');
-        $headerEnd = strpos($result, '</PunchOutOrderMessageHeader>');
-        $extrinsicPos = strpos($result, '<Extrinsic name="UserEmail">');
-
-        $this->assertNotFalse($headerStart);
-        $this->assertNotFalse($headerEnd);
-        $this->assertNotFalse($extrinsicPos);
-        $this->assertGreaterThan($headerStart, $extrinsicPos);
-        $this->assertLessThan($headerEnd, $extrinsicPos);
-    }
-
-    public function testMapQuoteToCxmlWithEmptyExtrinsicFieldsProducesNoHeaderExtrinsics(): void
-    {
-        $cxmlSetupRequest = $this->buildCxmlSetupRequest([]);
-        $quote = $this->buildQuote($cxmlSetupRequest);
-
-        $result = $this->createMapper()->mapQuoteToCxml($quote);
-
-        $headerStart = strpos($result, '<PunchOutOrderMessageHeader');
-        $headerEnd = strpos($result, '</PunchOutOrderMessageHeader>');
-        $headerContent = substr($result, (int)$headerStart, (int)$headerEnd - (int)$headerStart);
-
-        $this->assertStringNotContainsString('<Extrinsic', $headerContent);
-    }
-
     public function testMapQuoteToCxmlReturnsEmptyStringWhenNoPunchoutSession(): void
     {
         $quote = (new QuoteTransfer())

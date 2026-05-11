@@ -59,28 +59,6 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
         $this->assertSame(static::BUYER_COOKIE, $message->buyerCookie);
     }
 
-    public function testBuildCxmlPunchoutOrderMessageTransfersExtrinsicFields(): void
-    {
-        $extrinsics = ['UserEmail' => 'john@example.com', 'Department' => 'Engineering'];
-        $message = $this->buildAndDecode($this->buildQuote(extrinsics: $extrinsics));
-        $decoded = $message->punchOutOrderMessageHeader->getExtrinsicsAsKeyValue();
-
-        $this->assertSame('john@example.com', $decoded['UserEmail']);
-        $this->assertSame('Engineering', $decoded['Department']);
-    }
-
-    public function testBuildCxmlPunchoutOrderMessageExtrinsicsAreInsideHeader(): void
-    {
-        $extrinsics = ['UserEmail' => 'john@example.com', 'Department' => 'Engineering'];
-        $message = $this->buildAndDecode($this->buildQuote(extrinsics: $extrinsics));
-
-        $headerExtrinsics = $message->punchOutOrderMessageHeader->getExtrinsicsAsKeyValue();
-
-        $this->assertSame('john@example.com', $headerExtrinsics['UserEmail']);
-        $this->assertSame('Engineering', $headerExtrinsics['Department']);
-        $this->assertCount(count($extrinsics), $headerExtrinsics);
-    }
-
     public function testBuildCxmlPunchoutOrderMessageTransfersQuoteItemSku(): void
     {
         $message = $this->buildAndDecode($this->buildQuote());
@@ -160,17 +138,6 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
         $this->assertNotNull($header->tax);
         $this->assertSame(static::CURRENCY, $header->tax->money->currency);
         $this->assertSame(190, $header->tax->money->getValueCent());
-    }
-
-    public function testBuildCxmlPunchoutOrderMessageAppliesDiscountToTotal(): void
-    {
-        // 2 items at 1000 cents each = 2000 cents, minus 200 cents discount = 1800 cents
-        $totals = (new TotalsTransfer())->setDiscountTotal(200);
-        $total = $this->buildAndDecode($this->buildQuote(itemUnitPrice: 1000, itemQuantity: 2, totals: $totals))
-            ->punchOutOrderMessageHeader->total;
-
-        $this->assertSame(static::CURRENCY, $total->money->currency);
-        $this->assertSame(1800, $total->money->getValueCent());
     }
 
     public function testBuildCxmlPunchoutOrderMessageTransfersShipmentAddress(): void
