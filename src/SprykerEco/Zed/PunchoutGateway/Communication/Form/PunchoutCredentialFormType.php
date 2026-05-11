@@ -29,9 +29,9 @@ use Symfony\Component\Validator\Constraints\NotBlank;
  */
 class PunchoutCredentialFormType extends AbstractType
 {
-    protected const string FIELD_USERNAME = PunchoutCredentialTransfer::USERNAME;
+    public const string FIELD_PASSWORD = 'password';
 
-    protected const string FIELD_PASSWORD = 'password';
+    protected const string FIELD_USERNAME = PunchoutCredentialTransfer::USERNAME;
 
     protected const string FIELD_ID_CUSTOMER = PunchoutCredentialTransfer::ID_CUSTOMER;
 

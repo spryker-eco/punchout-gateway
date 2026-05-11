@@ -78,30 +78,6 @@ class EditController extends AbstractController
         ]);
     }
 
-    /**
-     * @param array<string, mixed> $formData
-     */
-    protected function executeUpdateAction(int $idPunchoutConnection, array $formData): ?RedirectResponse
-    {
-        $formData[PunchoutConnectionTransfer::ID_PUNCHOUT_CONNECTION] = $idPunchoutConnection;
-
-        $punchoutConnectionTransfer = (new PunchoutConnectionTransfer())->fromArray($formData, true);
-
-        try {
-            $this->getFacade()->updatePunchoutConnection($punchoutConnectionTransfer);
-
-            $this->addSuccessMessage('Punchout connection saved successfully.');
-
-            return $this->redirectResponse(
-                sprintf('%s?%s=%d', PunchoutGatewayConfig::URL_EDIT, PunchoutGatewayConfig::PARAM_ID_CONNECTION, $idPunchoutConnection),
-            );
-        } catch (PropelException | RuntimeException $e) {
-            $this->addErrorMessage('Punchout connection was not saved: ' . $e->getMessage());
-        }
-
-        return null;
-    }
-
     public function toggleIsActiveAction(Request $request): RedirectResponse
     {
         $idPunchoutConnection = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CONNECTION));
@@ -126,5 +102,29 @@ class EditController extends AbstractController
         );
 
         return $this->redirectResponse($redirectUrl);
+    }
+
+    /**
+     * @param array<string, mixed> $formData
+     */
+    protected function executeUpdateAction(int $idPunchoutConnection, array $formData): ?RedirectResponse
+    {
+        $formData[PunchoutConnectionTransfer::ID_PUNCHOUT_CONNECTION] = $idPunchoutConnection;
+
+        $punchoutConnectionTransfer = (new PunchoutConnectionTransfer())->fromArray($formData, true);
+
+        try {
+            $this->getFacade()->updatePunchoutConnection($punchoutConnectionTransfer);
+
+            $this->addSuccessMessage('Punchout connection saved successfully.');
+
+            return $this->redirectResponse(
+                sprintf('%s?%s=%d', PunchoutGatewayConfig::URL_EDIT, PunchoutGatewayConfig::PARAM_ID_CONNECTION, $idPunchoutConnection),
+            );
+        } catch (PropelException | RuntimeException $e) {
+            $this->addErrorMessage('Punchout connection was not saved: ' . $e->getMessage());
+        }
+
+        return null;
     }
 }

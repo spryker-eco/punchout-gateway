@@ -150,6 +150,21 @@ class PunchoutGatewayEntityManager extends AbstractEntityManager implements Punc
     {
         $punchoutSessionEntity = new SpyPunchoutSession();
 
+        $punchoutSessionEntity = $this->mapPunchoutSessionTransferToSpyPunchoutSession($punchoutSessionEntity, $punchoutSessionTransfer);
+
+        $punchoutSessionEntity->save();
+
+        $punchoutSessionTransfer->setIdPunchoutSession($punchoutSessionEntity->getIdPunchoutSession());
+        $punchoutSessionTransfer->setCreatedAt($punchoutSessionEntity->getCreatedAt()?->format(static::DATE_TIME_FORMAT));
+        $punchoutSessionTransfer->setUpdatedAt($punchoutSessionEntity->getUpdatedAt()?->format(static::DATE_TIME_FORMAT));
+
+        return $punchoutSessionTransfer;
+    }
+
+    protected function mapPunchoutSessionTransferToSpyPunchoutSession(
+        SpyPunchoutSession $punchoutSessionEntity,
+        PunchoutSessionTransfer $punchoutSessionTransfer
+    ): SpyPunchoutSession {
         $data = $punchoutSessionTransfer->toArray();
         $punchoutSessionEntity->fromArray($data);
 
@@ -161,12 +176,6 @@ class PunchoutGatewayEntityManager extends AbstractEntityManager implements Punc
             $punchoutSessionEntity->setSessionData($this->getFactory()->getServiceUtilEncoding()->encodeJson($sessionDataTransfer->modifiedToArray()) ?? '[]');
         }
 
-        $punchoutSessionEntity->save();
-
-        $punchoutSessionTransfer->setIdPunchoutSession($punchoutSessionEntity->getIdPunchoutSession());
-        $punchoutSessionTransfer->setCreatedAt($punchoutSessionEntity->getCreatedAt()?->format(static::DATE_TIME_FORMAT));
-        $punchoutSessionTransfer->setUpdatedAt($punchoutSessionEntity->getUpdatedAt()?->format(static::DATE_TIME_FORMAT));
-
-        return $punchoutSessionTransfer;
+        return $punchoutSessionEntity;
     }
 }

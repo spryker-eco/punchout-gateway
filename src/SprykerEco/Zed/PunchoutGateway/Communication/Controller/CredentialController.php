@@ -11,6 +11,7 @@ namespace SprykerEco\Zed\PunchoutGateway\Communication\Controller;
 
 use Generated\Shared\Transfer\PunchoutCredentialTransfer;
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
+use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutCredentialFormType;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -109,13 +110,7 @@ class CredentialController extends AbstractController
     {
         $redirectUrl = sprintf('%s?%s=%d', PunchoutGatewayConfig::URL_CONNECTION, PunchoutGatewayConfig::PARAM_ID_CONNECTION, $idPunchoutConnection);
 
-        $password = $formData['password'] ?? null;
-
-        if (!$password) {
-            $this->addErrorMessage('Password cannot be empty.');
-
-            return $this->redirectResponse($redirectUrl);
-        }
+        $password = $formData[PunchoutCredentialFormType::FIELD_PASSWORD] ?? null;
 
         $punchoutCredentialTransfer = (new PunchoutCredentialTransfer())->fromArray($formData, true);
         $punchoutCredentialTransfer->setIdPunchoutConnection($idPunchoutConnection);

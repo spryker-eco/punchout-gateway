@@ -36,9 +36,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function createPunchoutConnection(PunchoutConnectionTransfer $punchoutConnectionTransfer): PunchoutConnectionTransfer
     {
-        return $this->getFactory()
-            ->createPunchoutConnectionCreator()
-            ->createPunchoutConnection($punchoutConnectionTransfer);
+        return $this->getEntityManager()->createPunchoutConnection($punchoutConnectionTransfer);
     }
 
     /**
@@ -48,9 +46,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function updatePunchoutConnection(PunchoutConnectionTransfer $punchoutConnectionTransfer): PunchoutConnectionTransfer
     {
-        return $this->getFactory()
-            ->createPunchoutConnectionUpdater()
-            ->updatePunchoutConnection($punchoutConnectionTransfer);
+        return $this->getEntityManager()->updatePunchoutConnection($punchoutConnectionTransfer);
     }
 
     /**
@@ -60,9 +56,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function deletePunchoutConnection(int $idPunchoutConnection): bool
     {
-        return $this->getFactory()
-            ->createPunchoutConnectionDeleter()
-            ->deletePunchoutConnection($idPunchoutConnection);
+        return $this->getEntityManager()->deletePunchoutConnection($idPunchoutConnection);
     }
 
     /**
@@ -72,9 +66,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function findPunchoutConnectionById(int $idPunchoutConnection): ?PunchoutConnectionTransfer
     {
-        return $this->getFactory()
-            ->createPunchoutConnectionReader()
-            ->findPunchoutConnectionById($idPunchoutConnection);
+        return $this->getRepository()->findPunchoutConnectionById($idPunchoutConnection);
     }
 
     /**
@@ -84,9 +76,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function getPunchoutConnectionCollection(PunchoutConnectionCriteriaTransfer $criteriaTransfer): PunchoutConnectionCollectionTransfer
     {
-        return $this->getFactory()
-            ->createPunchoutConnectionReader()
-            ->getPunchoutConnectionCollection($criteriaTransfer);
+        return $this->getRepository()->getPunchoutConnectionCollection($criteriaTransfer);
     }
 
     /**
@@ -96,9 +86,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function createPunchoutCredential(PunchoutCredentialTransfer $punchoutCredentialTransfer): PunchoutCredentialTransfer
     {
-        return $this->getFactory()
-            ->createPunchoutCredentialCreator()
-            ->createPunchoutCredential($punchoutCredentialTransfer);
+        return $this->getEntityManager()->createPunchoutCredential($punchoutCredentialTransfer);
     }
 
     /**
@@ -108,9 +96,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function updatePunchoutCredential(PunchoutCredentialTransfer $punchoutCredentialTransfer): PunchoutCredentialTransfer
     {
-        return $this->getFactory()
-            ->createPunchoutCredentialUpdater()
-            ->updatePunchoutCredential($punchoutCredentialTransfer);
+        return $this->getEntityManager()->updatePunchoutCredential($punchoutCredentialTransfer);
     }
 
     /**
@@ -120,9 +106,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function deletePunchoutCredential(int $idPunchoutCredential): void
     {
-        $this->getFactory()
-            ->createPunchoutCredentialDeleter()
-            ->deletePunchoutCredential($idPunchoutCredential);
+        $this->getEntityManager()->deletePunchoutCredential($idPunchoutCredential);
     }
 
     /**
@@ -132,9 +116,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function findPunchoutCredentialById(int $idPunchoutCredential): ?PunchoutCredentialTransfer
     {
-        return $this->getFactory()
-            ->createPunchoutCredentialReader()
-            ->findPunchoutCredentialById($idPunchoutCredential);
+        return $this->getRepository()->findPunchoutCredentialById($idPunchoutCredential);
     }
 
     /**
@@ -144,9 +126,7 @@ class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFac
      */
     public function getPunchoutCredentialCollection(PunchoutCredentialCriteriaTransfer $criteriaTransfer): PunchoutCredentialCollectionTransfer
     {
-        return $this->getFactory()
-            ->createPunchoutCredentialReader()
-            ->getPunchoutCredentialCollection($criteriaTransfer);
+        return $this->getRepository()->getPunchoutCredentialCollection($criteriaTransfer);
     }
 
     /**

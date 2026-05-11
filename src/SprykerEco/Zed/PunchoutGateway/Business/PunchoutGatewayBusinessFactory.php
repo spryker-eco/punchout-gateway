@@ -21,22 +21,6 @@ use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceInterface;
 use SprykerEco\Shared\PunchoutGateway\Logger\NullPunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Connection\Creator\PunchoutConnectionCreator;
-use SprykerEco\Zed\PunchoutGateway\Business\Connection\Creator\PunchoutConnectionCreatorInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Connection\Deleter\PunchoutConnectionDeleter;
-use SprykerEco\Zed\PunchoutGateway\Business\Connection\Deleter\PunchoutConnectionDeleterInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Connection\Reader\PunchoutConnectionReader;
-use SprykerEco\Zed\PunchoutGateway\Business\Connection\Reader\PunchoutConnectionReaderInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Connection\Updater\PunchoutConnectionUpdater;
-use SprykerEco\Zed\PunchoutGateway\Business\Connection\Updater\PunchoutConnectionUpdaterInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Credential\Creator\PunchoutCredentialCreator;
-use SprykerEco\Zed\PunchoutGateway\Business\Credential\Creator\PunchoutCredentialCreatorInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Credential\Deleter\PunchoutCredentialDeleter;
-use SprykerEco\Zed\PunchoutGateway\Business\Credential\Deleter\PunchoutCredentialDeleterInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Credential\Reader\PunchoutCredentialReader;
-use SprykerEco\Zed\PunchoutGateway\Business\Credential\Reader\PunchoutCredentialReaderInterface;
-use SprykerEco\Zed\PunchoutGateway\Business\Credential\Updater\PunchoutCredentialUpdater;
-use SprykerEco\Zed\PunchoutGateway\Business\Credential\Updater\PunchoutCredentialUpdaterInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Authenticator\PunchoutCxmlAuthenticator;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Authenticator\PunchoutCxmlAuthenticatorInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Customer\CxmlCustomerResolver;
@@ -82,46 +66,6 @@ use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayDependencyProvider;
  */
 class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
 {
-    public function createPunchoutConnectionCreator(): PunchoutConnectionCreatorInterface
-    {
-        return new PunchoutConnectionCreator($this->getEntityManager());
-    }
-
-    public function createPunchoutConnectionUpdater(): PunchoutConnectionUpdaterInterface
-    {
-        return new PunchoutConnectionUpdater($this->getEntityManager());
-    }
-
-    public function createPunchoutConnectionDeleter(): PunchoutConnectionDeleterInterface
-    {
-        return new PunchoutConnectionDeleter($this->getEntityManager());
-    }
-
-    public function createPunchoutConnectionReader(): PunchoutConnectionReaderInterface
-    {
-        return new PunchoutConnectionReader($this->getRepository());
-    }
-
-    public function createPunchoutCredentialCreator(): PunchoutCredentialCreatorInterface
-    {
-        return new PunchoutCredentialCreator($this->getEntityManager());
-    }
-
-    public function createPunchoutCredentialUpdater(): PunchoutCredentialUpdaterInterface
-    {
-        return new PunchoutCredentialUpdater($this->getEntityManager());
-    }
-
-    public function createPunchoutCredentialDeleter(): PunchoutCredentialDeleterInterface
-    {
-        return new PunchoutCredentialDeleter($this->getEntityManager());
-    }
-
-    public function createPunchoutCredentialReader(): PunchoutCredentialReaderInterface
-    {
-        return new PunchoutCredentialReader($this->getRepository());
-    }
-
     public function createSessionCreator(): SessionCreatorInterface
     {
         return new SessionCreator(
