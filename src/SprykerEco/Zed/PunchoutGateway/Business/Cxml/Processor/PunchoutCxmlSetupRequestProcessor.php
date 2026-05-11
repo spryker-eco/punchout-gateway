@@ -70,9 +70,9 @@ class PunchoutCxmlSetupRequestProcessor implements PunchoutCxmlSetupRequestProce
             );
         }
 
-        $connectionTransfer = $this->repository->findActiveCxmlConnectionBySenderIdentity($senderIdentity);
+        $connectionTransfer = $this->repository->findCxmlConnectionBySenderIdentity($senderIdentity);
 
-        if ($connectionTransfer === null) {
+        if ($connectionTransfer === null || !$connectionTransfer->getIsActive()) {
             $this->punchoutLogger->logAuthenticationFailure($senderIdentity, PunchoutGatewayConfig::ERROR_CONNECTION_NOT_FOUND);
 
             return $this->createErrorResponse(

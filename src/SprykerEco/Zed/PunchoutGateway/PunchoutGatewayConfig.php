@@ -9,6 +9,7 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway;
 
+use Spryker\Shared\Application\ApplicationConstants;
 use Spryker\Zed\Kernel\AbstractBundleConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 
@@ -39,6 +40,14 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
     public const string URL_CREDENTIAL_TOGGLE_IS_ACTIVE = '/punchout-gateway/credential/toggle-is-active';
 
     public const string URL_CUSTOMER_SUGGEST = '/punchout-gateway/customer-suggest/index';
+
+    /**
+     * @api
+     */
+    public function getBaseUrlYves(): string
+    {
+        return $this->get(ApplicationConstants::BASE_URL_YVES);
+    }
 
     /**
      * @api

@@ -63,6 +63,7 @@
         <property name="requestUrl" type="string"/>
         <property name="idPunchoutConnection" type="int"/>
         <property name="idStore" type="int"/>
+        <property name="formMethod" type="string"/>
         <property name="formData" type="string[]" associative="true" singular="formInput"/>
     </transfer>
 

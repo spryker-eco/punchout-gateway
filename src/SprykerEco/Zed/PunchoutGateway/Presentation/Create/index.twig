@@ -13,24 +13,28 @@
     {% embed '@Gui/Partials/widget.twig' %}
         {% block widget_content %}
             {{ form_start(punchoutConnectionForm) }}
+            {{ form_errors(punchoutConnectionForm) }}
 
             <div class="col-sm-12">
                 <div class="form-group {% if punchoutConnectionForm.name.errors|length > 0 %}has-error{% endif %}">
                     {{ form_label(punchoutConnectionForm.name) }}
                     {{ form_widget(punchoutConnectionForm.name) }}
                     {{ form_errors(punchoutConnectionForm.name) }}
+                    {{ form_help(punchoutConnectionForm.name) }}
                 </div>
 
                 <div class="form-group {% if punchoutConnectionForm.idStore.errors|length > 0 %}has-error{% endif %}">
                     {{ form_label(punchoutConnectionForm.idStore) }}
                     {{ form_widget(punchoutConnectionForm.idStore) }}
                     {{ form_errors(punchoutConnectionForm.idStore) }}
+                    {{ form_help(punchoutConnectionForm.idStore) }}
                 </div>
 
                 <div class="form-group {% if punchoutConnectionForm.protocolType.errors|length > 0 %}has-error{% endif %}">
                     {{ form_label(punchoutConnectionForm.protocolType) }}
                     {{ form_widget(punchoutConnectionForm.protocolType, {'attr': {'id': 'protocol-type-select'}}) }}
                     {{ form_errors(punchoutConnectionForm.protocolType) }}
+                    {{ form_help(punchoutConnectionForm.protocolType) }}
                 </div>
 
                 <div id="cxml-config-section" style="display:none;">
@@ -40,58 +44,64 @@
                             {{ form_label(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
                             {{ form_widget(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
                             {{ form_errors(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
+                            {{ form_help(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
                         </div>
                         <div class="form-group">
                             {{ form_label(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                             {{ form_widget(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                             {{ form_errors(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
+                            {{ form_help(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                         </div>
                     {% endif %}
                 </div>
 
                 <div id="oci-config-section" style="display:none;">
                     <h4>{{ 'OCI Configuration' | trans }}</h4>
+                    <div class="form-group {% if punchoutConnectionForm.requestUrl.errors|length > 0 %}has-error{% endif %}">
+                        {{ form_label(punchoutConnectionForm.requestUrl) }}
+                        {{ form_widget(punchoutConnectionForm.requestUrl) }}
+                        {{ form_errors(punchoutConnectionForm.requestUrl) }}
+                        {{ form_help(punchoutConnectionForm.requestUrl) }}
+                    </div>
                     {% if punchoutConnectionForm.ociConfiguration is defined %}
                         <div class="form-group">
                             {{ form_label(punchoutConnectionForm.ociConfiguration.formMethod) }}
                             {{ form_widget(punchoutConnectionForm.ociConfiguration.formMethod) }}
                             {{ form_errors(punchoutConnectionForm.ociConfiguration.formMethod) }}
+                            {{ form_help(punchoutConnectionForm.ociConfiguration.formMethod) }}
                         </div>
                         <div class="form-group">
                             {{ form_label(punchoutConnectionForm.ociConfiguration.usernameField) }}
                             {{ form_widget(punchoutConnectionForm.ociConfiguration.usernameField) }}
                             {{ form_errors(punchoutConnectionForm.ociConfiguration.usernameField) }}
+                            {{ form_help(punchoutConnectionForm.ociConfiguration.usernameField) }}
                         </div>
                         <div class="form-group">
                             {{ form_label(punchoutConnectionForm.ociConfiguration.passwordField) }}
                             {{ form_widget(punchoutConnectionForm.ociConfiguration.passwordField) }}
                             {{ form_errors(punchoutConnectionForm.ociConfiguration.passwordField) }}
+                            {{ form_help(punchoutConnectionForm.ociConfiguration.passwordField) }}
                         </div>
                     {% endif %}
                 </div>
-
-                {% if punchoutConnectionForm.requestUrl is defined %}
-                <div class="form-group">
-                    {{ form_label(punchoutConnectionForm.requestUrl) }}
-                    {{ form_widget(punchoutConnectionForm.requestUrl) }}
-                    {{ form_errors(punchoutConnectionForm.requestUrl) }}
-                </div>
-                {% endif %}
 
                 <div class="form-group">
                     {{ form_label(punchoutConnectionForm.processorPluginClass) }}
                     {{ form_widget(punchoutConnectionForm.processorPluginClass) }}
                     {{ form_errors(punchoutConnectionForm.processorPluginClass) }}
+                    {{ form_help(punchoutConnectionForm.processorPluginClass) }}
                 </div>
 
                 <div class="form-group">
                     {{ form_widget(punchoutConnectionForm.isActive) }}
                     {{ form_label(punchoutConnectionForm.isActive) }}
+                    {{ form_help(punchoutConnectionForm.isActive) }}
                 </div>
 
                 <div class="form-group">
                     {{ form_widget(punchoutConnectionForm.allowIframe) }}
                     {{ form_label(punchoutConnectionForm.allowIframe) }}
+                    {{ form_help(punchoutConnectionForm.allowIframe) }}
                 </div>
             </div>
 
@@ -108,7 +118,7 @@
     {{ parent() }}
     <script>
         (function () {
-            var sel = document.getElementById('protocol-type-select');
+            var sel = document.getElementById('punchout_connection_form_protocolType');
             var cxmlSection = document.getElementById('cxml-config-section');
             var ociSection = document.getElementById('oci-config-section');
 

@@ -19,6 +19,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -36,7 +37,11 @@ class PunchoutConnectionFormType extends AbstractType
 
     public const string OPTION_PROTOCOL_TYPE_CHOICES = 'protocol_type_choices';
 
+    public const string OPTION_ID_PUNCHOUT_CONNECTION = 'id_punchout_connection';
+
     protected const string FIELD_NAME = PunchoutConnectionTransfer::NAME;
+
+    protected const string FIELD_REQUEST_URL = PunchoutConnectionTransfer::REQUEST_URL;
 
     protected const string FIELD_ID_STORE = PunchoutConnectionTransfer::ID_STORE;
 
@@ -45,8 +50,6 @@ class PunchoutConnectionFormType extends AbstractType
     protected const string FIELD_IS_ACTIVE = PunchoutConnectionTransfer::IS_ACTIVE;
 
     protected const string FIELD_ALLOW_IFRAME = PunchoutConnectionTransfer::ALLOW_IFRAME;
-
-    protected const string FIELD_REQUEST_URL = PunchoutConnectionTransfer::REQUEST_URL;
 
     protected const string FIELD_PROCESSOR_PLUGIN_CLASS = PunchoutConnectionTransfer::PROCESSOR_PLUGIN_CLASS;
 
@@ -64,19 +67,18 @@ class PunchoutConnectionFormType extends AbstractType
             ->addProtocolTypeField($builder, $options)
             ->addIsActiveField($builder)
             ->addAllowIframeField($builder)
-            ->addRequestUrlField($builder)
             ->addProcessorPluginClassField($builder);
 
-        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
-            $this->addProtocolConfigurationFields($event);
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($options) {
+            $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
         });
 
-        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
-            $this->addProtocolConfigurationFields($event);
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
+            $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
         });
 
-        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
-            $this->validatePostSubmit($event);
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($options) {
+            $this->validateOci($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
         });
     }
 
@@ -85,6 +87,8 @@ class PunchoutConnectionFormType extends AbstractType
         $resolver->setDefaults([
             static::OPTION_STORE_CHOICES => [],
             static::OPTION_PROTOCOL_TYPE_CHOICES => [],
+            PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => true,
+            static::OPTION_ID_PUNCHOUT_CONNECTION => null,
         ]);
     }
 
@@ -154,36 +158,18 @@ class PunchoutConnectionFormType extends AbstractType
         return $this;
     }
 
-    protected function addRequestUrlField(FormBuilderInterface $builder): static
-    {
-        $builder->add(static::FIELD_REQUEST_URL, TextType::class, [
-            'label' => 'Request URL',
-            'required' => false,
-            'constraints' => [
-                new Regex([
-                    'pattern' => '~^' . str_replace('/', '\\/', PunchoutGatewayConfig::OCI_URL_PREFIX) . PunchoutGatewayConfig::OCI_URL_SLUG . '$~',
-                    'message' => 'Enter an absolute URL, that starts with ' . PunchoutGatewayConfig::OCI_URL_PREFIX . ', only `_`, `-`, letters and numbers are allowed.',
-                ]),
-            ],
-            'attr' => ['placeholder' => 'https://'],
-            'help' => 'This is an absolute URL without a domain.',
-        ]);
-
-        return $this;
-    }
-
     protected function addProcessorPluginClassField(FormBuilderInterface $builder): static
     {
         $builder->add(static::FIELD_PROCESSOR_PLUGIN_CLASS, TextType::class, [
             'label' => 'Processor Plugin Class',
-            'required' => false,
+            'required' => true,
             'attr' => ['placeholder' => 'e.g. \\SprykerEco\\Zed\\PunchoutGateway\\Communication\\Plugin\\PunchoutGateway\\DefaultCxmlProcessorPlugin'],
         ]);
 
         return $this;
     }
 
-    protected function addProtocolConfigurationFields(FormEvent $event): void
+    protected function addProtocolConfigurationFields(FormEvent $event, bool $isCreate, ?int $excludeId = null): void
     {
         $data = $event->getData();
         $form = $event->getForm();
@@ -194,26 +180,29 @@ class PunchoutConnectionFormType extends AbstractType
             $protocolType = $data[static::FIELD_PROTOCOL_TYPE] ?? null;
         }
 
-        if (empty($data[PunchoutConnectionTransfer::ID_PUNCHOUT_CONNECTION])) {
-            return;
-        }
-
-        if ($protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
-            $form->add(static::FIELD_CXML_CONFIGURATION, PunchoutCxmlConfigurationFormType::class, [
-                'label' => false,
-                'required' => false,
-            ]);
-
-            $form->remove(static::FIELD_REQUEST_URL);
+        if (!$isCreate) {
             $form->remove(static::FIELD_PROTOCOL_TYPE);
-
             $form->add(static::FIELD_PROTOCOL_TYPE, TextType::class, [
                 'label' => 'Protocol Type',
                 'disabled' => true,
             ]);
         }
 
-        if ($protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+        if ($isCreate || $protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
+            $isCxml = $protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML;
+
+            $form->add(static::FIELD_CXML_CONFIGURATION, PunchoutCxmlConfigurationFormType::class, [
+                'label' => false,
+                'required' => false,
+                PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => $isCreate,
+                PunchoutCxmlConfigurationFormType::OPTION_IS_CXML => $isCxml,
+                PunchoutCxmlConfigurationFormType::OPTION_ID_PUNCHOUT_CONNECTION => $excludeId,
+            ]);
+        }
+
+        if ($isCreate || $protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+            $this->addRequestUrlField($form, $protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI);
+
             $form->add(static::FIELD_OCI_CONFIGURATION, PunchoutOciConfigurationFormType::class, [
                 'label' => false,
                 'required' => false,
@@ -221,26 +210,48 @@ class PunchoutConnectionFormType extends AbstractType
         }
     }
 
-    protected function validatePostSubmit(FormEvent $event): void
+    protected function validateOci(FormEvent $event, ?int $excludeId): void
     {
         $form = $event->getForm();
 
-        if (!$form->isSubmitted()) {
+        if ($form->get(static::FIELD_PROTOCOL_TYPE)->getData() !== PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
             return;
         }
 
-        $data = $event->getData();
+        $requestUrl = $form->get(static::FIELD_REQUEST_URL)->getData();
 
-        $protocolType = null;
-
-        if (is_array($data)) {
-            $protocolType = $data[static::FIELD_PROTOCOL_TYPE] ?? null;
+        if (!$requestUrl) {
+            return;
         }
 
-        if ($protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
-            if ($data[static::FIELD_IS_ACTIVE] && !$data[static::FIELD_REQUEST_URL]) {
-                $form->get(static::FIELD_REQUEST_URL)->addError(new FormError('Provide a non empty URL before activating the connection.'));
-            }
+        $existing = $this->getRepository()->findActiveOciConnectionByRequestUrl($requestUrl);
+
+        if ($existing === null || $existing->getIdPunchoutConnection() === $excludeId) {
+            return;
         }
+
+        $form
+            ->get(static::FIELD_REQUEST_URL)
+            ->addError(new FormError('An OCI connection with this Request URL already exists.'));
+    }
+
+    protected function addRequestUrlField(FormInterface $form, bool $isOCI): void
+    {
+        $options = [new Regex([
+            'pattern' => '~^' . str_replace('/', '\\/', PunchoutGatewayConfig::OCI_URL_PREFIX) . PunchoutGatewayConfig::OCI_URL_SLUG . '$~',
+            'message' => 'Enter an absolute URL, that starts with ' . PunchoutGatewayConfig::OCI_URL_PREFIX . ', only `_`, `-`, letters and numbers are allowed.',
+        ]),
+            ];
+
+        if ($isOCI) {
+            $options[] = new NotBlank();
+        }
+
+        $form->add(static::FIELD_REQUEST_URL, TextType::class, [
+            'label' => 'Request URL',
+            'required' => $isOCI,
+            'constraints' => $options,
+            'help' => 'This is an absolute URL without a domain.',
+        ]);
     }
 }

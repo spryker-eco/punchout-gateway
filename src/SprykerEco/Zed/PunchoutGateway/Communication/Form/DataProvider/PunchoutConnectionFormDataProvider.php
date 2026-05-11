@@ -13,6 +13,7 @@ use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Spryker\Zed\Store\Business\StoreFacadeInterface;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutConnectionFormType;
+use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutCxmlConfigurationFormType;
 
 class PunchoutConnectionFormDataProvider
 {
@@ -29,13 +30,16 @@ class PunchoutConnectionFormDataProvider
             return [];
         }
 
+        $punchoutConnectionTransfer = clone $punchoutConnectionTransfer;
+        $punchoutConnectionTransfer->getCxmlConfiguration()?->setSenderSharedSecret('');
+
         return $punchoutConnectionTransfer->toArray(true, true);
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function getOptions(): array
+    public function getOptions(?PunchoutConnectionTransfer $punchoutConnectionTransfer = null): array
     {
         return [
             PunchoutConnectionFormType::OPTION_STORE_CHOICES => $this->getStoreChoices(),
@@ -43,6 +47,8 @@ class PunchoutConnectionFormDataProvider
                 'cXML' => PunchoutGatewayConfig::PROTOCOL_TYPE_CXML,
                 'OCI' => PunchoutGatewayConfig::PROTOCOL_TYPE_OCI,
             ],
+            PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => $punchoutConnectionTransfer?->getIdPunchoutConnection() === null,
+            PunchoutConnectionFormType::OPTION_ID_PUNCHOUT_CONNECTION => $punchoutConnectionTransfer?->getIdPunchoutConnection(),
         ];
     }
 

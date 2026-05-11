@@ -39,9 +39,9 @@
                     {{ form_help(punchoutConnectionForm.protocolType) }}
                 </div>
 
+                {% if punchoutConnectionForm.cxmlConfiguration is defined %}
                 <div id="cxml-config-section" style="display:none;">
                     <h4>{{ 'cXML Configuration' | trans }}</h4>
-                    {% if punchoutConnectionForm.cxmlConfiguration is defined %}
                         <div class="form-group {% if punchoutConnectionForm.cxmlConfiguration.senderIdentity.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
                             {{ form_widget(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
@@ -51,14 +51,23 @@
                         <div class="form-group {% if punchoutConnectionForm.cxmlConfiguration.senderSharedSecret.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                             {{ form_widget(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
+                            {{ form_errors(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                             {{ form_help(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                         </div>
-                    {% endif %}
                 </div>
+                {% endif %}
 
+                {% if punchoutConnectionForm.ociConfiguration is defined %}
                 <div id="oci-config-section" style="display:none;">
                     <h4>{{ 'OCI Configuration' | trans }}</h4>
-                    {% if punchoutConnectionForm.ociConfiguration is defined %}
+                    {% if punchoutConnectionForm.requestUrl is defined %}
+                        <div class="form-group {% if punchoutConnectionForm.requestUrl.errors|length > 0 %}has-error{% endif %}">
+                            {{ form_label(punchoutConnectionForm.requestUrl) }}
+                            {{ form_widget(punchoutConnectionForm.requestUrl) }}
+                            {{ form_errors(punchoutConnectionForm.requestUrl) }}
+                            {{ form_help(punchoutConnectionForm.requestUrl) }}
+                        </div>
+                    {% endif %}
                         <div class="form-group {% if punchoutConnectionForm.ociConfiguration.formMethod.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.ociConfiguration.formMethod) }}
                             {{ form_widget(punchoutConnectionForm.ociConfiguration.formMethod) }}
@@ -68,22 +77,15 @@
                         <div class="form-group {% if punchoutConnectionForm.ociConfiguration.usernameField.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.ociConfiguration.usernameField) }}
                             {{ form_widget(punchoutConnectionForm.ociConfiguration.usernameField) }}
+                            {{ form_errors(punchoutConnectionForm.ociConfiguration.usernameField) }}
                             {{ form_help(punchoutConnectionForm.ociConfiguration.usernameField) }}
                         </div>
                         <div class="form-group {% if punchoutConnectionForm.ociConfiguration.passwordField.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.ociConfiguration.passwordField) }}
                             {{ form_widget(punchoutConnectionForm.ociConfiguration.passwordField) }}
+                            {{ form_errors(punchoutConnectionForm.ociConfiguration.passwordField) }}
                             {{ form_help(punchoutConnectionForm.ociConfiguration.passwordField) }}
                         </div>
-                    {% endif %}
-                </div>
-
-                {% if punchoutConnectionForm.requestUrl is defined %}
-                <div class="form-group {% if punchoutConnectionForm.requestUrl.errors|length > 0 %}has-error{% endif %}">
-                    {{ form_label(punchoutConnectionForm.requestUrl) }}
-                    {{ form_widget(punchoutConnectionForm.requestUrl) }}
-                    {{ form_errors(punchoutConnectionForm.requestUrl) }}
-                    {{ form_help(punchoutConnectionForm.requestUrl) }}
                 </div>
                 {% endif %}
 
@@ -127,7 +129,7 @@
     {{ parent() }}
     <script>
         (function () {
-            var sel = document.getElementById('protocol-type-select');
+            var sel = document.getElementById('punchout_connection_form_protocolType');
             var cxmlSection = document.getElementById('cxml-config-section');
             var ociSection = document.getElementById('oci-config-section');
 

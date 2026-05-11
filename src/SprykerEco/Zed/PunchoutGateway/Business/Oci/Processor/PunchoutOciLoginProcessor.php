@@ -62,6 +62,14 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
             return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_CONNECTION_NOT_FOUND);
         }
 
+        $storedFormMethod = $connectionTransfer->getOciConfiguration()->getFormMethod();
+
+        if ($storedFormMethod !== null && $storedFormMethod !== '' && $storedFormMethod !== $ociLoginRequestTransfer->getFormMethod()) {
+            $this->punchoutLogger->logRequestUrlFailure($requestUrl, SharedPunchoutGatewayConfig::ERROR_CONNECTION_WRONG_METHOD);
+
+            return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_CONNECTION_WRONG_METHOD);
+        }
+
         $this->punchoutLogger->logConnectionFound($connectionTransfer);
 
         $processorPlugin = $this->processorPluginResolver->resolveProcessorPlugin($connectionTransfer, PunchoutProcessorPluginInterface::class);

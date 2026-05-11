@@ -134,13 +134,12 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
             ->mapCredentialEntityToTransfer($credentialEntity, new PunchoutCredentialTransfer());
     }
 
-    public function findActiveCxmlConnectionBySenderIdentity(string $senderIdentity): ?PunchoutConnectionTransfer
+    public function findCxmlConnectionBySenderIdentity(string $senderIdentity): ?PunchoutConnectionTransfer
     {
         $punchoutConnectionEntity = $this->getFactory()
             ->createSpyPunchoutConnectionQuery()
             ->filterBySenderIdentity($senderIdentity)
             ->filterByProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_CXML)
-            ->filterByIsActive(true)
             ->joinWithSpyStore()
             ->findOne();
 

@@ -48,10 +48,29 @@
                         <th>{{ 'Allow iFrame' | trans }}</th>
                         <td>{{ punchoutConnection.allowIframe ? 'Yes' : 'No' | trans }}</td>
                     </tr>
+                    {% if punchoutConnection.protocolType === 'cxml' %}
+                        <tr>
+                            <th>{{ 'Sender Identity' | trans }}</th>
+                            <td>{{ punchoutConnection.cxmlConfiguration.senderIdentity }}</td>
+                        </tr>
+                    {% endif %}
+
                     {% if punchoutConnection.protocolType === 'oci' %}
                     <tr>
                         <th>{{ 'Request URL' | trans }}</th>
                         <td>{{ punchoutConnection.requestUrl }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Form Method' | trans }}</th>
+                        <td>{{ punchoutConnection.ociConfiguration.formMethod | default(defaultFormMethod) }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Form field Username' | trans }}</th>
+                        <td>{{ punchoutConnection.ociConfiguration.usernameField | default(defaultUsernameField) }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Form field Password' | trans }}</th>
+                        <td>{{ punchoutConnection.ociConfiguration.passwordField | default(defaultPasswordField) }}</td>
                     </tr>
                     {% endif %}
                     <tr>

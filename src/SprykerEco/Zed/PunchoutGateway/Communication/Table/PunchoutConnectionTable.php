@@ -11,15 +11,19 @@ namespace SprykerEco\Zed\PunchoutGateway\Communication\Table;
 
 use Orm\Zed\PunchoutGateway\Persistence\Map\SpyPunchoutConnectionTableMap;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnectionQuery;
+use Orm\Zed\Store\Persistence\Map\SpyStoreTableMap;
 use Spryker\Service\UtilText\Model\Url\Url;
 use Spryker\Zed\Gui\Communication\Table\AbstractTable;
 use Spryker\Zed\Gui\Communication\Table\TableConfiguration;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 
 class PunchoutConnectionTable extends AbstractTable
 {
     protected const string COL_ID = SpyPunchoutConnectionTableMap::COL_ID_PUNCHOUT_CONNECTION;
+
+    protected const string COL_STORE = SpyPunchoutConnectionTableMap::COL_FK_STORE;
 
     protected const string COL_NAME = SpyPunchoutConnectionTableMap::COL_NAME;
 
@@ -31,14 +35,17 @@ class PunchoutConnectionTable extends AbstractTable
 
     protected const string COL_ACTIONS = 'actions';
 
-    public function __construct(protected PunchoutGatewayRepositoryInterface $repository)
-    {
+    public function __construct(
+        protected PunchoutGatewayRepositoryInterface $repository,
+        protected PunchoutGatewayConfig $moduleConfig
+    ) {
     }
 
     protected function configure(TableConfiguration $config): TableConfiguration
     {
         $config->setHeader([
             static::COL_ID => 'ID',
+            static::COL_STORE => 'Customer Default Store',
             static::COL_NAME => 'Name',
             static::COL_PROTOCOL_TYPE => 'Protocol',
             static::COL_IS_ACTIVE => 'Status',
@@ -55,6 +62,7 @@ class PunchoutConnectionTable extends AbstractTable
         $config->setSortable([
             static::COL_ID,
             static::COL_NAME,
+            static::COL_STORE,
             static::COL_PROTOCOL_TYPE,
             static::COL_IS_ACTIVE,
         ]);
@@ -70,21 +78,26 @@ class PunchoutConnectionTable extends AbstractTable
      */
     protected function prepareData(TableConfiguration $config): array
     {
-        $query = SpyPunchoutConnectionQuery::create();
+        $query = SpyPunchoutConnectionQuery::create()
+            ->joinWithSpyStore();
 
         $queryResults = $this->runQuery($query, $config);
 
         $results = [];
 
         foreach ($queryResults as $row) {
-            $results[] = [
+            $dataRow = [
                 static::COL_ID => $row[SpyPunchoutConnectionTableMap::COL_ID_PUNCHOUT_CONNECTION],
                 static::COL_NAME => $row[SpyPunchoutConnectionTableMap::COL_NAME],
+                static::COL_STORE => $row['SpyStore'][SpyStoreTableMap::COL_NAME],
                 static::COL_PROTOCOL_TYPE => $row[SpyPunchoutConnectionTableMap::COL_PROTOCOL_TYPE],
                 static::COL_IS_ACTIVE => $this->renderStatus((bool)$row[SpyPunchoutConnectionTableMap::COL_IS_ACTIVE]),
-                static::COL_REQUEST_URL => $row[SpyPunchoutConnectionTableMap::COL_REQUEST_URL],
                 static::COL_ACTIONS => $this->buildActionButtons($row),
             ];
+
+            $dataRow[static::COL_REQUEST_URL] = $this->getFullRequestUrl($row);
+
+            $results[] = $dataRow;
         }
 
         return $results;
@@ -148,5 +161,21 @@ class PunchoutConnectionTable extends AbstractTable
         $class = $isActive ? 'label-success' : 'label-danger';
 
         return sprintf('<span class="label %s">%s</span>', $class, $label);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    protected function getFullRequestUrl(array $row): string
+    {
+        if ($row[SpyPunchoutConnectionTableMap::COL_PROTOCOL_TYPE] === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+            return $this->moduleConfig->getBaseUrlYves() . $row[SpyPunchoutConnectionTableMap::COL_REQUEST_URL];
+        }
+
+        if ($row[SpyPunchoutConnectionTableMap::COL_PROTOCOL_TYPE] === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
+            return $this->moduleConfig->getBaseUrlYves() . PunchoutGatewayPunchoutGatewayConfig::CXML_SETUP_PREFIX;
+        }
+
+        return 'N/A';
     }
 }

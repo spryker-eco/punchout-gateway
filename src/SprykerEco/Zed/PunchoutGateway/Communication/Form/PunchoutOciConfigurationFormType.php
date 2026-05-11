@@ -10,10 +10,10 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Form;
 
 use Spryker\Zed\Kernel\Communication\Form\AbstractType;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
  * @method \SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface getRepository()
@@ -31,7 +31,8 @@ class PunchoutOciConfigurationFormType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $this->addFormMethodField($builder)
+        $this
+            ->addFormMethodField($builder)
             ->addUsernameFieldField($builder)
             ->addPasswordFieldField($builder);
     }
@@ -40,9 +41,13 @@ class PunchoutOciConfigurationFormType extends AbstractType
     {
         $builder->add(static::FIELD_FORM_METHOD, ChoiceType::class, [
             'label' => 'Form Method',
-            'required' => true,
+            'required' => false,
+            'placeholder' => '',
             'choices' => ['POST' => 'POST', 'GET' => 'GET'],
-            'constraints' => [new NotBlank()],
+            'help' => $this->getFactory()->getTranslatorFacade()->trans(
+                'HTTP method for the form, defaults to %method',
+                ['%method' => PunchoutGatewayConfig::OCI_DEFAULT_FORM_METHOD],
+            ),
         ]);
 
         return $this;
@@ -53,7 +58,10 @@ class PunchoutOciConfigurationFormType extends AbstractType
         $builder->add(static::FIELD_USERNAME_FIELD, TextType::class, [
             'label' => 'Username Field Name',
             'required' => false,
-            'attr' => ['placeholder' => 'e.g. USERNAME'],
+            'help' => $this->getFactory()->getTranslatorFacade()->trans(
+                'Form field name to pass username, defaults to %field',
+                ['%field' => PunchoutGatewayConfig::OCI_DEFAULT_USERNAME_FIELD],
+            ),
         ]);
 
         return $this;
@@ -64,7 +72,10 @@ class PunchoutOciConfigurationFormType extends AbstractType
         $builder->add(static::FIELD_PASSWORD_FIELD, TextType::class, [
             'label' => 'Password Field Name',
             'required' => false,
-            'attr' => ['placeholder' => 'e.g. PASSWORD'],
+            'help' => $this->getFactory()->getTranslatorFacade()->trans(
+                'Form field name to pass password, defaults to %field',
+                ['%field' => PunchoutGatewayConfig::OCI_DEFAULT_PASSWORD_FIELD],
+            ),
         ]);
 
         return $this;

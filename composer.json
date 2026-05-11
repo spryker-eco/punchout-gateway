@@ -10,7 +10,7 @@
         "spryker-shop/customer-page": "^2.74.0",
         "spryker/application": "^3.9.0",
         "spryker/application-extension": "^1.1.0",
-        "spryker/customer": "^7.78.1",
+        "spryker/customer": "^7.79.0",
         "spryker/calculation": "^4.0.0",
         "spryker/kernel": "^3.76.0",
         "spryker/log": "^3.17.0",
@@ -27,7 +27,8 @@
         "spryker/currency": "^4.0.0",
         "spryker/price": "^5.0.0",
         "spryker/gui": "^5.2.2",
-        "spryker/util-text": "^1.6.0"
+        "spryker/util-text": "^1.6.0",
+        "spryker/translator": "^1.0.0"
     },
     "require-dev": {
         "spryker/price-product": "*",

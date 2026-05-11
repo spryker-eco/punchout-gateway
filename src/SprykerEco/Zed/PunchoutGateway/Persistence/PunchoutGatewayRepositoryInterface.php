@@ -27,7 +27,7 @@ interface PunchoutGatewayRepositoryInterface
 
     public function findPunchoutCredentialById(int $idPunchoutCredential): ?PunchoutCredentialTransfer;
 
-    public function findActiveCxmlConnectionBySenderIdentity(string $senderIdentity): ?PunchoutConnectionTransfer;
+    public function findCxmlConnectionBySenderIdentity(string $senderIdentity): ?PunchoutConnectionTransfer;
 
     public function findPunchoutSessionByIdQuote(int $idQuote): ?PunchoutSessionTransfer;
 

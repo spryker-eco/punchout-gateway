@@ -10,6 +10,7 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Controller;
 
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,11 +37,23 @@ class ViewController extends AbstractController
             return $this->redirectResponse(PunchoutGatewayConfig::URL_LIST);
         }
 
-        $credentialTable = $this->getFactory()->createPunchoutCredentialTableForView($idPunchoutConnection);
-
-        return $this->viewResponse([
+        $data = [
             'punchoutConnection' => $punchoutConnectionTransfer,
-            'credentialTable' => $credentialTable->render(),
-        ]);
+        ];
+
+        if ($punchoutConnectionTransfer->getProtocolType() === SharedPunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+            $punchoutConnectionTransfer->setRequestUrl(
+                $this->getFactory()->getConfig()->getBaseUrlYves() . $punchoutConnectionTransfer->getRequestUrl(),
+            );
+
+            $credentialTable = $this->getFactory()->createPunchoutCredentialTableForView($idPunchoutConnection);
+
+            $data['credentialTable'] = $credentialTable->render();
+            $data['defaultUsernameField'] = SharedPunchoutGatewayConfig::OCI_DEFAULT_USERNAME_FIELD;
+            $data['defaultPasswordField'] = SharedPunchoutGatewayConfig::OCI_DEFAULT_PASSWORD_FIELD;
+            $data['defaultFormMethod'] = SharedPunchoutGatewayConfig::OCI_DEFAULT_FORM_METHOD;
+        }
+
+        return $this->viewResponse($data);
     }
 }

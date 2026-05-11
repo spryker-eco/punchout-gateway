@@ -22,14 +22,6 @@ class PunchoutConnectionMapper
     {
     }
 
-    protected const string CONFIGURATION_KEY_SENDER_SHARED_SECRET = 'senderSharedSecret';
-
-    protected const string CONFIGURATION_KEY_FORM_METHOD = 'formMethod';
-
-    protected const string CONFIGURATION_KEY_USERNAME_FIELD = 'usernameField';
-
-    protected const string CONFIGURATION_KEY_PASSWORD_FIELD = 'passwordField';
-
     public function mapPunchoutConnectionEntityToTransfer(
         ?SpyPunchoutConnection $punchoutConnectionEntity,
         PunchoutConnectionTransfer $punchoutConnectionTransfer,
@@ -71,7 +63,7 @@ class PunchoutConnectionMapper
         $cxmlConfigurationTransfer = new PunchoutCxmlConfigurationTransfer();
 
         $cxmlConfigurationTransfer->setSenderIdentity($punchoutConnectionEntity->getSenderIdentity());
-        $cxmlConfigurationTransfer->setSenderSharedSecret($protocolConfiguration[static::CONFIGURATION_KEY_SENDER_SHARED_SECRET] ?? null);
+        $cxmlConfigurationTransfer->setSenderSharedSecret($protocolConfiguration[PunchoutGatewayConfig::CONFIGURATION_KEY_SENDER_SHARED_SECRET] ?? null);
 
         return $cxmlConfigurationTransfer;
     }
@@ -82,9 +74,9 @@ class PunchoutConnectionMapper
     protected function mapOciConfiguration(array $protocolConfiguration): PunchoutOciConfigurationTransfer
     {
         $ociConfigurationTransfer = new PunchoutOciConfigurationTransfer();
-        $ociConfigurationTransfer->setFormMethod($protocolConfiguration[static::CONFIGURATION_KEY_FORM_METHOD] ?? null);
-        $ociConfigurationTransfer->setUsernameField($protocolConfiguration[static::CONFIGURATION_KEY_USERNAME_FIELD] ?? null);
-        $ociConfigurationTransfer->setPasswordField($protocolConfiguration[static::CONFIGURATION_KEY_PASSWORD_FIELD] ?? null);
+        $ociConfigurationTransfer->setFormMethod($protocolConfiguration[PunchoutGatewayConfig::CONFIGURATION_KEY_FORM_METHOD] ?? null);
+        $ociConfigurationTransfer->setUsernameField($protocolConfiguration[PunchoutGatewayConfig::CONFIGURATION_KEY_USERNAME_FIELD] ?? null);
+        $ociConfigurationTransfer->setPasswordField($protocolConfiguration[PunchoutGatewayConfig::CONFIGURATION_KEY_PASSWORD_FIELD] ?? null);
 
         return $ociConfigurationTransfer;
     }
@@ -124,10 +116,10 @@ class PunchoutConnectionMapper
 
         $punchoutConnectionEntity->setSenderIdentity($cxmlConfiguration->getSenderIdentity());
 
-        $configuration = [];
+        $configuration = $this->utilEncodingService->decodeJson($punchoutConnectionEntity->getConfiguration(), true);
 
         if ($cxmlConfiguration->getSenderSharedSecret() !== null) {
-            $configuration[static::CONFIGURATION_KEY_SENDER_SHARED_SECRET] = password_hash(
+            $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_SENDER_SHARED_SECRET] = password_hash(
                 $cxmlConfiguration->getSenderSharedSecret(),
                 PASSWORD_DEFAULT,
             );
@@ -151,15 +143,15 @@ class PunchoutConnectionMapper
         $configuration = [];
 
         if ($ociConfiguration->getFormMethod() !== null) {
-            $configuration[static::CONFIGURATION_KEY_FORM_METHOD] = $ociConfiguration->getFormMethod();
+            $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_FORM_METHOD] = $ociConfiguration->getFormMethod();
         }
 
         if ($ociConfiguration->getUsernameField() !== null) {
-            $configuration[static::CONFIGURATION_KEY_USERNAME_FIELD] = $ociConfiguration->getUsernameField();
+            $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_USERNAME_FIELD] = $ociConfiguration->getUsernameField();
         }
 
         if ($ociConfiguration->getPasswordField() !== null) {
-            $configuration[static::CONFIGURATION_KEY_PASSWORD_FIELD] = $ociConfiguration->getPasswordField();
+            $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_PASSWORD_FIELD] = $ociConfiguration->getPasswordField();
         }
 
         $punchoutConnectionEntity->setConfiguration(

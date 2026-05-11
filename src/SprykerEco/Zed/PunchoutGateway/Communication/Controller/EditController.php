@@ -34,7 +34,7 @@ class EditController extends AbstractController
             $id = $request->query->get(PunchoutGatewayConfig::PARAM_ID_CONNECTION);
             $idPunchoutConnection = $this->castId($id);
         } catch (InvalidIdException) {
-            $this->addErrorMessage('Punchout connection ID `%d` is invalid.', ['%d' => $id]);
+            $this->addErrorMessage('Punchout connection ID `%id` is invalid.', ['%id' => $id]);
 
             return $this->redirectResponse(PunchoutGatewayConfig::URL_LIST);
         }
@@ -50,7 +50,7 @@ class EditController extends AbstractController
         $dataProvider = $this->getFactory()->createPunchoutConnectionFormDataProvider();
         $form = $this->getFactory()->createPunchoutConnectionForm(
             $dataProvider->getData($punchoutConnectionTransfer),
-            $dataProvider->getOptions(),
+            $dataProvider->getOptions($punchoutConnectionTransfer),
         );
 
         $form->handleRequest($request);

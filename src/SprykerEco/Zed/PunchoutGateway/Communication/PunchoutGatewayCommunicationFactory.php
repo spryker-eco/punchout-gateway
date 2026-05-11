@@ -13,6 +13,7 @@ use Spryker\Service\UtilEncoding\UtilEncodingServiceInterface;
 use Spryker\Zed\Customer\Business\CustomerFacadeInterface;
 use Spryker\Zed\Kernel\Communication\AbstractCommunicationFactory;
 use Spryker\Zed\Store\Business\StoreFacadeInterface;
+use Spryker\Zed\Translator\Business\TranslatorFacadeInterface;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\CustomerChoiceLoader;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataProvider\PunchoutConnectionFormDataProvider;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataProvider\PunchoutCredentialFormDataProvider;
@@ -37,6 +38,7 @@ class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
     {
         return new PunchoutConnectionTable(
             $this->getRepository(),
+            $this->getConfig(),
         );
     }
 
@@ -109,5 +111,10 @@ class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
     public function getUtilEncodingService(): UtilEncodingServiceInterface
     {
         return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::SERVICE_UTIL_ENCODING);
+    }
+
+    public function getTranslatorFacade(): TranslatorFacadeInterface
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_TRANSLATOR);
     }
 }

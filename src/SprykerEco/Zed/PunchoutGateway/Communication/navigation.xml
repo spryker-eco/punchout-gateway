@@ -1,90 +1,10 @@
 <?xml version="1.0"?>
 <config>
     <punchout-gateway>
-        <label>Punchout</label>
+        <label>Punchout Connections</label>
         <bundle>punchout-gateway</bundle>
         <controller>list</controller>
         <action>index</action>
-        <icon>fa-exchange-alt</icon>
         <visible>1</visible>
-        <pages>
-            <punchout-connection-list>
-                <label>Connections</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>list</controller>
-                <action>index</action>
-                <visible>1</visible>
-            </punchout-connection-list>
-            <punchout-connection-create>
-                <label>Create Connection</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>create</controller>
-                <action>index</action>
-                <visible>0</visible>
-            </punchout-connection-create>
-            <punchout-connection-edit>
-                <label>Edit Connection</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>edit</controller>
-                <action>index</action>
-                <visible>0</visible>
-            </punchout-connection-edit>
-            <punchout-connection-view>
-                <label>View Connection</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>view</controller>
-                <action>index</action>
-                <visible>0</visible>
-            </punchout-connection-view>
-            <punchout-connection-delete>
-                <label>Delete Connection</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>delete</controller>
-                <action>index</action>
-                <visible>0</visible>
-            </punchout-connection-delete>
-            <punchout-connection-list-table>
-                <label>Connections Table</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>list</controller>
-                <action>table</action>
-                <visible>0</visible>
-            </punchout-connection-list-table>
-            <punchout-connection-view-table>
-                <label>View Credentials Table</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>view</controller>
-                <action>table</action>
-                <visible>0</visible>
-            </punchout-connection-view-table>
-            <punchout-connection-edit-credential-table>
-                <label>Edit Credentials Table</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>edit</controller>
-                <action>credential-table</action>
-                <visible>0</visible>
-            </punchout-connection-edit-credential-table>
-            <punchout-connection-edit-toggle>
-                <label>Toggle Connection</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>edit</controller>
-                <action>toggle-is-active</action>
-                <visible>0</visible>
-            </punchout-connection-edit-toggle>
-            <punchout-connection-edit-add-credential>
-                <label>Add Credential</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>edit</controller>
-                <action>add-credential</action>
-                <visible>0</visible>
-            </punchout-connection-edit-add-credential>
-            <punchout-connection-edit-delete-credential>
-                <label>Delete Credential</label>
-                <bundle>punchout-gateway</bundle>
-                <controller>edit</controller>
-                <action>delete-credential</action>
-                <visible>0</visible>
-            </punchout-connection-edit-delete-credential>
-        </pages>
     </punchout-gateway>
 </config>

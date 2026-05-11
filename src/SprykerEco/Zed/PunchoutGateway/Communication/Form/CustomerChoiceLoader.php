@@ -34,17 +34,17 @@ class CustomerChoiceLoader implements ChoiceLoaderInterface
      */
     public function loadChoicesForValues(array $values, ?callable $value = null): array
     {
-        $intIds = array_values(array_filter(
+        $customerIds = array_values(array_filter(
             array_map(fn (string $val) => $val !== '' ? (int)$val : null, $values),
             fn (?int $id) => $id !== null && $id > 0,
         ));
 
-        if ($intIds === []) {
+        if ($customerIds === []) {
             return [];
         }
 
         $collection = $this->customerFacade->getCustomerCollectionByCriteria(
-            (new CustomerCriteriaFilterTransfer())->setCustomerIds($intIds),
+            (new CustomerCriteriaFilterTransfer())->setCustomerIds($customerIds),
         );
 
         return array_map(
