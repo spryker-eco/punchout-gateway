@@ -20,6 +20,9 @@ use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapperInte
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 
+/**
+ * @method \SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceConfig getConfig()
+ */
 class PunchoutGatewayServiceFactory extends AbstractServiceFactory
 {
     public function createCxmlEncoder(): CxmlEncoderInterface
@@ -44,6 +47,7 @@ class PunchoutGatewayServiceFactory extends AbstractServiceFactory
         return new CxmlPunchoutOrderMessageMapper(
             $this->createCxmlEncoder(),
             $this->createPunchoutLogger(),
+            $this->getConfig(),
         );
     }
 

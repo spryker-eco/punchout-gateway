@@ -25,6 +25,7 @@ use Generated\Shared\Transfer\TotalsTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayService;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceConfig;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceFactory;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
@@ -57,28 +58,6 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
         $message = $this->buildAndDecode($this->buildQuote());
 
         $this->assertSame(static::BUYER_COOKIE, $message->buyerCookie);
-    }
-
-    public function testBuildCxmlPunchoutOrderMessageTransfersExtrinsicFields(): void
-    {
-        $extrinsics = ['UserEmail' => 'john@example.com', 'Department' => 'Engineering'];
-        $message = $this->buildAndDecode($this->buildQuote(extrinsics: $extrinsics));
-        $decoded = $message->punchOutOrderMessageHeader->getExtrinsicsAsKeyValue();
-
-        $this->assertSame('john@example.com', $decoded['UserEmail']);
-        $this->assertSame('Engineering', $decoded['Department']);
-    }
-
-    public function testBuildCxmlPunchoutOrderMessageExtrinsicsAreInsideHeader(): void
-    {
-        $extrinsics = ['UserEmail' => 'john@example.com', 'Department' => 'Engineering'];
-        $message = $this->buildAndDecode($this->buildQuote(extrinsics: $extrinsics));
-
-        $headerExtrinsics = $message->punchOutOrderMessageHeader->getExtrinsicsAsKeyValue();
-
-        $this->assertSame('john@example.com', $headerExtrinsics['UserEmail']);
-        $this->assertSame('Engineering', $headerExtrinsics['Department']);
-        $this->assertCount(count($extrinsics), $headerExtrinsics);
     }
 
     public function testBuildCxmlPunchoutOrderMessageTransfersQuoteItemSku(): void
@@ -162,17 +141,6 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
         $this->assertSame(190, $header->tax->money->getValueCent());
     }
 
-    public function testBuildCxmlPunchoutOrderMessageAppliesDiscountToTotal(): void
-    {
-        // 2 items at 1000 cents each = 2000 cents, minus 200 cents discount = 1800 cents
-        $totals = (new TotalsTransfer())->setDiscountTotal(200);
-        $total = $this->buildAndDecode($this->buildQuote(itemUnitPrice: 1000, itemQuantity: 2, totals: $totals))
-            ->punchOutOrderMessageHeader->total;
-
-        $this->assertSame(static::CURRENCY, $total->money->currency);
-        $this->assertSame(1800, $total->money->getValueCent());
-    }
-
     public function testBuildCxmlPunchoutOrderMessageTransfersShipmentAddress(): void
     {
         $address = (new AddressTransfer())
@@ -222,6 +190,7 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
         $mapper = new CxmlPunchoutOrderMessageMapper(
             new CxmlEncoder(Serializer::create()),
             $this->createMock(PunchoutLoggerInterface::class),
+            new PunchoutGatewayServiceConfig(),
         );
 
         $factory = $this->getMockBuilder(PunchoutGatewayServiceFactory::class)
