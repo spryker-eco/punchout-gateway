@@ -22,6 +22,7 @@ use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoderInterface;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceConfig;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
@@ -31,7 +32,8 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
 
     public function __construct(
         protected CxmlEncoderInterface $cxmlEncoder,
-        protected PunchoutLoggerInterface $punchoutLogger
+        protected PunchoutLoggerInterface $punchoutLogger,
+        protected PunchoutGatewayServiceConfig $config,
     ) {
     }
 
@@ -96,7 +98,7 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             $operation,
         );
 
-        $this->addItems($builder, $quoteTransfer);
+        $this->addItems($builder, $quoteTransfer, $punchoutSession->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields());
         $this->addShipTo($builder, $quoteTransfer);
         $this->addShippingCost($builder, $quoteTransfer);
         $this->addTax($builder, $quoteTransfer);
@@ -106,14 +108,35 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         return $punchoutOrderMessage;
     }
 
-    protected function addItems(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
+    /**
+     * @param array<string, string> $extrinsics
+     */
+    protected function addItems(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer, array $extrinsics): void
     {
+        $extrinsics = $this->filterExtrinsics($extrinsics);
+
         foreach ($quoteTransfer->getItems() as $item) {
-            $this->addItem($builder, $item);
+            $this->addItem($builder, $item, $extrinsics);
         }
     }
 
-    protected function addItem(PunchOutOrderMessageBuilder $builder, ItemTransfer $item): void
+    /**
+     * @param array<string, string> $extrinsics
+     *
+     * @return array<string, string>
+     */
+    protected function filterExtrinsics(array $extrinsics): array
+    {
+        return array_diff_key(
+            $extrinsics,
+            array_flip($this->config->getExtrinsicBlackList()),
+        );
+    }
+
+    /**
+     * @param array<string, string> $extrinsics
+     */
+    protected function addItem(PunchOutOrderMessageBuilder $builder, ItemTransfer $item, array $extrinsics = []): void
     {
         $itemId = new ItemId(
             (string)$item->getSku(),
@@ -128,6 +151,7 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             PunchoutGatewayConfig::DEFAULT_UNIT_OF_MEASURE,
             (int)$item->getUnitPrice(),
             [new Classification(static::CLASSIFICATION_UNIT_OF_MEASURE, '')],
+            extrinsics: $extrinsics ?: null,
         );
     }
 

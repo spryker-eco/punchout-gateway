@@ -65,4 +65,21 @@ interface PunchoutGatewayConfig
      * @uses \Spryker\Shared\Shipment\ShipmentConfig::SHIPMENT_EXPENSE_TYPE
      */
     public const string SHIPMENT_EXPENSE_TYPE = 'SHIPMENT_EXPENSE_TYPE';
+
+    /**
+     * @var array<string>
+     */
+    public const array EXTRINSIC_BLACKLIST = [
+        'User',
+        'UniqueUsername',
+        'UniqueName',
+        'UserId',
+        'UserEmail',
+        'UserFullName',
+        'UserPrintableName',
+        'FirstName',
+        'LastName',
+        'PhoneNumber',
+        'UserPhoneNumber',
+    ];
 }

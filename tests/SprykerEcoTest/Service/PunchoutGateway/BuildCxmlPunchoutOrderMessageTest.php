@@ -25,6 +25,7 @@ use Generated\Shared\Transfer\TotalsTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayService;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceConfig;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceFactory;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
@@ -189,6 +190,7 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
         $mapper = new CxmlPunchoutOrderMessageMapper(
             new CxmlEncoder(Serializer::create()),
             $this->createMock(PunchoutLoggerInterface::class),
+            new PunchoutGatewayServiceConfig(),
         );
 
         $factory = $this->getMockBuilder(PunchoutGatewayServiceFactory::class)
