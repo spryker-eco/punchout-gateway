@@ -11,6 +11,8 @@ namespace SprykerEco\Zed\PunchoutGateway;
 
 use Spryker\Zed\Kernel\AbstractBundleDependencyProvider;
 use Spryker\Zed\Kernel\Container;
+use SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultCxmlProcessorPlugin;
+use SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultOciProcessorPlugin;
 
 /**
  * @method \SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig getConfig()
@@ -38,6 +40,8 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     public const string FACADE_CART = 'FACADE_CART';
 
     public const string FACADE_TRANSLATOR = 'FACADE_TRANSLATOR';
+
+    public const string PLUGINS_PROCESSORS = 'PLUGINS_PROCESSORS';
 
     public function provideBusinessLayerDependencies(Container $container): Container
     {
@@ -71,6 +75,7 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
         $container = $this->addCustomerFacade($container);
         $container = $this->addUtilEncodingService($container);
         $container = $this->addTranslatorFacade($container);
+        $container = $this->addPunchoutProcessorPlugins($container);
 
         return $container;
     }
@@ -79,6 +84,15 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     {
         $container->set(static::PLUGINS_PUNCHOUT_SESSION_IN_QUOTE_EXPANDER, function (): array {
             return $this->getPunchoutSessionInQuoteExpanderPlugins();
+        });
+
+        return $container;
+    }
+
+    protected function addPunchoutProcessorPlugins(Container $container): Container
+    {
+        $container->set(static::PLUGINS_PROCESSORS, function (): array {
+            return $this->getPunchoutProcessorPlugins();
         });
 
         return $container;
@@ -180,5 +194,16 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     protected function getPunchoutSessionInQuoteExpanderPlugins(): array
     {
         return [];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function getPunchoutProcessorPlugins(): array
+    {
+        return [
+            'Default cXML' => DefaultCxmlProcessorPlugin::class,
+            'Default OCI' => DefaultOciProcessorPlugin::class,
+        ];
     }
 }

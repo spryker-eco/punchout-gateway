@@ -9,6 +9,7 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Table;
 
+use Orm\Zed\Customer\Persistence\Map\SpyCustomerTableMap;
 use Orm\Zed\PunchoutGateway\Persistence\Map\SpyPunchoutCredentialTableMap;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutCredentialQuery;
 use Spryker\Service\UtilText\Model\Url\Url;
@@ -24,6 +25,8 @@ class PunchoutCredentialTable extends AbstractTable
     protected const string COL_USERNAME = SpyPunchoutCredentialTableMap::COL_USERNAME;
 
     protected const string COL_IS_ACTIVE = SpyPunchoutCredentialTableMap::COL_IS_ACTIVE;
+
+    protected const string COL_CUSTOMER_NAME = 'customer_name';
 
     protected const string COL_ACTIONS = 'credential_actions';
 
@@ -43,6 +46,7 @@ class PunchoutCredentialTable extends AbstractTable
         $config->setHeader([
             static::COL_ID => 'ID',
             static::COL_USERNAME => 'Username',
+            static::COL_CUSTOMER_NAME => 'Customer Name',
             static::COL_IS_ACTIVE => 'Status',
             static::COL_ACTIONS => 'Actions',
         ]);
@@ -61,7 +65,12 @@ class PunchoutCredentialTable extends AbstractTable
     protected function prepareData(TableConfiguration $config): array
     {
         $query = SpyPunchoutCredentialQuery::create()
-            ->filterByFkPunchoutConnection($this->idPunchoutConnection);
+            ->filterByFkPunchoutConnection($this->idPunchoutConnection)
+            ->leftJoinWithSpyCustomer()
+            ->withColumn(
+                sprintf("CONCAT_WS(' ', %s, %s, %s)", SpyCustomerTableMap::COL_FIRST_NAME, SpyCustomerTableMap::COL_LAST_NAME, SpyCustomerTableMap::COL_EMAIL),
+                static::COL_CUSTOMER_NAME,
+            );
 
         $queryResults = $this->runQuery($query, $config);
 
@@ -71,6 +80,7 @@ class PunchoutCredentialTable extends AbstractTable
             $results[] = [
                 static::COL_ID => $row[SpyPunchoutCredentialTableMap::COL_ID_PUNCHOUT_CREDENTIAL],
                 static::COL_USERNAME => $row[SpyPunchoutCredentialTableMap::COL_USERNAME],
+                static::COL_CUSTOMER_NAME => $row[static::COL_CUSTOMER_NAME] ?? '',
                 static::COL_IS_ACTIVE => $row[SpyPunchoutCredentialTableMap::COL_IS_ACTIVE]
                     ? '<span class="label label-success">Active</span>'
                     : '<span class="label label-danger">Inactive</span>',
@@ -90,6 +100,14 @@ class PunchoutCredentialTable extends AbstractTable
 
         return implode('', [
             $this->generateButton(
+                Url::generate(PunchoutGatewayConfig::URL_CREDENTIAL_EDIT, [
+                    PunchoutGatewayConfig::PARAM_ID_CREDENTIAL => $idCredential,
+                    PunchoutGatewayConfig::PARAM_ID_CONNECTION => $this->idPunchoutConnection,
+                ])->build(),
+                'Edit',
+                [static::BUTTON_CLASS => 'btn-edit'],
+            ),
+            $this->generateButton(
                 Url::generate(PunchoutGatewayConfig::URL_CREDENTIAL_DELETE, [
                     PunchoutGatewayConfig::PARAM_ID_CREDENTIAL => $idCredential,
                     PunchoutGatewayConfig::PARAM_ID_CONNECTION => $this->idPunchoutConnection,
@@ -97,7 +115,10 @@ class PunchoutCredentialTable extends AbstractTable
                 'Delete',
                 [
                     'class' => 'btn-danger',
-                    'onclick' => 'return confirm("Are you sure you want to proceed?")',
+                    'onclick' => sprintf(
+                        'return confirm("%s")',
+                        $this->getTranslator()->trans('Are you sure you want to proceed?'),
+                    ),
                 ],
             ),
             $this->createActivateButton($row),

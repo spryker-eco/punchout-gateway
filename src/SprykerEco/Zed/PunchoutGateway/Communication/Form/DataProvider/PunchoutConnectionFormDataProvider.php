@@ -17,8 +17,13 @@ use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutCxmlConfigurationF
 
 class PunchoutConnectionFormDataProvider
 {
-    public function __construct(protected StoreFacadeInterface $storeFacade)
-    {
+    /**
+     * @param array<string, string> $processorPlugins
+     */
+    public function __construct(
+        protected StoreFacadeInterface $storeFacade,
+        protected array $processorPlugins
+    ) {
     }
 
     /**
@@ -31,9 +36,22 @@ class PunchoutConnectionFormDataProvider
         }
 
         $punchoutConnectionTransfer = clone $punchoutConnectionTransfer;
-        $punchoutConnectionTransfer->getCxmlConfiguration()?->setSenderSharedSecret('');
 
-        return $punchoutConnectionTransfer->toArray(true, true);
+        $data = $punchoutConnectionTransfer->toArray(true, true);
+
+        if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
+            $punchoutConnectionTransfer->getCxmlConfiguration()?->setSenderSharedSecret('');
+        }
+
+        if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+            $data[PunchoutConnectionTransfer::REQUEST_URL] = str_replace(
+                PunchoutGatewayConfig::OCI_URL_PREFIX,
+                '',
+                $data[PunchoutConnectionTransfer::REQUEST_URL],
+            );
+        }
+
+        return $data;
     }
 
     /**
@@ -41,11 +59,22 @@ class PunchoutConnectionFormDataProvider
      */
     public function getOptions(?PunchoutConnectionTransfer $punchoutConnectionTransfer = null): array
     {
+        $choices = [];
+        $typeMap = [];
+
+        foreach ($this->processorPlugins as $title => $plugin) {
+            $fqcn = $plugin;
+            $choices[$title] = $fqcn;
+            $typeMap[$fqcn] = (new $plugin())->getType();
+        }
+
         return [
+            PunchoutConnectionFormType::OPTION_PROCESSOR_PLUGINS_CHOICES => $choices,
+            PunchoutConnectionFormType::OPTION_PROCESSOR_PLUGINS_TYPE_MAP => $typeMap,
             PunchoutConnectionFormType::OPTION_STORE_CHOICES => $this->getStoreChoices(),
             PunchoutConnectionFormType::OPTION_PROTOCOL_TYPE_CHOICES => [
-                'cXML' => PunchoutGatewayConfig::PROTOCOL_TYPE_CXML,
-                'OCI' => PunchoutGatewayConfig::PROTOCOL_TYPE_OCI,
+                'Choice cXML' => PunchoutGatewayConfig::PROTOCOL_TYPE_CXML,
+                'Choice OCI' => PunchoutGatewayConfig::PROTOCOL_TYPE_OCI,
             ],
             PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => $punchoutConnectionTransfer?->getIdPunchoutConnection() === null,
             PunchoutConnectionFormType::OPTION_ID_PUNCHOUT_CONNECTION => $punchoutConnectionTransfer?->getIdPunchoutConnection(),

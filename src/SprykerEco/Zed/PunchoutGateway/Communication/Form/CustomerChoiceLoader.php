@@ -18,13 +18,30 @@ use Symfony\Component\Form\ChoiceList\Loader\ChoiceLoaderInterface;
 
 class CustomerChoiceLoader implements ChoiceLoaderInterface
 {
-    public function __construct(protected readonly CustomerFacadeInterface $customerFacade)
-    {
+    public function __construct(
+        protected readonly CustomerFacadeInterface $customerFacade,
+        protected readonly ?int $preselectedIdCustomer = null,
+    ) {
     }
 
     public function loadChoiceList(?callable $value = null): ChoiceListInterface
     {
-        return new ArrayChoiceList([], $value);
+        if ($this->preselectedIdCustomer === null) {
+            return new ArrayChoiceList([], $value);
+        }
+
+        $collection = $this->customerFacade->getCustomerCollectionByCriteria(
+            (new CustomerCriteriaFilterTransfer())->setCustomerIds([$this->preselectedIdCustomer]),
+        );
+
+        $choices = [];
+
+        foreach ($collection->getCustomers() as $customerTransfer) {
+            $label = sprintf('%s (%s %s)', $customerTransfer->getEmail(), $customerTransfer->getFirstName(), $customerTransfer->getLastName());
+            $choices[$label] = $customerTransfer->getIdCustomerOrFail();
+        }
+
+        return new ArrayChoiceList($choices, $value);
     }
 
     /**

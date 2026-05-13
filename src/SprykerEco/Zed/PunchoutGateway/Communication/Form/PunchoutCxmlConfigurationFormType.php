@@ -10,6 +10,7 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Form;
 
 use Spryker\Zed\Kernel\Communication\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormError;
@@ -38,11 +39,16 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $this->addSenderIdentityField($builder, $options[static::OPTION_IS_CXML])
-            ->addSenderSharedSecretField($builder, $options[static::OPTION_IS_CXML], $options[static::OPTION_IS_CREATE]);
+        $this->addSenderIdentityField($builder, $options[static::OPTION_IS_CXML], $options[static::OPTION_IS_CREATE])
+            ->addSenderSharedSecretField($builder, $options[static::OPTION_IS_CREATE]);
 
         $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($options) {
-            $this->validateSenderIdentityUniqueness($event, $options[static::OPTION_IS_CXML], $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+            if (!$options[static::OPTION_IS_CXML]) {
+                return;
+            }
+
+            $this->validateSenderIdentityUniqueness($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+            $this->validateSharedSecret($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
         });
     }
 
@@ -55,15 +61,15 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
         ]);
     }
 
-    protected function addSenderIdentityField(FormBuilderInterface $builder, bool $isCxml): static
+    protected function addSenderIdentityField(FormBuilderInterface $builder, bool $isCxml, bool $isCreate): static
     {
         $options = [
             'label' => 'Sender Identity',
-            'required' => $isCxml,
+            'required' => $isCxml || !$isCreate,
             'attr' => ['placeholder' => 'e.g. MyCompanyDomain'],
         ];
 
-        if ($isCxml) {
+        if ($isCxml || !$isCreate) {
             $options['constraints'] = [new NotBlank()];
         }
 
@@ -72,12 +78,19 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
         return $this;
     }
 
-    protected function validateSenderIdentityUniqueness(FormEvent $event, bool $isCxml, ?int $excludeId): void
+    protected function validateSharedSecret(FormEvent $event, ?int $excludeId): void
     {
-        if (!$isCxml) {
-            return;
-        }
+        $sharedSecret = $event->getForm()->get(static::FIELD_SENDER_SHARED_SECRET)->getData();
 
+        if (!$sharedSecret && !$excludeId) {
+            $event->getForm()
+                ->get(static::FIELD_SENDER_SHARED_SECRET)
+                ->addError(new FormError('Shared Secret is mandatory for a cXML connection.'));
+        }
+    }
+
+    protected function validateSenderIdentityUniqueness(FormEvent $event, ?int $excludeId): void
+    {
         $senderIdentity = $event->getForm()->get(static::FIELD_SENDER_IDENTITY)->getData();
 
         if (!$senderIdentity) {
@@ -95,28 +108,22 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
             ->addError(new FormError('A cXML connection with this Sender Identity already exists.'));
     }
 
-    protected function addSenderSharedSecretField(FormBuilderInterface $builder, bool $isCxml, bool $isCreate): static
+    protected function addSenderSharedSecretField(FormBuilderInterface $builder, bool $isCreate): static
     {
-        $isMandatory = $isCxml && $isCreate;
-
         $options = [
             'label' => 'Sender Shared Secret',
-            'required' => $isMandatory,
+            'required' => false,
             'attr' => [
-                'placeholder' => $isMandatory ? '' : 'Leave blank to keep current secret',
+                'placeholder' => $isCreate ? '' : 'Leave blank to keep current secret',
                 'autocomplete' => 'new-password',
             ],
         ];
 
-        if (!$isMandatory) {
+        if (!$isCreate) {
             $options['help'] = 'Leave blank to keep the current secret.';
         }
 
-        if ($isMandatory) {
-            $options['constraints'] = [new NotBlank()];
-        }
-
-        $builder->add(static::FIELD_SENDER_SHARED_SECRET, TextType::class, $options);
+        $builder->add(static::FIELD_SENDER_SHARED_SECRET, PasswordType::class, $options);
 
         return $this;
     }

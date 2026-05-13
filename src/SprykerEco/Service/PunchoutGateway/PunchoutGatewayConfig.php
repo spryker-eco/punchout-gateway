@@ -8,9 +8,9 @@
 namespace SprykerEco\Service\PunchoutGateway;
 
 use Spryker\Service\Kernel\AbstractBundleConfig;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
 
-class PunchoutGatewayServiceConfig extends AbstractBundleConfig
+class PunchoutGatewayConfig extends AbstractBundleConfig
 {
     /**
      * @api
@@ -19,6 +19,6 @@ class PunchoutGatewayServiceConfig extends AbstractBundleConfig
      */
     public function getExtrinsicBlackList(): array
     {
-        return PunchoutGatewayConfig::EXTRINSIC_BLACKLIST;
+        return SharedPunchoutGatewayConfig::EXTRINSIC_BLACKLIST;
     }
 }

@@ -37,6 +37,13 @@
                     {{ form_help(punchoutConnectionForm.protocolType) }}
                 </div>
 
+                <div class="form-group">
+                    {{ form_label(punchoutConnectionForm.processorPluginClass) }}
+                    {{ form_widget(punchoutConnectionForm.processorPluginClass) }}
+                    {{ form_errors(punchoutConnectionForm.processorPluginClass) }}
+                    {{ form_help(punchoutConnectionForm.processorPluginClass) }}
+                </div>
+
                 <div id="cxml-config-section" style="display:none;">
                     <h4>{{ 'cXML Configuration' | trans }}</h4>
                     {% if punchoutConnectionForm.cxmlConfiguration is defined %}
@@ -57,12 +64,20 @@
 
                 <div id="oci-config-section" style="display:none;">
                     <h4>{{ 'OCI Configuration' | trans }}</h4>
-                    <div class="form-group {% if punchoutConnectionForm.requestUrl.errors|length > 0 %}has-error{% endif %}">
+                    <div class="form-group {% if punchoutConnectionForm.requestUrl.vars.errors|length > 0 %}has-error{% endif %}">
                         {{ form_label(punchoutConnectionForm.requestUrl) }}
-                        {{ form_widget(punchoutConnectionForm.requestUrl) }}
+
+                        <div class="input-group m-b">
+                            <span class="input-group-addon">
+                                {{ requestUrlPrefix }}
+                            </span>
+                            {{ form_widget(punchoutConnectionForm.requestUrl) }}
+                        </div>
+
                         {{ form_errors(punchoutConnectionForm.requestUrl) }}
-                        {{ form_help(punchoutConnectionForm.requestUrl) }}
                     </div>
+
+
                     {% if punchoutConnectionForm.ociConfiguration is defined %}
                         <div class="form-group">
                             {{ form_label(punchoutConnectionForm.ociConfiguration.formMethod) }}
@@ -83,13 +98,6 @@
                             {{ form_help(punchoutConnectionForm.ociConfiguration.passwordField) }}
                         </div>
                     {% endif %}
-                </div>
-
-                <div class="form-group">
-                    {{ form_label(punchoutConnectionForm.processorPluginClass) }}
-                    {{ form_widget(punchoutConnectionForm.processorPluginClass) }}
-                    {{ form_errors(punchoutConnectionForm.processorPluginClass) }}
-                    {{ form_help(punchoutConnectionForm.processorPluginClass) }}
                 </div>
 
                 <div class="form-group">
@@ -121,11 +129,32 @@
             var sel = document.getElementById('punchout_connection_form_protocolType');
             var cxmlSection = document.getElementById('cxml-config-section');
             var ociSection = document.getElementById('oci-config-section');
+            var pluginSel = document.getElementById('punchout_connection_form_processorPluginClass');
+
+            function updatePluginFilter() {
+                if (!pluginSel) return;
+
+                var type = sel ? sel.value : '';
+                var currentValue = pluginSel.value;
+                var hasMatch = false;
+
+                for (var i = 0; i < pluginSel.options.length; i++) {
+                    var opt = pluginSel.options[i];
+                    var optType = opt.getAttribute('data-protocol-type') || '';
+                    var visible = optType === '' || optType === type;
+                    opt.hidden = !visible;
+                    opt.disabled = !visible;
+                    if (visible && opt.value === currentValue) hasMatch = true;
+                }
+
+                if (!hasMatch) pluginSel.value = '';
+            }
 
             function updateVisibility() {
                 var val = sel ? sel.value : '';
                 if (cxmlSection) cxmlSection.style.display = (val === 'cxml') ? '' : 'none';
                 if (ociSection) ociSection.style.display = (val === 'oci') ? '' : 'none';
+                updatePluginFilter();
             }
 
             if (sel) {

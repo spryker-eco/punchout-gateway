@@ -14,6 +14,7 @@ use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Exception\RuntimeException;
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
 use Spryker\Zed\Kernel\Exception\Controller\InvalidIdException;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -75,6 +76,7 @@ class EditController extends AbstractController
             'credentialForm' => $credentialForm->createView(),
             'credentialTable' => $credentialTable->render(),
             'idPunchoutConnection' => $idPunchoutConnection,
+            'requestUrlPrefix' => PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX,
         ]);
     }
 
@@ -112,6 +114,7 @@ class EditController extends AbstractController
         $formData[PunchoutConnectionTransfer::ID_PUNCHOUT_CONNECTION] = $idPunchoutConnection;
 
         $punchoutConnectionTransfer = (new PunchoutConnectionTransfer())->fromArray($formData, true);
+        $punchoutConnectionTransfer->setRequestUrl(PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX . $punchoutConnectionTransfer->getRequestUrl());
 
         try {
             $this->getFacade()->updatePunchoutConnection($punchoutConnectionTransfer);

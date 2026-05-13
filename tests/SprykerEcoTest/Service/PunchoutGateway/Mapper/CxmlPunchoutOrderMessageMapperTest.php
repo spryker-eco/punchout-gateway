@@ -21,7 +21,7 @@ use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
-use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceConfig;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 use SprykerEcoTest\Service\PunchoutGateway\PunchoutGatewayServiceTester;
@@ -152,7 +152,7 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
     /**
      * @return array<string, string>
      */
-    private function decodeFirstItemExtrinsics(string $xml): array
+    protected function decodeFirstItemExtrinsics(string $xml): array
     {
         $cxml = Serializer::create()->deserialize($xml);
 
@@ -166,7 +166,7 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
     /**
      * @return array<int, array<string, string>>
      */
-    private function decodeAllItemExtrinsics(string $xml): array
+    protected function decodeAllItemExtrinsics(string $xml): array
     {
         $cxml = Serializer::create()->deserialize($xml);
 
@@ -182,19 +182,19 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
         return $result;
     }
 
-    private function createMapper(?PunchoutLoggerInterface $logger = null): CxmlPunchoutOrderMessageMapper
+    protected function createMapper(?PunchoutLoggerInterface $logger = null): CxmlPunchoutOrderMessageMapper
     {
         return new CxmlPunchoutOrderMessageMapper(
             new CxmlEncoder(Serializer::create()),
             $logger ?? new PunchoutLogger(),
-            new PunchoutGatewayServiceConfig(),
+            new PunchoutGatewayConfig(),
         );
     }
 
     /**
      * @param array<string, string> $extrinsics
      */
-    private function buildCxmlSetupRequest(array $extrinsics): PunchoutCxmlSetupRequestTransfer
+    protected function buildCxmlSetupRequest(array $extrinsics): PunchoutCxmlSetupRequestTransfer
     {
         return (new PunchoutCxmlSetupRequestTransfer())
             ->setFromIdentity(static::FROM_IDENTITY)
@@ -203,7 +203,7 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
             ->setExtrinsicFields($extrinsics);
     }
 
-    private function buildSession(PunchoutCxmlSetupRequestTransfer $cxmlSetupRequest): PunchoutSessionTransfer
+    protected function buildSession(PunchoutCxmlSetupRequestTransfer $cxmlSetupRequest): PunchoutSessionTransfer
     {
         return (new PunchoutSessionTransfer())
             ->setBuyerCookie(static::BUYER_COOKIE)
@@ -211,7 +211,7 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
             ->setPunchoutData((new PunchoutSessionDataTransfer())->setCxmlSetupRequest($cxmlSetupRequest));
     }
 
-    private function buildQuote(PunchoutCxmlSetupRequestTransfer $cxmlSetupRequest): QuoteTransfer
+    protected function buildQuote(PunchoutCxmlSetupRequestTransfer $cxmlSetupRequest): QuoteTransfer
     {
         return (new QuoteTransfer())
             ->setCurrency((new CurrencyTransfer())->setCode('EUR'))

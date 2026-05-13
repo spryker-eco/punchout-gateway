@@ -53,6 +53,10 @@
                             <th>{{ 'Sender Identity' | trans }}</th>
                             <td>{{ punchoutConnection.cxmlConfiguration.senderIdentity }}</td>
                         </tr>
+                        <tr>
+                            <th>{{ 'Setup Request URL' | trans }}</th>
+                            <td>{{ punchoutConnection.requestUrl }}</td>
+                        </tr>
                     {% endif %}
 
                     {% if punchoutConnection.protocolType === 'oci' %}

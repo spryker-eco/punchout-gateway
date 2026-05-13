@@ -100,4 +100,10 @@ interface PunchoutGatewayConfig
     public const string CONFIGURATION_KEY_USERNAME_FIELD = 'usernameField';
 
     public const string CONFIGURATION_KEY_PASSWORD_FIELD = 'passwordField';
+
+    public const string CONFIGURATION_KEY_ENABLE_LOGGING = 'punchout_gateway:general:logging:enable_logging';
+
+    public const string CONFIGURATION_KEY_CXML_SESSION_START_URL_VALIDITY_IN_SECONDS = 'punchout_gateway:cxml:session:start_url_validity_in_seconds';
+
+    public const string CONFIGURATION_KEY_CXML_SESSION_TOKEN_LENGTH = 'punchout_gateway:cxml:session:token_length';
 }

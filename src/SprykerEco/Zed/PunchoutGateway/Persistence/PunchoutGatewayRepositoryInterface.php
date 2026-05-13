@@ -35,8 +35,6 @@ interface PunchoutGatewayRepositoryInterface
 
     public function findActiveCredentialByUsernameAndConnection(string $username, int $idPunchoutConnection): ?PunchoutCredentialTransfer;
 
-    public function findActiveOciConnectionByRequestUrl(string $requestUrl): ?PunchoutConnectionTransfer;
-
     public function findValidPunchoutSessionByToken(string $sessionToken): ?PunchoutSessionTransfer;
 
     public function findPunchoutSessionByToken(string $sessionToken): ?PunchoutSessionTransfer;

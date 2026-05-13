@@ -172,6 +172,8 @@
         <property name="protocolType" type="string"/>
         <property name="isActive" type="bool"/>
         <property name="searchTerm" type="string"/>
+        <property name="requestUrl" type="string"/>
+        <property name="notIdConnections" type="int[]" singular="notIdConnection"/>
         <property name="pagination" type="Pagination"/>
     </transfer>
 
@@ -188,6 +190,8 @@
 
     <transfer name="PunchoutCredentialCriteria" strict="true">
         <property name="idPunchoutConnection" type="int"/>
+        <property name="username" type="string"/>
+        <property name="notIdPunchoutConnections" type="int[]" singular="notIdPunchoutConnection"/>
         <property name="pagination" type="Pagination"/>
     </transfer>
 

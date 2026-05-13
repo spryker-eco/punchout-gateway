@@ -335,49 +335,51 @@ class PunchoutGatewayServiceTest extends Unit
         $this->assertInstanceOf(DateTimeInterface::class, $decoded->timestamp);
     }
 
-    // Helpers
-
-    private function createService(): PunchoutGatewayService
+    protected function createService(): PunchoutGatewayService
     {
         $service = $this->getMockBuilder(PunchoutGatewayService::class)
             ->onlyMethods(['getFactory'])
             ->getMock();
+
         $service->method('getFactory')->willReturn(new PunchoutGatewayServiceFactory());
 
         return $service;
     }
 
-    private function createServiceWithFactory(PunchoutGatewayServiceFactory $factory): PunchoutGatewayService
+    protected function createServiceWithFactory(PunchoutGatewayServiceFactory $factory): PunchoutGatewayService
     {
         $service = $this->getMockBuilder(PunchoutGatewayService::class)
             ->onlyMethods(['getFactory'])
             ->getMock();
+
         $service->method('getFactory')->willReturn($factory);
 
         return $service;
     }
 
-    private function createFactoryMockWithEncoder(CxmlEncoderInterface $encoder): PunchoutGatewayServiceFactory
+    protected function createFactoryMockWithEncoder(CxmlEncoderInterface $encoder): PunchoutGatewayServiceFactory
     {
         $factory = $this->getMockBuilder(PunchoutGatewayServiceFactory::class)
             ->onlyMethods(['createCxmlEncoder'])
             ->getMock();
+
         $factory->method('createCxmlEncoder')->willReturn($encoder);
 
         return $factory;
     }
 
-    private function createFactoryMockWithBuilder(CxmlBuilderInterface $builder): PunchoutGatewayServiceFactory
+    protected function createFactoryMockWithBuilder(CxmlBuilderInterface $builder): PunchoutGatewayServiceFactory
     {
         $factory = $this->getMockBuilder(PunchoutGatewayServiceFactory::class)
             ->onlyMethods(['createCxmlBuilder'])
             ->getMock();
+
         $factory->method('createCxmlBuilder')->willReturn($builder);
 
         return $factory;
     }
 
-    private function buildMinimalResponseXml(string $payloadId, string $timestamp, int $code, string $text): string
+    protected function buildMinimalResponseXml(string $payloadId, string $timestamp, int $code, string $text): string
     {
         return sprintf(
             '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE cXML SYSTEM "%s"><cXML payloadID="%s" timestamp="%s"><Response><Status code="%d" text="%s"/></Response></cXML>',
@@ -389,7 +391,7 @@ class PunchoutGatewayServiceTest extends Unit
         );
     }
 
-    private function buildRequestWithHeaderXml(): string
+    protected function buildRequestWithHeaderXml(): string
     {
         return <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>

@@ -24,14 +24,6 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class CredentialController extends AbstractController
 {
-    public function credentialTableAction(Request $request): JsonResponse
-    {
-        $idPunchoutConnection = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CONNECTION));
-        $table = $this->getFactory()->createPunchoutCredentialTable($idPunchoutConnection);
-
-        return $this->jsonResponse($table->fetchData());
-    }
-
     public function toggleIsActiveAction(Request $request): RedirectResponse
     {
         $idPunchoutCredential = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CREDENTIAL));
@@ -60,6 +52,43 @@ class CredentialController extends AbstractController
     /**
      * @return \Symfony\Component\HttpFoundation\RedirectResponse|array<string, mixed>
      */
+    public function editCredentialAction(Request $request): array|RedirectResponse
+    {
+        $idPunchoutCredential = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CREDENTIAL));
+        $idPunchoutConnection = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CONNECTION));
+
+        $punchoutCredentialTransfer = $this->getFacade()->findPunchoutCredentialById($idPunchoutCredential);
+
+        if ($punchoutCredentialTransfer === null) {
+            $this->addErrorMessage('Punchout credential with ID %id not found.', ['%id' => $idPunchoutCredential]);
+
+            return $this->redirectResponse(
+                sprintf('%s?%s=%d', PunchoutGatewayConfig::URL_EDIT, PunchoutGatewayConfig::PARAM_ID_CONNECTION, $idPunchoutConnection),
+            );
+        }
+
+        $dataProvider = $this->getFactory()->createPunchoutCredentialFormDataProvider();
+        $form = $this->getFactory()->createPunchoutCredentialForm(
+            $dataProvider->getData($punchoutCredentialTransfer),
+            $dataProvider->getOptions(true, $punchoutCredentialTransfer->getIdCustomer(), $idPunchoutConnection, $idPunchoutCredential),
+        );
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            return $this->executeEditCredentialAction($punchoutCredentialTransfer, $idPunchoutConnection, $form->getData());
+        }
+
+        return $this->viewResponse([
+            'credentialForm' => $form->createView(),
+            'idPunchoutConnection' => $idPunchoutConnection,
+            'idPunchoutCredential' => $idPunchoutCredential,
+        ]);
+    }
+
+    /**
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse|array<string, mixed>
+     */
     public function addCredentialAction(Request $request): array|RedirectResponse
     {
         $idPunchoutConnection = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CONNECTION));
@@ -67,7 +96,7 @@ class CredentialController extends AbstractController
         $dataProvider = $this->getFactory()->createPunchoutCredentialFormDataProvider();
         $form = $this->getFactory()->createPunchoutCredentialForm(
             $dataProvider->getData(),
-            $dataProvider->getOptions(),
+            $dataProvider->getOptions(idPunchoutConnection: $idPunchoutConnection),
         );
 
         $form->handleRequest($request);
@@ -118,6 +147,30 @@ class CredentialController extends AbstractController
 
         $this->getFacade()->createPunchoutCredential($punchoutCredentialTransfer);
         $this->addSuccessMessage('Credential was added.');
+
+        return $this->redirectResponse($redirectUrl);
+    }
+
+    /**
+     * @param array<string, mixed> $formData
+     */
+    protected function executeEditCredentialAction(
+        PunchoutCredentialTransfer $punchoutCredentialTransfer,
+        int $idPunchoutConnection,
+        array $formData,
+    ): RedirectResponse {
+        $redirectUrl = sprintf('%s?%s=%d', PunchoutGatewayConfig::URL_CONNECTION, PunchoutGatewayConfig::PARAM_ID_CONNECTION, $idPunchoutConnection);
+
+        $password = $formData[PunchoutCredentialFormType::FIELD_PASSWORD] ?? null;
+
+        $punchoutCredentialTransfer->fromArray($formData, true);
+
+        if ($password !== null && $password !== '') {
+            $punchoutCredentialTransfer->setPasswordHash(password_hash($password, PASSWORD_DEFAULT));
+        }
+
+        $this->getFacade()->updatePunchoutCredential($punchoutCredentialTransfer);
+        $this->addSuccessMessage('Credential was updated.');
 
         return $this->redirectResponse($redirectUrl);
     }
