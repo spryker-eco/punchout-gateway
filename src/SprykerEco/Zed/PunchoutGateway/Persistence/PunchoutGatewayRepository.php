@@ -51,6 +51,14 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
             $query->filterByName('%' . $criteriaTransfer->getSearchTerm() . '%', Criteria::LIKE);
         }
 
+        if ($criteriaTransfer->getRequestUrl() !== null) {
+            $query->filterByRequestUrl($criteriaTransfer->getRequestUrl());
+        }
+
+        if (array_filter($criteriaTransfer->getNotIdConnections())) {
+            $query->filterByIdPunchoutConnection(array_filter($criteriaTransfer->getNotIdConnections()), Criteria::NOT_IN);
+        }
+
         $paginationTransfer = $criteriaTransfer->getPagination();
 
         if ($paginationTransfer !== null && $paginationTransfer->getLimit() !== null) {
@@ -93,9 +101,19 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
     {
         $collectionTransfer = new PunchoutCredentialCollectionTransfer();
 
-        $query = $this->getFactory()
-            ->createSpyPunchoutCredentialQuery()
-            ->filterByFkPunchoutConnection($criteriaTransfer->getIdPunchoutConnectionOrFail());
+        $query = $this->getFactory()->createSpyPunchoutCredentialQuery();
+
+        if ($criteriaTransfer->getIdPunchoutConnection()) {
+            $query->filterByFkPunchoutConnection($criteriaTransfer->getIdPunchoutConnection());
+        }
+
+        if ($criteriaTransfer->getUsername()) {
+            $query->filterByUsername($criteriaTransfer->getUsername());
+        }
+
+        if ($criteriaTransfer->getNotIdPunchoutCredentials()) {
+            $query->filterByIdPunchoutCredential(array_filter($criteriaTransfer->getNotIdPunchoutCredentials()), Criteria::NOT_IN);
+        }
 
         $paginationTransfer = $criteriaTransfer->getPagination();
 
@@ -140,25 +158,6 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
             ->createSpyPunchoutConnectionQuery()
             ->filterBySenderIdentity($senderIdentity)
             ->filterByProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_CXML)
-            ->joinWithSpyStore()
-            ->findOne();
-
-        if ($punchoutConnectionEntity === null) {
-            return null;
-        }
-
-        return $this->getFactory()
-            ->createPunchoutConnectionMapper()
-            ->mapPunchoutConnectionEntityToTransfer($punchoutConnectionEntity, new PunchoutConnectionTransfer());
-    }
-
-    public function findActiveOciConnectionByRequestUrl(string $requestUrl): ?PunchoutConnectionTransfer
-    {
-        $punchoutConnectionEntity = $this->getFactory()
-            ->createSpyPunchoutConnectionQuery()
-            ->filterByRequestUrl($requestUrl)
-            ->filterByProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_OCI)
-            ->filterByIsActive(true)
             ->joinWithSpyStore()
             ->findOne();
 

@@ -17,7 +17,6 @@ use Spryker\Zed\Translator\Business\TranslatorFacadeInterface;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\CustomerChoiceLoader;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataProvider\PunchoutConnectionFormDataProvider;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataProvider\PunchoutCredentialFormDataProvider;
-use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutConnectionDeleteForm;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutConnectionFormType;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutCredentialFormType;
 use SprykerEco\Zed\PunchoutGateway\Communication\Table\PunchoutConnectionTable;
@@ -62,7 +61,10 @@ class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
 
     public function createPunchoutConnectionFormDataProvider(): PunchoutConnectionFormDataProvider
     {
-        return new PunchoutConnectionFormDataProvider($this->getStoreFacade());
+        return new PunchoutConnectionFormDataProvider(
+            $this->getStoreFacade(),
+            $this->getProcessorPlugins(),
+        );
     }
 
     public function createPunchoutCredentialFormDataProvider(): PunchoutCredentialFormDataProvider
@@ -79,11 +81,6 @@ class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
         return $this->getFormFactory()->create(PunchoutConnectionFormType::class, $data, $options);
     }
 
-    public function createPunchoutConnectionDeleteForm(): FormInterface
-    {
-        return $this->getFormFactory()->create(PunchoutConnectionDeleteForm::class);
-    }
-
     /**
      * @param array<string, mixed>|null $data
      * @param array<string, mixed> $options
@@ -93,9 +90,9 @@ class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
         return $this->getFormFactory()->create(PunchoutCredentialFormType::class, $data, $options);
     }
 
-    public function createCustomerChoiceLoader(): CustomerChoiceLoader
+    public function createCustomerChoiceLoader(?int $preselectedIdCustomer = null): CustomerChoiceLoader
     {
-        return new CustomerChoiceLoader($this->getCustomerFacade());
+        return new CustomerChoiceLoader($this->getCustomerFacade(), $preselectedIdCustomer);
     }
 
     public function getStoreFacade(): StoreFacadeInterface
@@ -116,5 +113,13 @@ class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
     public function getTranslatorFacade(): TranslatorFacadeInterface
     {
         return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_TRANSLATOR);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getProcessorPlugins(): array
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::PLUGINS_PROCESSORS);
     }
 }

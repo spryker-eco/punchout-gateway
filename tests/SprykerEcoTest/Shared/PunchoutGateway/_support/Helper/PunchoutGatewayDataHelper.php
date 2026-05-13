@@ -43,7 +43,7 @@ class PunchoutGatewayDataHelper extends Module
         $entity->setName($seed['name'] ?? sprintf('TestConnection_%s', uniqid()));
         $entity->setIsActive($seed['is_active'] ?? true);
         $entity->setProtocolType($seed['protocol_type'] ?? 'cxml');
-        $entity->setRequestUrl($seed['request_url'] ?? 'https://test.local/punchout');
+        $entity->setRequestUrl($seed['request_url'] ?? null);
         $entity->setSenderIdentity($senderIdentity);
         $entity->setConfiguration($configuration);
         $entity->setProcessorPluginClass($seed['processor_plugin_class'] ?? DefaultCxmlProcessorPlugin::class);

@@ -11,6 +11,7 @@ namespace SprykerEco\Zed\PunchoutGateway;
 
 use Spryker\Shared\Application\ApplicationConstants;
 use Spryker\Zed\Kernel\AbstractBundleConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 
 class PunchoutGatewayConfig extends AbstractBundleConfig
@@ -35,6 +36,8 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
 
     public const string URL_CREDENTIAL_TABLE = '/punchout-gateway/credential/table';
 
+    public const string URL_CREDENTIAL_EDIT = '/punchout-gateway/credential/edit-credential';
+
     public const string URL_CREDENTIAL_DELETE = '/punchout-gateway/credential/delete-credential';
 
     public const string URL_CREDENTIAL_TOGGLE_IS_ACTIVE = '/punchout-gateway/credential/toggle-is-active';
@@ -54,7 +57,10 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
      */
     public function isLoggingEnabled(): bool
     {
-        return (bool)$this->get(PunchoutGatewayConstants::ENABLE_LOGGING, false);
+        return (bool)$this->getModuleConfig(
+            PunchoutGatewayPunchoutGatewayConfig::CONFIGURATION_KEY_ENABLE_LOGGING,
+            $this->get(PunchoutGatewayConstants::ENABLE_LOGGING, false),
+        );
     }
 
     /**
@@ -62,7 +68,10 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
      */
     public function getCxmlSessionStartUrlValidityInSeconds(): int
     {
-        return 10 * 60;
+        return (int)$this->getModuleConfig(
+            PunchoutGatewayPunchoutGatewayConfig::CONFIGURATION_KEY_CXML_SESSION_START_URL_VALIDITY_IN_SECONDS,
+            10 * 60,
+        );
     }
 
     /**
@@ -78,6 +87,9 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
      */
     public function getCxmlSessionTokenLength(): int
     {
-        return 32;
+        return (int)$this->getModuleConfig(
+            PunchoutGatewayPunchoutGatewayConfig::CONFIGURATION_KEY_CXML_SESSION_TOKEN_LENGTH,
+            32,
+        );
     }
 }

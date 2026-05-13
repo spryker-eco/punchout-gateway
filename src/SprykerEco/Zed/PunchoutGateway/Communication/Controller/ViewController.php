@@ -10,6 +10,7 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Controller;
 
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -40,6 +41,12 @@ class ViewController extends AbstractController
         $data = [
             'punchoutConnection' => $punchoutConnectionTransfer,
         ];
+
+        if ($punchoutConnectionTransfer->getProtocolType() === SharedPunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
+            $punchoutConnectionTransfer->setRequestUrl(
+                $this->getFactory()->getConfig()->getBaseUrlYves() . PunchoutGatewayPunchoutGatewayConfig::CXML_SETUP_PREFIX,
+            );
+        }
 
         if ($punchoutConnectionTransfer->getProtocolType() === SharedPunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
             $punchoutConnectionTransfer->setRequestUrl(

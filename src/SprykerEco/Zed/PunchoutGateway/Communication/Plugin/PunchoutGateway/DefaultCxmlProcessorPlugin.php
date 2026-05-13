@@ -18,6 +18,7 @@ use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSetupResponseTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Spryker\Zed\Kernel\Communication\AbstractPlugin;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPluginInterface;
 
 /**
@@ -30,13 +31,23 @@ use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPlugin
  */
 class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlProcessorPluginInterface
 {
-/**
- * {@inheritDoc}
- * - Extracts sender identity, shared secret, buyer cookie, items,
- *   contact, shipping address, extrinsics, and other protocol fields.
- *
- * @api
- */
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function getType(): string
+    {
+        return PunchoutGatewayConfig::PROTOCOL_TYPE_CXML;
+    }
+
+    /**
+     * {@inheritDoc}
+     * - Extracts sender identity, shared secret, buyer cookie, items,
+     *   contact, shipping address, extrinsics, and other protocol fields.
+     *
+     * @api
+     */
     public function parseCxmlRequest(
         PunchoutCxmlSetupRequestTransfer $cxmlSetupRequestTransfer,
         CXml $cxml,

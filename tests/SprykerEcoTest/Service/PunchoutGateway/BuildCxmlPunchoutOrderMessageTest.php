@@ -11,7 +11,6 @@ namespace SprykerEcoTest\Service\PunchoutGateway;
 
 use Codeception\Test\Unit;
 use CXml\Model\Message\PunchOutOrderMessage;
-use CXml\Serializer;
 use Generated\Shared\Transfer\AddressTransfer;
 use Generated\Shared\Transfer\CurrencyTransfer;
 use Generated\Shared\Transfer\ExpenseTransfer;
@@ -22,13 +21,9 @@ use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Generated\Shared\Transfer\TaxTotalTransfer;
 use Generated\Shared\Transfer\TotalsTransfer;
-use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
-use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayService;
-use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceConfig;
-use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceFactory;
-use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
+use SprykerTest\Shared\Testify\Helper\LocatorHelperTrait;
 
 /**
  * @group SprykerEcoTest
@@ -39,6 +34,8 @@ use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
  */
 class BuildCxmlPunchoutOrderMessageTest extends Unit
 {
+    use LocatorHelperTrait;
+
     protected PunchoutGatewayServiceTester $tester;
 
     protected const string BUYER_COOKIE = 'test-buyer-cookie-abc123';
@@ -108,7 +105,7 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
     {
         $totals = (new TotalsTransfer())->setExpenseTotal(750);
         $quote = $this->buildQuote(totals: $totals);
-        $quote->addExpense((new ExpenseTransfer())->setType(PunchoutGatewayConfig::SHIPMENT_EXPENSE_TYPE)->setSumGrossPrice(600));
+        $quote->addExpense((new ExpenseTransfer())->setType(SharedPunchoutGatewayConfig::SHIPMENT_EXPENSE_TYPE)->setSumGrossPrice(600));
         $quote->addExpense((new ExpenseTransfer())->setType('some other type')->setSumGrossPrice(100));
 
         $header = $this->buildAndDecode($quote)->punchOutOrderMessageHeader;
@@ -173,7 +170,7 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
         $this->assertSame('Jane Smith', $header->getShipTo()?->address->name->value);
     }
 
-    private function buildAndDecode(QuoteTransfer $quote): PunchOutOrderMessage
+    protected function buildAndDecode(QuoteTransfer $quote): PunchOutOrderMessage
     {
         $service = $this->createService();
         $xml = $service->buildCxmlPunchoutOrderMessage($quote);
@@ -185,31 +182,15 @@ class BuildCxmlPunchoutOrderMessageTest extends Unit
         return $payload;
     }
 
-    private function createService(): PunchoutGatewayService
+    protected function createService(): PunchoutGatewayService
     {
-        $mapper = new CxmlPunchoutOrderMessageMapper(
-            new CxmlEncoder(Serializer::create()),
-            $this->createMock(PunchoutLoggerInterface::class),
-            new PunchoutGatewayServiceConfig(),
-        );
-
-        $factory = $this->getMockBuilder(PunchoutGatewayServiceFactory::class)
-            ->onlyMethods(['createCxmlPunchoutOrderMessageMapper'])
-            ->getMock();
-        $factory->method('createCxmlPunchoutOrderMessageMapper')->willReturn($mapper);
-
-        $service = $this->getMockBuilder(PunchoutGatewayService::class)
-            ->onlyMethods(['getFactory'])
-            ->getMock();
-        $service->method('getFactory')->willReturn($factory);
-
-        return $service;
+        return $this->getLocator()->punchoutGateway()->service();
     }
 
     /**
      * @param array<string, string> $extrinsics
      */
-    private function buildQuote(
+    protected function buildQuote(
         array $extrinsics = [],
         int $itemUnitPrice = 1000,
         int $itemQuantity = 1,

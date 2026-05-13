@@ -31,8 +31,6 @@ class PunchoutConnectionTable extends AbstractTable
 
     protected const string COL_IS_ACTIVE = SpyPunchoutConnectionTableMap::COL_IS_ACTIVE;
 
-    protected const string COL_REQUEST_URL = SpyPunchoutConnectionTableMap::COL_REQUEST_URL;
-
     protected const string COL_ACTIONS = 'actions';
 
     public function __construct(
@@ -45,18 +43,16 @@ class PunchoutConnectionTable extends AbstractTable
     {
         $config->setHeader([
             static::COL_ID => 'ID',
-            static::COL_STORE => 'Customer Default Store',
             static::COL_NAME => 'Name',
             static::COL_PROTOCOL_TYPE => 'Protocol',
             static::COL_IS_ACTIVE => 'Status',
-            static::COL_REQUEST_URL => 'Request URL',
+            static::COL_STORE => 'Customer Default Store',
             static::COL_ACTIONS => 'Actions',
         ]);
 
         $config->setSearchable([
             static::COL_NAME,
             static::COL_PROTOCOL_TYPE,
-            static::COL_REQUEST_URL,
         ]);
 
         $config->setSortable([
@@ -95,8 +91,6 @@ class PunchoutConnectionTable extends AbstractTable
                 static::COL_ACTIONS => $this->buildActionButtons($row),
             ];
 
-            $dataRow[static::COL_REQUEST_URL] = $this->getFullRequestUrl($row);
-
             $results[] = $dataRow;
         }
 
@@ -128,7 +122,10 @@ class PunchoutConnectionTable extends AbstractTable
             'Delete',
             [
                 'class' => 'btn-danger',
-                'onclick' => 'return confirm("Are you sure you want to proceed?")',
+                'onclick' => sprintf(
+                    'return confirm("%s")',
+                    $this->getTranslator()->trans('Are you sure you want to proceed?'),
+                ),
             ],
         );
 

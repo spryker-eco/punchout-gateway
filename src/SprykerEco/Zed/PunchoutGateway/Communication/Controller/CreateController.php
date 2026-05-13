@@ -11,6 +11,7 @@ namespace SprykerEco\Zed\PunchoutGateway\Communication\Controller;
 
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,6 +42,7 @@ class CreateController extends AbstractController
 
         return $this->viewResponse([
             'punchoutConnectionForm' => $form->createView(),
+            'requestUrlPrefix' => PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX,
         ]);
     }
 
@@ -50,6 +52,14 @@ class CreateController extends AbstractController
     protected function executeCreateAction(array $formData): RedirectResponse
     {
         $punchoutConnectionTransfer = (new PunchoutConnectionTransfer())->fromArray($formData, true);
+
+        if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+            $punchoutConnectionTransfer->setRequestUrl(PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX . $punchoutConnectionTransfer->getRequestUrl());
+        }
+
+        if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
+            $punchoutConnectionTransfer->setRequestUrl(null);
+        }
 
         $punchoutConnectionTransfer = $this->getFacade()->createPunchoutConnection($punchoutConnectionTransfer);
 

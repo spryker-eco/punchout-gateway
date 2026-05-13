@@ -9,6 +9,8 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Form;
 
+use Exception;
+use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Spryker\Zed\Kernel\Communication\Form\AbstractType;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
@@ -34,6 +36,10 @@ use Symfony\Component\Validator\Constraints\Regex;
 class PunchoutConnectionFormType extends AbstractType
 {
     public const string OPTION_STORE_CHOICES = 'store_choices';
+
+    public const string OPTION_PROCESSOR_PLUGINS_CHOICES = 'processor_plugins_choices';
+
+    public const string OPTION_PROCESSOR_PLUGINS_TYPE_MAP = 'processor_plugins_type_map';
 
     public const string OPTION_PROTOCOL_TYPE_CHOICES = 'protocol_type_choices';
 
@@ -65,9 +71,9 @@ class PunchoutConnectionFormType extends AbstractType
         $this->addNameField($builder)
             ->addIdStoreField($builder, $options)
             ->addProtocolTypeField($builder, $options)
+            ->addProcessorPluginClassField($builder, $options)
             ->addIsActiveField($builder)
-            ->addAllowIframeField($builder)
-            ->addProcessorPluginClassField($builder);
+            ->addAllowIframeField($builder);
 
         $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($options) {
             $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
@@ -79,12 +85,15 @@ class PunchoutConnectionFormType extends AbstractType
 
         $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($options) {
             $this->validateOci($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+            $this->validateProcessorPlugin($event);
         });
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
+            static::OPTION_PROCESSOR_PLUGINS_CHOICES => [],
+            static::OPTION_PROCESSOR_PLUGINS_TYPE_MAP => [],
             static::OPTION_STORE_CHOICES => [],
             static::OPTION_PROTOCOL_TYPE_CHOICES => [],
             PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => true,
@@ -158,12 +167,21 @@ class PunchoutConnectionFormType extends AbstractType
         return $this;
     }
 
-    protected function addProcessorPluginClassField(FormBuilderInterface $builder): static
+    /**
+     * @param array<string, mixed> $options
+     */
+    protected function addProcessorPluginClassField(FormBuilderInterface $builder, array $options): static
     {
-        $builder->add(static::FIELD_PROCESSOR_PLUGIN_CLASS, TextType::class, [
+        $typeMap = $options[static::OPTION_PROCESSOR_PLUGINS_TYPE_MAP];
+
+        $builder->add(static::FIELD_PROCESSOR_PLUGIN_CLASS, ChoiceType::class, [
             'label' => 'Processor Plugin Class',
             'required' => true,
-            'attr' => ['placeholder' => 'e.g. \\SprykerEco\\Zed\\PunchoutGateway\\Communication\\Plugin\\PunchoutGateway\\DefaultCxmlProcessorPlugin'],
+            'choices' => $options[static::OPTION_PROCESSOR_PLUGINS_CHOICES],
+            'choice_attr' => static function (string $fqcn) use ($typeMap): array {
+                return ['data-protocol-type' => $typeMap[$fqcn] ?? ''];
+            },
+            'constraints' => [new NotBlank()],
         ]);
 
         return $this;
@@ -210,6 +228,31 @@ class PunchoutConnectionFormType extends AbstractType
         }
     }
 
+    protected function validateProcessorPlugin(FormEvent $event): void
+    {
+        $form = $event->getForm();
+
+        $type = $form->get(static::FIELD_PROTOCOL_TYPE)->getData();
+        $pluginClass = $form->get(static::FIELD_PROCESSOR_PLUGIN_CLASS)->getData();
+
+        if (!$type || !$pluginClass) {
+            return;
+        }
+
+        try {
+            /** @var \SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInterface $plugin */
+            $plugin = new $pluginClass();
+
+            if ($type !== $plugin->getType()) {
+                $form->get(static::FIELD_PROCESSOR_PLUGIN_CLASS)
+                    ->addError(new FormError('Processor plugin %pluginName is not compatible with the current protocol type.', null, ['%pluginName' => $pluginClass]));
+            }
+        } catch (Exception $e) {
+            $form->get(static::FIELD_PROCESSOR_PLUGIN_CLASS)
+                ->addError(new FormError('Cannot validate processor plugin %pluginName', null, ['%pluginName' => $pluginClass]));
+        }
+    }
+
     protected function validateOci(FormEvent $event, ?int $excludeId): void
     {
         $form = $event->getForm();
@@ -224,24 +267,33 @@ class PunchoutConnectionFormType extends AbstractType
             return;
         }
 
-        $existing = $this->getRepository()->findActiveOciConnectionByRequestUrl($requestUrl);
+        $requestUrl = PunchoutGatewayConfig::OCI_URL_PREFIX . $requestUrl;
 
-        if ($existing === null || $existing->getIdPunchoutConnection() === $excludeId) {
+        $punchoutConnectionCriteriaTransfer = (new PunchoutConnectionCriteriaTransfer())
+            ->setRequestUrl($requestUrl);
+
+        if ($excludeId) {
+            $punchoutConnectionCriteriaTransfer->addNotIdConnection($excludeId);
+        }
+
+        $connectionTransfers = $this->getRepository()->getPunchoutConnectionCollection($punchoutConnectionCriteriaTransfer);
+
+        if ($connectionTransfers->getPunchoutConnections()->count() === 0) {
             return;
         }
 
-        $form
-            ->get(static::FIELD_REQUEST_URL)
+        $form->get(static::FIELD_REQUEST_URL)
             ->addError(new FormError('An OCI connection with this Request URL already exists.'));
     }
 
     protected function addRequestUrlField(FormInterface $form, bool $isOCI): void
     {
-        $options = [new Regex([
-            'pattern' => '~^' . str_replace('/', '\\/', PunchoutGatewayConfig::OCI_URL_PREFIX) . PunchoutGatewayConfig::OCI_URL_SLUG . '$~',
-            'message' => 'Enter an absolute URL, that starts with ' . PunchoutGatewayConfig::OCI_URL_PREFIX . ', only `_`, `-`, letters and numbers are allowed.',
-        ]),
-            ];
+        $options = [
+            new Regex([
+                'pattern' => '~^' . PunchoutGatewayConfig::OCI_URL_SLUG . '$~',
+                'message' => 'Only `_`, `-`, letters and numbers are allowed.',
+            ]),
+        ];
 
         if ($isOCI) {
             $options[] = new NotBlank();
@@ -251,7 +303,7 @@ class PunchoutConnectionFormType extends AbstractType
             'label' => 'Request URL',
             'required' => $isOCI,
             'constraints' => $options,
-            'help' => 'This is an absolute URL without a domain.',
+            'help' => 'This is a suffix to the request url.',
         ]);
     }
 }
