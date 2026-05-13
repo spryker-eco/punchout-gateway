@@ -52,6 +52,7 @@ class CreateController extends AbstractController
     protected function executeCreateAction(array $formData): RedirectResponse
     {
         $punchoutConnectionTransfer = (new PunchoutConnectionTransfer())->fromArray($formData, true);
+        $punchoutConnectionTransfer->setRequestUrl(PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX . $punchoutConnectionTransfer->getRequestUrl());
 
         if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
             $punchoutConnectionTransfer->setRequestUrl(PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX . $punchoutConnectionTransfer->getRequestUrl());
