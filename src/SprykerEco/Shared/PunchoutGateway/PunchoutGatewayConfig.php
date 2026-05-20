@@ -17,6 +17,8 @@ interface PunchoutGatewayConfig
 
     public const string PROTOCOL_TYPE_OCI = 'oci';
 
+    public const string CXML_SETUP_PREFIX = '/punchout-cxml-setup';
+
     public const string DEFAULT_QUOTE_NAME = 'Punchout';
 
     public const string OPERATION_EDIT = 'edit';
@@ -32,6 +34,8 @@ interface PunchoutGatewayConfig
     public const string ERROR_AUTHENTICATION_FAILED = 'Authentication failed';
 
     public const string ERROR_CONNECTION_NOT_FOUND = 'No active connection was found.';
+
+    public const string ERROR_CONNECTION_WRONG_METHOD = 'Request HTTP method is wrong.';
 
     public const string ERROR_SESSION_CREATION_FAILED = 'Session creation failed.';
 
@@ -55,9 +59,15 @@ interface PunchoutGatewayConfig
 
     public const string CXML_SESSION_START_URL = '/punchout-cxml-start?session=%s';
 
+    public const string OCI_URL_PREFIX = '/punchout-gateway/oci/';
+
+    public const string OCI_URL_SLUG = '[a-zA-Z0-9_-]+';
+
     public const string OCI_DEFAULT_USERNAME_FIELD = 'USERNAME';
 
     public const string OCI_DEFAULT_PASSWORD_FIELD = 'PASSWORD';
+
+    public const string OCI_DEFAULT_FORM_METHOD = 'POST';
 
     public const int HTTP_ERROR_CODE_UNAUTHORIZED = Response::HTTP_UNAUTHORIZED;
 
@@ -82,4 +92,18 @@ interface PunchoutGatewayConfig
         'PhoneNumber',
         'UserPhoneNumber',
     ];
+
+    public const string CONFIGURATION_KEY_SENDER_SHARED_SECRET = 'senderSharedSecret';
+
+    public const string CONFIGURATION_KEY_FORM_METHOD = 'formMethod';
+
+    public const string CONFIGURATION_KEY_USERNAME_FIELD = 'usernameField';
+
+    public const string CONFIGURATION_KEY_PASSWORD_FIELD = 'passwordField';
+
+    public const string CONFIGURATION_KEY_ENABLE_LOGGING = 'punchout_gateway:general:logging:enable_logging';
+
+    public const string CONFIGURATION_KEY_CXML_SESSION_START_URL_VALIDITY_IN_SECONDS = 'punchout_gateway:cxml:session:start_url_validity_in_seconds';
+
+    public const string CONFIGURATION_KEY_CXML_SESSION_TOKEN_LENGTH = 'punchout_gateway:cxml:session:token_length';
 }

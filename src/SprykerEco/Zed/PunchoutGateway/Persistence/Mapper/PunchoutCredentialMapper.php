@@ -25,4 +25,23 @@ class PunchoutCredentialMapper
 
         return $credentialTransfer;
     }
+
+    public function mapCredentialTransferToEntity(
+        PunchoutCredentialTransfer $credentialTransfer,
+        SpyPunchoutCredential $credentialEntity,
+    ): SpyPunchoutCredential {
+        $credentialEntity->setFkPunchoutConnection($credentialTransfer->getIdPunchoutConnectionOrFail());
+        $credentialEntity->setUsername($credentialTransfer->getUsernameOrFail());
+        $credentialEntity->setIsActive((bool)$credentialTransfer->getIsActive());
+
+        if ($credentialTransfer->getIdCustomer() !== null) {
+            $credentialEntity->setFkCustomer($credentialTransfer->getIdCustomer());
+        }
+
+        if ($credentialTransfer->getPasswordHash() !== null) {
+            $credentialEntity->setPasswordHash($credentialTransfer->getPasswordHash());
+        }
+
+        return $credentialEntity;
+    }
 }

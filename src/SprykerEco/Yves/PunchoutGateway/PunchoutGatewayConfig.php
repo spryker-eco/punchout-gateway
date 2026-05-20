@@ -11,6 +11,7 @@ namespace SprykerEco\Yves\PunchoutGateway;
 
 use Spryker\Shared\Application\ApplicationConstants;
 use Spryker\Yves\Kernel\AbstractBundleConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 
 class PunchoutGatewayConfig extends AbstractBundleConfig
@@ -28,6 +29,9 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
      */
     public function isLoggingEnabled(): bool
     {
-        return (bool)$this->get(PunchoutGatewayConstants::ENABLE_LOGGING, false);
+        return (bool)$this->getModuleConfig(
+            PunchoutGatewayPunchoutGatewayConfig::CONFIGURATION_KEY_ENABLE_LOGGING,
+            $this->get(PunchoutGatewayConstants::ENABLE_LOGGING, false),
+        );
     }
 }

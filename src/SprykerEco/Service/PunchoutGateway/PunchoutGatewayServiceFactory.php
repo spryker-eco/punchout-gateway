@@ -21,7 +21,7 @@ use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 
 /**
- * @method \SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceConfig getConfig()
+ * @method \SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig getConfig()
  */
 class PunchoutGatewayServiceFactory extends AbstractServiceFactory
 {

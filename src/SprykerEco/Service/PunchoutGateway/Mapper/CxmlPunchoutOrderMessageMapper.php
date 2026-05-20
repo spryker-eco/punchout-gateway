@@ -22,9 +22,9 @@ use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoderInterface;
-use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceConfig;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
 
 class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperInterface
 {
@@ -33,7 +33,7 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
     public function __construct(
         protected CxmlEncoderInterface $cxmlEncoder,
         protected PunchoutLoggerInterface $punchoutLogger,
-        protected PunchoutGatewayServiceConfig $config,
+        protected PunchoutGatewayConfig $config,
     ) {
     }
 
@@ -57,11 +57,11 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
 
         $punchoutOrderMessage = $this->buildPunchoutOrderMessage($quoteTransfer, $punchoutSession);
 
-        $cxml = Builder::create(PunchoutGatewayConfig::DEFAULT_CXML_SENDER_USER_AGENT, PunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE)
-            ->from(new Credential(PunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getToIdentity()))
-            ->to(new Credential(PunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getFromIdentity()))
+        $cxml = Builder::create(SharedPunchoutGatewayConfig::DEFAULT_CXML_SENDER_USER_AGENT, SharedPunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE)
+            ->from(new Credential(SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getToIdentity()))
+            ->to(new Credential(SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getFromIdentity()))
             ->sender(
-                (new Credential(PunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getToIdentity()))
+                (new Credential(SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getToIdentity()))
                     ->setSharedSecret($cxmlSetupRequest->getSenderSharedSecret()),
             )
             ->payload($punchoutOrderMessage)
@@ -92,7 +92,7 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         $operation = $punchoutSession->getOperation();
 
         $builder = PunchOutOrderMessageBuilder::create(
-            PunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE,
+            SharedPunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE,
             $buyerCookie,
             $currencyCode,
             $operation,
@@ -148,7 +148,7 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             $itemId,
             (int)$item->getQuantity(),
             (string)$item->getName(),
-            PunchoutGatewayConfig::DEFAULT_UNIT_OF_MEASURE,
+            SharedPunchoutGatewayConfig::DEFAULT_UNIT_OF_MEASURE,
             (int)$item->getUnitPrice(),
             [new Classification(static::CLASSIFICATION_UNIT_OF_MEASURE, '')],
             extrinsics: $extrinsics ?: null,
@@ -193,8 +193,8 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         }
 
         foreach ($quoteTransfer->getExpenses() as $expenseTransfer) {
-            if ($expenseTransfer->getType() === PunchoutGatewayConfig::SHIPMENT_EXPENSE_TYPE) {
-                $builder->shipping((int)$expenseTransfer->getSumGrossPrice(), PunchoutGatewayConfig::DEFAULT_CXML_SHIPPING_DESCRIPTION);
+            if ($expenseTransfer->getType() === SharedPunchoutGatewayConfig::SHIPMENT_EXPENSE_TYPE) {
+                $builder->shipping((int)$expenseTransfer->getSumGrossPrice(), SharedPunchoutGatewayConfig::DEFAULT_CXML_SHIPPING_DESCRIPTION);
 
                 break;
             }
@@ -209,6 +209,6 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             return;
         }
 
-        $builder->tax((int)$totals->getTaxTotal()->getAmount(), PunchoutGatewayConfig::DEFAULT_CXML_TAX_DESCRIPTION);
+        $builder->tax((int)$totals->getTaxTotal()->getAmount(), SharedPunchoutGatewayConfig::DEFAULT_CXML_TAX_DESCRIPTION);
     }
 }

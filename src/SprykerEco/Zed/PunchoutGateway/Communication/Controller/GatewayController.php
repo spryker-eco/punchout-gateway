@@ -19,6 +19,7 @@ use Spryker\Zed\Kernel\Communication\Controller\AbstractGatewayController;
 /**
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
  * @method \SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface getRepository()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
  */
 class GatewayController extends AbstractGatewayController
 {

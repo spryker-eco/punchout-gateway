@@ -15,6 +15,7 @@ use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Spryker\Zed\Kernel\Communication\AbstractPlugin;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInterface;
 
 /**
@@ -23,9 +24,20 @@ use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInte
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayBusinessFactory getBusinessFactory()
  * @method \SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig getConfig()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
  */
 class DefaultOciProcessorPlugin extends AbstractPlugin implements PunchoutProcessorPluginInterface
 {
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function getType(): string
+    {
+        return PunchoutGatewayConfig::PROTOCOL_TYPE_OCI;
+    }
+
     /**
      * {@inheritDoc}
      * - Uses connection's configured username/password field names to extract credentials from form data.

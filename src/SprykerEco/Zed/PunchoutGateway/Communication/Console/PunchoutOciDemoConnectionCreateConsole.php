@@ -7,7 +7,6 @@
 
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Console;
 
-use Generated\Shared\Transfer\PunchoutOciConfigurationTransfer;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnection;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnectionQuery;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutCredential;
@@ -21,6 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @method \SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface getRepository()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
  */
 class PunchoutOciDemoConnectionCreateConsole extends Console
 {
@@ -40,9 +40,9 @@ class PunchoutOciDemoConnectionCreateConsole extends Console
 
     protected const string OCI_PASSWORD_FIELD = 'PASSWORD';
 
-    protected const string OCI_USERNAME = 'username';
+    protected const string OCI_CREDENTIALS_USERNAME = 'username';
 
-    protected const string OCI_PASSWORD = 'password';
+    protected const string OCI_CREDENTIALS_PASSWORD = 'password';
 
     protected const int ID_CUSTOMER = 3;
 
@@ -81,15 +81,15 @@ class PunchoutOciDemoConnectionCreateConsole extends Console
         $configuration = [];
 
         if (static::OCI_USERNAME_FIELD !== PunchoutGatewayConfig::OCI_DEFAULT_USERNAME_FIELD) {
-            $configuration['usernameField'] = static::OCI_USERNAME_FIELD;
+            $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_USERNAME_FIELD] = static::OCI_USERNAME_FIELD;
         }
 
         if (static::OCI_PASSWORD_FIELD !== PunchoutGatewayConfig::OCI_DEFAULT_PASSWORD_FIELD) {
-            $configuration['passwordField'] = static::OCI_PASSWORD_FIELD;
+            $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_PASSWORD_FIELD] = static::OCI_PASSWORD_FIELD;
         }
 
         if (static::OCI_FORM_METHOD !== 'POST') {
-            $configuration[PunchoutOciConfigurationTransfer::FORM_METHOD] = static::OCI_FORM_METHOD;
+            $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_FORM_METHOD] = static::OCI_FORM_METHOD;
         }
 
         if ($configuration) {
@@ -102,8 +102,8 @@ class PunchoutOciDemoConnectionCreateConsole extends Console
 
         $pc = new SpyPunchoutCredential();
         $pc->setFkPunchoutConnection($punchoutConnectionEntity->getIdPunchoutConnection());
-        $pc->setUsername(static::OCI_USERNAME);
-        $pc->setPasswordHash(password_hash(static::OCI_PASSWORD, PASSWORD_DEFAULT));
+        $pc->setUsername(static::OCI_CREDENTIALS_USERNAME);
+        $pc->setPasswordHash(password_hash(static::OCI_CREDENTIALS_PASSWORD, PASSWORD_DEFAULT));
         $pc->setFkCustomer(static::ID_CUSTOMER);
         $pc->save();
 

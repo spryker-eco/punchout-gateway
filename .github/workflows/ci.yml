@@ -45,6 +45,23 @@ jobs:
                     restore-keys: |
                         ${{ runner.os }}-composer-
 
+            - name: Validate translation key parity
+              run: |
+                ref="data/translation/Zed/en_US.csv"
+                failed=0
+                ref_keys=$(cut -d'"' -f2 "$ref" | sort)
+                for file in data/translation/Zed/*.csv; do
+                  [[ "$file" == "$ref" ]] && continue
+                  file_keys=$(cut -d'"' -f2 "$file" | sort)
+                  missing=$(comm -23 <(echo "$ref_keys") <(echo "$file_keys"))
+                  if [[ -n "$missing" ]]; then
+                    echo "Missing keys in $file:"
+                    echo "$missing" | sed 's/^/  - /'
+                    failed=1
+                  fi
+                done
+                exit $failed
+
             - name: Composer validate
               run: composer validate
 

@@ -112,6 +112,11 @@ class ResolveProcessorPluginTest extends Unit
 // phpcs:ignore PSR1.Classes.ClassDeclaration.MultipleClasses
 class DummyPunchoutProcessorPlugin implements PunchoutProcessorPluginInterface
 {
+    public function getType(): string
+    {
+        return '';
+    }
+
     public function authenticate(PunchoutSetupRequestTransfer $setupRequestTransfer): ?PunchoutConnectionTransfer
     {
         return null;

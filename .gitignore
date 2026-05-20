@@ -21,3 +21,4 @@ GTAGS
 
 # Tests
 tests/SprykerEcoTest/*/*/_support/_generated/
+tests/_output/
