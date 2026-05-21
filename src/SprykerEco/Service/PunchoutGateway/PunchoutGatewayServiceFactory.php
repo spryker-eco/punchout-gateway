@@ -17,6 +17,11 @@ use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoderInterface;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapperInterface;
+use SprykerEco\Service\PunchoutGateway\Mapper\OciFormDataMapper;
+use SprykerEco\Service\PunchoutGateway\Mapper\OciFormDataMapperInterface;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldSuggestionCollector;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolverInterface;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 
@@ -48,6 +53,30 @@ class PunchoutGatewayServiceFactory extends AbstractServiceFactory
             $this->createCxmlEncoder(),
             $this->createPunchoutLogger(),
             $this->getConfig(),
+            $this->createFieldValueResolver(),
+        );
+    }
+
+    public function createOciFormDataMapper(): OciFormDataMapperInterface
+    {
+        return new OciFormDataMapper(
+            $this->getConfig(),
+            $this->createFieldValueResolver(),
+        );
+    }
+
+    public function createFieldValueResolver(): FieldValueResolverInterface
+    {
+        return new FieldValueResolver(
+            $this->getProvidedDependency(PunchoutGatewayDependencyProvider::PLUGINS_FIELD_MAPPER),
+            $this->createPunchoutLogger(),
+        );
+    }
+
+    public function createFieldSuggestionCollector(): FieldSuggestionCollector
+    {
+        return new FieldSuggestionCollector(
+            $this->getProvidedDependency(PunchoutGatewayDependencyProvider::PLUGINS_FIELD_MAPPER),
         );
     }
 

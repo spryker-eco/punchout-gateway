@@ -18,6 +18,8 @@ use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class PunchoutConnectionMapper
 {
+    protected const string CONFIGURATION_KEY_MAPPING = 'mapping';
+
     public function __construct(protected UtilEncodingServiceInterface $utilEncodingService)
     {
     }
@@ -49,6 +51,8 @@ class PunchoutConnectionMapper
                 $this->mapOciConfiguration($protocolConfiguration),
             );
         }
+
+        $punchoutConnectionTransfer->setMappings($protocolConfiguration[static::CONFIGURATION_KEY_MAPPING] ?? []);
 
         return $punchoutConnectionTransfer;
     }
@@ -93,20 +97,34 @@ class PunchoutConnectionMapper
         $punchoutConnectionEntity->setRequestUrl($punchoutConnectionTransfer->getRequestUrl());
         $punchoutConnectionEntity->setProcessorPluginClass($punchoutConnectionTransfer->getProcessorPluginClass());
 
+        $configuration = $this->utilEncodingService->decodeJson($punchoutConnectionEntity->getConfiguration(), true);
+
+        $mapping = $punchoutConnectionTransfer->getMappings();
+
+        $configuration[static::CONFIGURATION_KEY_MAPPING] = $mapping;
+
         if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
-            $this->applyCxmlConfiguration($punchoutConnectionTransfer, $punchoutConnectionEntity);
+            $this->applyCxmlConfiguration($punchoutConnectionTransfer, $punchoutConnectionEntity, $configuration);
         }
 
         if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
-            $this->applyOciConfiguration($punchoutConnectionTransfer, $punchoutConnectionEntity);
+            $this->applyOciConfiguration($punchoutConnectionTransfer, $punchoutConnectionEntity, $configuration);
         }
+
+        $punchoutConnectionEntity->setConfiguration(
+            $this->utilEncodingService->encodeJson($configuration) ?? '{}',
+        );
 
         return $punchoutConnectionEntity;
     }
 
+    /**
+     * @param array<string, mixed> $configuration
+     */
     protected function applyCxmlConfiguration(
         PunchoutConnectionTransfer $punchoutConnectionTransfer,
         SpyPunchoutConnection $punchoutConnectionEntity,
+        array &$configuration
     ): void {
         $cxmlConfiguration = $punchoutConnectionTransfer->getCxmlConfiguration();
 
@@ -116,31 +134,27 @@ class PunchoutConnectionMapper
 
         $punchoutConnectionEntity->setSenderIdentity($cxmlConfiguration->getSenderIdentity());
 
-        $configuration = $this->utilEncodingService->decodeJson($punchoutConnectionEntity->getConfiguration(), true);
-
         if ($cxmlConfiguration->getSenderSharedSecret() !== null) {
             $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_SENDER_SHARED_SECRET] = password_hash(
                 $cxmlConfiguration->getSenderSharedSecret(),
                 PASSWORD_DEFAULT,
             );
         }
-
-        $punchoutConnectionEntity->setConfiguration(
-            $this->utilEncodingService->encodeJson($configuration) ?? '{}',
-        );
     }
 
+    /**
+     * @param array<string, mixed> $configuration
+     */
     protected function applyOciConfiguration(
         PunchoutConnectionTransfer $punchoutConnectionTransfer,
         SpyPunchoutConnection $punchoutConnectionEntity,
+        array &$configuration,
     ): void {
         $ociConfiguration = $punchoutConnectionTransfer->getOciConfiguration();
 
         if ($ociConfiguration === null) {
             return;
         }
-
-        $configuration = [];
 
         if ($ociConfiguration->getFormMethod() !== null) {
             $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_FORM_METHOD] = $ociConfiguration->getFormMethod();
@@ -153,10 +167,6 @@ class PunchoutConnectionMapper
         if ($ociConfiguration->getPasswordField() !== null) {
             $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_PASSWORD_FIELD] = $ociConfiguration->getPasswordField();
         }
-
-        $punchoutConnectionEntity->setConfiguration(
-            $this->utilEncodingService->encodeJson($configuration) ?? '{}',
-        );
     }
 
     /**

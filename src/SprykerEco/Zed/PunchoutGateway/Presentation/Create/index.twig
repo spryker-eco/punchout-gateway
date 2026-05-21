@@ -162,5 +162,77 @@
                 updateVisibility();
             }
         })();
+
+        (function () {
+            var suggestionsByUrl = {};
+
+            function loadSuggestions(url, callback) {
+                if (suggestionsByUrl[url]) {
+                    callback(suggestionsByUrl[url]);
+                    return;
+                }
+                fetch(url)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        suggestionsByUrl[url] = (data.suggestions || []).map(function (s) {
+                            return {id: s, text: s};
+                        });
+                        callback(suggestionsByUrl[url]);
+                    });
+            }
+
+            function initSourceCombobox(input) {
+                var url = input.getAttribute('data-suggestions-url');
+                if (!url || input.getAttribute('data-select2-init')) return;
+                input.setAttribute('data-select2-init', '1');
+                input.addEventListener('focus', function onFirstFocus() {
+                    input.removeEventListener('focus', onFirstFocus);
+                    loadSuggestions(url, function (suggestions) {
+                        if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+                            jQuery(input).select2({
+                                tags: true,
+                                data: suggestions,
+                                placeholder: input.getAttribute('placeholder') || '',
+                                allowClear: true,
+                                width: '100%'
+                            });
+                        }
+                    });
+                }, {once: false});
+            }
+
+            function initAllSourceComboboxes(container) {
+                container.querySelectorAll('.js-source-combobox').forEach(initSourceCombobox);
+            }
+
+            function addMappingRow(containerId, addBtnId, rowClass, removeBtnClass) {
+                var container = document.getElementById(containerId);
+                var addBtn = document.getElementById(addBtnId);
+                if (!container || !addBtn) return;
+                var index = container.querySelectorAll('.' + rowClass).length;
+                addBtn.addEventListener('click', function () {
+                    var prototype = container.getAttribute('data-prototype');
+                    var html = prototype.replace(/__name__/g, index);
+                    var div = document.createElement('div');
+                    div.className = rowClass + ' row';
+                    div.style.marginBottom = '4px';
+                    div.innerHTML = html;
+                    container.appendChild(div);
+                    initAllSourceComboboxes(div);
+                    index++;
+                });
+                container.addEventListener('click', function (e) {
+                    if (e.target && e.target.classList.contains(removeBtnClass)) {
+                        e.target.closest('.' + rowClass).remove();
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                initAllSourceComboboxes(document);
+                addMappingRow('cxml-mapping-rows', 'js-add-mapping-row', 'cxml-mapping-row', 'js-remove-mapping-row');
+                addMappingRow('cxml-extrinsic-rows', 'js-add-extrinsic-row', 'cxml-extrinsic-row', 'js-remove-extrinsic-row');
+            });
+        })();
     </script>
 {% endblock %}

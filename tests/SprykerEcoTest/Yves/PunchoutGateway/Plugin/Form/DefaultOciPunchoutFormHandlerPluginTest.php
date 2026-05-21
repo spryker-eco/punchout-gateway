@@ -16,6 +16,13 @@ use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionDataTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
+use SprykerEco\Service\PunchoutGateway\Mapper\OciFormDataMapper;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayService;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceFactory;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceInterface;
+use SprykerEco\Shared\PunchoutGateway\Logger\NullPunchoutLogger;
 use SprykerEco\Yves\PunchoutGateway\FormBuilder\OciFormFieldBuilder;
 use SprykerEco\Yves\PunchoutGateway\Plugin\Form\DefaultOciPunchoutFormHandlerPlugin;
 use SprykerEco\Yves\PunchoutGateway\PunchoutGatewayFactory;
@@ -182,8 +189,10 @@ class DefaultOciPunchoutFormHandlerPluginTest extends Unit
 
     protected function buildPluginWithRealBuilder(): DefaultOciPunchoutFormHandlerPlugin
     {
+        $punchoutGatewayService = $this->createRealPunchoutGatewayService();
+
         $factoryMock = $this->createMock(PunchoutGatewayFactory::class);
-        $factoryMock->method('createOciFormFieldBuilder')->willReturn(new OciFormFieldBuilder());
+        $factoryMock->method('createOciFormFieldBuilder')->willReturn(new OciFormFieldBuilder($punchoutGatewayService));
 
         $plugin = $this->getMockBuilder(DefaultOciPunchoutFormHandlerPlugin::class)
             ->onlyMethods(['getFactory'])
@@ -191,5 +200,24 @@ class DefaultOciPunchoutFormHandlerPluginTest extends Unit
         $plugin->method('getFactory')->willReturn($factoryMock);
 
         return $plugin;
+    }
+
+    protected function createRealPunchoutGatewayService(): PunchoutGatewayServiceInterface
+    {
+        $config = new PunchoutGatewayConfig();
+        $fieldValueResolver = new FieldValueResolver([], new NullPunchoutLogger());
+        $mapper = new OciFormDataMapper($config, $fieldValueResolver);
+
+        $factoryMock = $this->getMockBuilder(PunchoutGatewayServiceFactory::class)
+            ->onlyMethods(['createOciFormDataMapper'])
+            ->getMock();
+        $factoryMock->method('createOciFormDataMapper')->willReturn($mapper);
+
+        $service = $this->getMockBuilder(PunchoutGatewayService::class)
+            ->onlyMethods(['getFactory'])
+            ->getMock();
+        $service->method('getFactory')->willReturn($factoryMock);
+
+        return $service;
     }
 }

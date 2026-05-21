@@ -131,24 +131,15 @@ class PunchoutLogger implements PunchoutLoggerInterface
      */
     protected function sanitizeContext(array $context): array
     {
-        $context = $this->sanitizeCustomerData($context);
-
-        return $context;
-    }
-
-    /**
-     * @param array<string, mixed> $context
-     *
-     * @return array<string, mixed>
-     */
-    protected function sanitizeCustomerData(array $context): array
-    {
         if (isset($context[PunchoutSessionStartResponseTransfer::CUSTOMER]) && is_array($context[PunchoutSessionStartResponseTransfer::CUSTOMER])) {
-            $context[PunchoutSessionStartResponseTransfer::CUSTOMER] = array_intersect_key(array_flip([
-                CustomerTransfer::ID_CUSTOMER,
-                CustomerTransfer::EMAIL,
-                CustomerTransfer::CUSTOMER_REFERENCE,
-            ]), $context[PunchoutSessionStartResponseTransfer::CUSTOMER]);
+            $context[PunchoutSessionStartResponseTransfer::CUSTOMER] = array_intersect_key(
+                $context[PunchoutSessionStartResponseTransfer::CUSTOMER],
+                array_flip([
+                    CustomerTransfer::ID_CUSTOMER,
+                    CustomerTransfer::EMAIL,
+                    CustomerTransfer::CUSTOMER_REFERENCE,
+                ]),
+            );
         }
 
         return $context;

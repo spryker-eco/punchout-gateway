@@ -15,7 +15,6 @@ use Orm\Zed\Store\Persistence\Map\SpyStoreTableMap;
 use Spryker\Service\UtilText\Model\Url\Url;
 use Spryker\Zed\Gui\Communication\Table\AbstractTable;
 use Spryker\Zed\Gui\Communication\Table\TableConfiguration;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 
@@ -158,21 +157,5 @@ class PunchoutConnectionTable extends AbstractTable
         $class = $isActive ? 'label-success' : 'label-danger';
 
         return sprintf('<span class="label %s">%s</span>', $class, $label);
-    }
-
-    /**
-     * @param array<string, mixed> $row
-     */
-    protected function getFullRequestUrl(array $row): string
-    {
-        if ($row[SpyPunchoutConnectionTableMap::COL_PROTOCOL_TYPE] === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
-            return $this->moduleConfig->getBaseUrlYves() . $row[SpyPunchoutConnectionTableMap::COL_REQUEST_URL];
-        }
-
-        if ($row[SpyPunchoutConnectionTableMap::COL_PROTOCOL_TYPE] === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
-            return $this->moduleConfig->getBaseUrlYves() . PunchoutGatewayPunchoutGatewayConfig::CXML_SETUP_PREFIX;
-        }
-
-        return 'N/A';
     }
 }

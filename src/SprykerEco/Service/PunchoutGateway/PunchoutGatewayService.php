@@ -12,6 +12,7 @@ namespace SprykerEco\Service\PunchoutGateway;
 use CXml\Model\CXml;
 use CXml\Model\Response\PunchOutSetupResponse;
 use CXml\Model\Status;
+use Generated\Shared\Transfer\PunchoutFormDataTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Spryker\Service\Kernel\AbstractService;
 
@@ -49,5 +50,25 @@ class PunchoutGatewayService extends AbstractService implements PunchoutGatewayS
         return $this->getFactory()
             ->createCxmlPunchoutOrderMessageMapper()
             ->mapQuoteToCxml($quoteTransfer);
+    }
+
+    public function getSourceFieldSuggestions(): array
+    {
+        return $this->getFactory()->createFieldSuggestionCollector()->collect();
+    }
+
+    public function getSupportedCxmlFields(): array
+    {
+        return $this->getFactory()->getConfig()->getSupportedCxmlFields();
+    }
+
+    public function getSupportedOciFields(): array
+    {
+        return $this->getFactory()->getConfig()->getSupportedOciFields();
+    }
+
+    public function mapOciFormData(QuoteTransfer $quoteTransfer): ?PunchoutFormDataTransfer
+    {
+        return $this->getFactory()->createOciFormDataMapper()->mapOciFormData($quoteTransfer);
     }
 }

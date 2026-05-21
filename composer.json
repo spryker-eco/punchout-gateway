@@ -27,8 +27,7 @@
         "spryker/currency": "^4.0.0",
         "spryker/price": "^5.0.0",
         "spryker/gui": "^5.2.2",
-        "spryker/util-text": "^1.6.0",
-        "spryker/translator": "^1.0.0"
+        "spryker/util-text": "^1.6.0"
     },
     "require-dev": {
         "spryker/price-product": "*",

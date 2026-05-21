@@ -10,6 +10,7 @@ declare(strict_types = 1);
 namespace SprykerEcoTest\Zed\PunchoutGateway\Communication\Form;
 
 use Codeception\Test\Unit;
+use Generated\Shared\Transfer\StoreTransfer;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutConnectionFormType;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutCxmlConfigurationFormType;
@@ -40,6 +41,13 @@ class PunchoutConnectionFormTypeTest extends Unit
 
     protected PunchoutGatewayCommunicationTester $tester;
 
+    protected StoreTransfer $storeTransfer;
+
+    public function _before()
+    {
+        $this->storeTransfer = $this->getLocator()->store()->facade()->getAllStores()[0];
+    }
+
     public function testValidateOciWithNonOciProtocolTypeSkipsValidation(): void
     {
         // Arrange
@@ -55,7 +63,6 @@ class PunchoutConnectionFormTypeTest extends Unit
     public function testValidateOciWithUniqueRequestUrlDoesNotAddError(): void
     {
         // Arrange
-        $storeTransfer = $this->getLocator()->store()->facade()->getAllStores()[0];
         $form = $this->createConnectionForm($this->buildOciFormOptions());
 
         // Act
@@ -69,9 +76,8 @@ class PunchoutConnectionFormTypeTest extends Unit
     {
         // Arrange
         $slug = sprintf('oci-slug-%s', uniqid());
-        $storeTransfer = $this->getLocator()->store()->facade()->getAllStores()[0];
         $this->tester->havePunchoutConnection([
-            'fk_store' => $storeTransfer->getIdStore(),
+            'fk_store' => $this->storeTransfer->getIdStore(),
             'request_url' => PunchoutGatewayConfig::OCI_URL_PREFIX . $slug,
             'protocol_type' => PunchoutGatewayConfig::PROTOCOL_TYPE_OCI,
         ]);
@@ -88,9 +94,8 @@ class PunchoutConnectionFormTypeTest extends Unit
     {
         // Arrange
         $slug = sprintf('oci-slug-%s', uniqid());
-        $storeTransfer = $this->getLocator()->store()->facade()->getAllStores()[0];
         $existingConnection = $this->tester->havePunchoutConnection([
-            'fk_store' => $storeTransfer->getIdStore(),
+            'fk_store' => $this->storeTransfer->getIdStore(),
             'request_url' => PunchoutGatewayConfig::OCI_URL_PREFIX . $slug,
             'protocol_type' => PunchoutGatewayConfig::PROTOCOL_TYPE_OCI,
         ]);

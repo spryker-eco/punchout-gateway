@@ -20,6 +20,7 @@
         <property name="processorPluginClass" type="string"/>
         <property name="createdAt" type="string"/>
         <property name="updatedAt" type="string"/>
+        <property name="mappings" type="string[]" singular="mapping" associative="true"/>
     </transfer>
 
     <transfer name="PunchoutCxmlConfiguration" strict="true">
@@ -292,6 +293,11 @@
 
     <transfer name="AuditLoggerConfigCriteria" strict="true">
         <property name="channelName" type="string"/>
+    </transfer>
+
+    <transfer name="MappingSource" strict="true">
+        <property name="item" type="Item"/>
+        <property name="quote" type="Quote"/>
     </transfer>
 
 </transfers>

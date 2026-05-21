@@ -44,6 +44,8 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
 
     public const string URL_CUSTOMER_SUGGEST = '/punchout-gateway/customer-suggest/index';
 
+    public const string URL_SOURCE_FIELD_SUGGESTIONS = '/punchout-gateway/source-field-suggestions/index';
+
     /**
      * @api
      */

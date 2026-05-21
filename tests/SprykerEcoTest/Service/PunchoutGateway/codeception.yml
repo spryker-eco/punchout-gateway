@@ -14,9 +14,3 @@ suites:
                 - \SprykerTest\Shared\Testify\Helper\Environment
                 - \SprykerTest\Shared\Testify\Helper\LocatorHelper
 
-    Mapper:
-        path: Mapper
-        actor: PunchoutGatewayServiceTester
-        modules:
-            enabled:
-                - Asserts

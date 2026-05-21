@@ -61,6 +61,50 @@
                             {{ form_errors(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                             {{ form_help(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                         </div>
+
+                        <h5>{{ 'cXML Field Mapping' | trans }}</h5>
+                        <p class="help-block">
+                            {{ 'Map cXML fields to source expressions (e.g. item.sku, quote.currency.code). Leave source blank to skip the field.' | trans }}<br/>
+                            {{ 'Use "value" for a constant (e.g. "EA"). Join segments with & (e.g. item.sku&"_suffix"). & inside quoted strings is not supported.' | trans }}
+                        </p>
+
+                        <div id="cxml-mapping-rows"
+                             data-prototype="{{ form_widget(punchoutConnectionForm.cxmlConfiguration.mappingFields.vars.prototype) | e('html_attr') }}">
+                            {% for row in punchoutConnectionForm.cxmlConfiguration.mappingFields %}
+                                <div class="cxml-mapping-row row" style="margin-bottom:4px;">
+                                    <div class="col-sm-5">{{ form_widget(row.cxmlField, {'attr': {'class': 'form-control'}}) }}</div>
+                                    <div class="col-sm-5">{{ form_widget(row.source, {'attr': {'class': 'form-control'}}) }}</div>
+                                    <div class="col-sm-2">
+                                        <button type="button" class="btn btn-danger btn-sm js-remove-mapping-row">{{ 'Remove' | trans }}</button>
+                                    </div>
+                                    {{ form_errors(row.cxmlField) }}
+                                    {{ form_errors(row.source) }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-default btn-sm" id="js-add-mapping-row">{{ 'Add Field Mapping' | trans }}</button>
+
+                        <h5>{{ 'Extrinsic Fields Mapping' | trans }}</h5>
+                        <p class="help-block">
+                            {{ 'Map custom Extrinsic fields. Name must not be a reserved user-identity field.' | trans }}<br/>
+                            {{ 'Reserved names: %s.' | trans }}
+                        </p>
+
+                        <div id="cxml-extrinsic-rows"
+                             data-prototype="{{ form_widget(punchoutConnectionForm.cxmlConfiguration.mappingExtrinsics.vars.prototype) | e('html_attr') }}">
+                            {% for row in punchoutConnectionForm.cxmlConfiguration.mappingExtrinsics %}
+                                <div class="cxml-extrinsic-row row" style="margin-bottom:4px;">
+                                    <div class="col-sm-5">{{ form_widget(row.extrinsicName, {'attr': {'class': 'form-control'}}) }}</div>
+                                    <div class="col-sm-5">{{ form_widget(row.source, {'attr': {'class': 'form-control'}}) }}</div>
+                                    <div class="col-sm-2">
+                                        <button type="button" class="btn btn-danger btn-sm js-remove-extrinsic-row">{{ 'Remove' | trans }}</button>
+                                    </div>
+                                    {{ form_errors(row.extrinsicName) }}
+                                    {{ form_errors(row.source) }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-default btn-sm" id="js-add-extrinsic-row">{{ 'Add Extrinsic' | trans }}</button>
                 </div>
                 {% endif %}
 
@@ -99,6 +143,30 @@
                             {{ form_errors(punchoutConnectionForm.ociConfiguration.passwordField) }}
                             {{ form_help(punchoutConnectionForm.ociConfiguration.passwordField) }}
                         </div>
+
+                    {% if punchoutConnectionForm.ociConfiguration.mappingFields is defined %}
+                        <h5>{{ 'OCI Field Mapping' | trans }}</h5>
+                        <p class="help-block">
+                            {{ 'Map OCI output fields to source expressions. Leave blank to use defaults.' | trans }}<br/>
+                            {{ 'Use "value" for a constant (e.g. "EA"). Join segments with & (e.g. item.sku&"_suffix"). & inside quoted strings is not supported.' | trans }}
+                        </p>
+
+                        <div id="oci-mapping-rows"
+                             data-prototype="{{ form_widget(punchoutConnectionForm.ociConfiguration.mappingFields.vars.prototype) | e('html_attr') }}">
+                            {% for row in punchoutConnectionForm.ociConfiguration.mappingFields %}
+                                <div class="oci-mapping-row row" style="margin-bottom:4px;">
+                                    <div class="col-sm-5">{{ form_widget(row.cxmlField, {'attr': {'class': 'form-control'}}) }}</div>
+                                    <div class="col-sm-5">{{ form_widget(row.source, {'attr': {'class': 'form-control js-source-combobox', 'data-suggestions-url': row.source.vars.attr['data-suggestions-url']|default('')}}) }}</div>
+                                    <div class="col-sm-2">
+                                        <button type="button" class="btn btn-danger btn-sm js-remove-oci-mapping-row">{{ 'Remove' | trans }}</button>
+                                    </div>
+                                    {{ form_errors(row.cxmlField) }}
+                                    {{ form_errors(row.source) }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-default btn-sm" id="js-add-oci-mapping-row">{{ 'Add Field Mapping' | trans }}</button>
+                    {% endif %}
                 </div>
                 {% endif %}
 
@@ -173,6 +241,106 @@
                 sel.addEventListener('change', updateVisibility);
                 updateVisibility();
             }
+        })();
+
+        (function () {
+            var suggestionsByUrl = {};
+
+            function loadSuggestions(url, callback) {
+                if (suggestionsByUrl[url]) {
+                    callback(suggestionsByUrl[url]);
+                    return;
+                }
+                fetch(url)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        suggestionsByUrl[url] = (data.suggestions || []).map(function (s) {
+                            return {id: s, text: s};
+                        });
+                        callback(suggestionsByUrl[url]);
+                    });
+            }
+
+            function initSourceCombobox(input) {
+                var url = input.getAttribute('data-suggestions-url');
+                if (!url || input.getAttribute('data-select2-init')) return;
+                input.setAttribute('data-select2-init', '1');
+                input.addEventListener('focus', function onFirstFocus() {
+                    input.removeEventListener('focus', onFirstFocus);
+                    loadSuggestions(url, function (suggestions) {
+                        if (typeof jQuery === 'undefined' || !jQuery.fn.select2) return;
+
+                        var currentValue = input.value;
+                        var select = document.createElement('select');
+                        select.name = input.name;
+                        select.id = input.id;
+                        select.className = input.className;
+
+                        var emptyOption = document.createElement('option');
+                        emptyOption.value = '';
+                        select.appendChild(emptyOption);
+
+                        if (currentValue) {
+                            var currentOption = document.createElement('option');
+                            currentOption.value = currentValue;
+                            currentOption.text = currentValue;
+                            currentOption.selected = true;
+                            select.appendChild(currentOption);
+                        }
+
+                        suggestions.forEach(function (s) {
+                            if (s.id === currentValue) return;
+                            var option = document.createElement('option');
+                            option.value = s.id;
+                            option.text = s.text;
+                            select.appendChild(option);
+                        });
+
+                        input.parentNode.replaceChild(select, input);
+
+                        jQuery(select).select2({
+                            tags: true,
+                            placeholder: select.getAttribute('placeholder') || input.getAttribute('placeholder') || '',
+                            allowClear: true,
+                            width: '100%'
+                        });
+                    });
+                }, {once: false});
+            }
+
+            function initAllSourceComboboxes(container) {
+                container.querySelectorAll('.js-source-combobox').forEach(initSourceCombobox);
+            }
+
+            function addMappingRow(containerId, addBtnId, rowClass, removeBtnClass) {
+                var container = document.getElementById(containerId);
+                var addBtn = document.getElementById(addBtnId);
+                if (!container || !addBtn) return;
+                var index = container.querySelectorAll('.' + rowClass).length;
+                addBtn.addEventListener('click', function () {
+                    var prototype = container.getAttribute('data-prototype');
+                    var html = prototype.replace(/__name__/g, index);
+                    var div = document.createElement('div');
+                    div.className = rowClass + ' row';
+                    div.style.marginBottom = '4px';
+                    div.innerHTML = html;
+                    container.appendChild(div);
+                    initAllSourceComboboxes(div);
+                    index++;
+                });
+                container.addEventListener('click', function (e) {
+                    if (e.target && e.target.classList.contains(removeBtnClass)) {
+                        e.target.closest('.' + rowClass).remove();
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                initAllSourceComboboxes(document);
+                addMappingRow('cxml-mapping-rows', 'js-add-mapping-row', 'cxml-mapping-row', 'js-remove-mapping-row');
+                addMappingRow('cxml-extrinsic-rows', 'js-add-extrinsic-row', 'cxml-extrinsic-row', 'js-remove-extrinsic-row');
+                addMappingRow('oci-mapping-rows', 'js-add-oci-mapping-row', 'oci-mapping-row', 'js-remove-oci-mapping-row');
+            });
         })();
     </script>
 {% endblock %}

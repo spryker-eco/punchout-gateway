@@ -85,7 +85,6 @@ class PunchoutGatewayFactory extends AbstractFactory
             $this->getSessionClient(),
             $this->getCustomerClient(),
             $this->getQuoteClient(),
-            $this->createPunchoutLogger(),
         );
     }
 
@@ -125,7 +124,7 @@ class PunchoutGatewayFactory extends AbstractFactory
 
     public function createOciFormFieldBuilder(): OciFormFieldBuilderInterface
     {
-        return new OciFormFieldBuilder();
+        return new OciFormFieldBuilder($this->getPunchoutGatewayService());
     }
 
     /**

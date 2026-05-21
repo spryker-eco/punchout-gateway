@@ -9,7 +9,6 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Business\Oci\Processor;
 
-use Exception;
 use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
@@ -23,6 +22,7 @@ use SprykerEco\Zed\PunchoutGateway\Business\Session\SessionCreatorInterface;
 use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInterface;
 use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
+use Throwable;
 
 class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
 {
@@ -43,7 +43,7 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
     ): PunchoutSessionStartResponseTransfer {
         try {
             return $this->executeProcessLoginRequest($ociLoginRequestTransfer);
-        } catch (Exception $exception) {
+        } catch (Throwable $exception) {
             $this->punchoutLogger->logThrowable(static::PUNCH_OUT_OCI_LOGIN_PROCESSING_FAILED, $exception);
 
             return $this->createErrorResponse(static::PUNCH_OUT_OCI_LOGIN_PROCESSING_FAILED);

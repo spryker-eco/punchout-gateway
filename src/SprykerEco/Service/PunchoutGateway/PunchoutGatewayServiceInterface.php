@@ -12,6 +12,7 @@ namespace SprykerEco\Service\PunchoutGateway;
 use CXml\Model\CXml;
 use CXml\Model\Response\PunchOutSetupResponse;
 use CXml\Model\Status;
+use Generated\Shared\Transfer\PunchoutFormDataTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 
 interface PunchoutGatewayServiceInterface
@@ -56,4 +57,44 @@ interface PunchoutGatewayServiceInterface
      * @api
      */
     public function buildCxmlPunchoutOrderMessage(QuoteTransfer $quoteTransfer): string;
+
+    /**
+     * Specification:
+     * - Returns all possible source field paths from all registered field mapper plugins.
+     * - Each string is a dot-separated path prefixed with the plugin key (e.g. "item.sku", "quote.customer.email").
+     *
+     * @api
+     *
+     * @return array<string>
+     */
+    public function getSourceFieldSuggestions(): array;
+
+    /**
+     * Specification:
+     * - Returns the list of supported cXML field keys available for mapping.
+     *
+     * @api
+     *
+     * @return array<string>
+     */
+    public function getSupportedCxmlFields(): array;
+
+    /**
+     * Specification:
+     * - Returns the list of supported OCI field keys available for mapping.
+     *
+     * @api
+     *
+     * @return array<string>
+     */
+    public function getSupportedOciFields(): array;
+
+    /**
+     * Specification:
+     * - Builds the OCI form data transfer from the quote, applying per-connection field-map overrides.
+     * - Returns null when the quote has no punchout session, no browser form post URL, or no OCI login request.
+     *
+     * @api
+     */
+    public function mapOciFormData(QuoteTransfer $quoteTransfer): ?PunchoutFormDataTransfer;
 }

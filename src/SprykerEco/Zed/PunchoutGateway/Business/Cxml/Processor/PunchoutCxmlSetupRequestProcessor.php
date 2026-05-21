@@ -9,7 +9,6 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Business\Cxml\Processor;
 
-use Exception;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionStartResponseTransfer;
@@ -23,6 +22,7 @@ use SprykerEco\Zed\PunchoutGateway\Business\Quote\QuoteCreatorInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Session\SessionCreatorInterface;
 use SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPluginInterface;
 use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface;
+use Throwable;
 
 class PunchoutCxmlSetupRequestProcessor implements PunchoutCxmlSetupRequestProcessorInterface
 {
@@ -47,7 +47,7 @@ class PunchoutCxmlSetupRequestProcessor implements PunchoutCxmlSetupRequestProce
     ): PunchoutSetupResponseTransfer {
         try {
             return $this->executeProcessSetupRequest($punchoutCxmlSetupRequestTransfer);
-        } catch (Exception $exception) {
+        } catch (Throwable $exception) {
             $this->punchoutLogger->logThrowable(static::PUNCH_OUT_C_XML_SETUP_REQUEST_PROCESSING_FAILED, $exception);
 
             return $this->createErrorResponse(static::PUNCH_OUT_C_XML_SETUP_REQUEST_PROCESSING_FAILED);

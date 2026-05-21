@@ -13,7 +13,7 @@ use Spryker\Service\UtilEncoding\UtilEncodingServiceInterface;
 use Spryker\Zed\Customer\Business\CustomerFacadeInterface;
 use Spryker\Zed\Kernel\Communication\AbstractCommunicationFactory;
 use Spryker\Zed\Store\Business\StoreFacadeInterface;
-use Spryker\Zed\Translator\Business\TranslatorFacadeInterface;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceInterface;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\CustomerChoiceLoader;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataProvider\PunchoutConnectionFormDataProvider;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataProvider\PunchoutCredentialFormDataProvider;
@@ -50,21 +50,18 @@ class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
         );
     }
 
-    public function createPunchoutCredentialTableForView(int $idPunchoutConnection): PunchoutCredentialTable
-    {
-        return new PunchoutCredentialTable(
-            $this->getRepository(),
-            $idPunchoutConnection,
-            sprintf('%s?%s=%d&', PunchoutGatewayConfig::URL_CREDENTIAL_TABLE, PunchoutGatewayConfig::PARAM_ID_CONNECTION, $idPunchoutConnection),
-        );
-    }
-
     public function createPunchoutConnectionFormDataProvider(): PunchoutConnectionFormDataProvider
     {
         return new PunchoutConnectionFormDataProvider(
             $this->getStoreFacade(),
             $this->getProcessorPlugins(),
+            $this->getPunchoutGatewayService(),
         );
+    }
+
+    public function getPunchoutGatewayService(): PunchoutGatewayServiceInterface
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::SERVICE_PUNCHOUT_GATEWAY);
     }
 
     public function createPunchoutCredentialFormDataProvider(): PunchoutCredentialFormDataProvider
@@ -108,11 +105,6 @@ class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
     public function getUtilEncodingService(): UtilEncodingServiceInterface
     {
         return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::SERVICE_UTIL_ENCODING);
-    }
-
-    public function getTranslatorFacade(): TranslatorFacadeInterface
-    {
-        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_TRANSLATOR);
     }
 
     /**
