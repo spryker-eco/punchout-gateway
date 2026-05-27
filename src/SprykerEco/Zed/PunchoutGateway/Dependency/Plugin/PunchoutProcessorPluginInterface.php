@@ -24,6 +24,14 @@ interface PunchoutProcessorPluginInterface
 {
     /**
      * Specification:
+     * - Reports type of the support connection.
+     *
+     * @api
+     */
+    public function getType(): string;
+
+    /**
+     * Specification:
      * - Authenticates the login request against the given connection.
      * - Returns the authenticated connection transfer on success, or null on failure.
      *

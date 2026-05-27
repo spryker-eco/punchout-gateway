@@ -11,6 +11,7 @@ namespace SprykerEco\Yves\PunchoutGateway\Plugin\Router;
 
 use Spryker\Yves\Router\Plugin\RouteProvider\AbstractRouteProviderPlugin;
 use Spryker\Yves\Router\Route\RouteCollection;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class PunchoutGatewayRouteProviderPlugin extends AbstractRouteProviderPlugin
 {
@@ -28,9 +29,9 @@ class PunchoutGatewayRouteProviderPlugin extends AbstractRouteProviderPlugin
      */
     protected function addPunchoutGatewayCxmlSetupRoute(RouteCollection $routeCollection): RouteCollection
     {
-        $route = $this->buildPostRoute('/punchout-cxml-setup/{connectionSlug}', 'PunchoutGateway', 'Cxml', 'setup');
+        $route = $this->buildPostRoute(PunchoutGatewayConfig::CXML_SETUP_PREFIX . '/{connectionSlug}', 'PunchoutGateway', 'Cxml', 'setup');
         $routeCollection->add('punchout-gateway-cxml-setup-slug', $route);
-        $route = $this->buildPostRoute('/punchout-cxml-setup', 'PunchoutGateway', 'Cxml', 'setup');
+        $route = $this->buildPostRoute(PunchoutGatewayConfig::CXML_SETUP_PREFIX, 'PunchoutGateway', 'Cxml', 'setup');
         $routeCollection->add('punchout-gateway-cxml-setup', $route);
 
         return $routeCollection;
@@ -52,9 +53,13 @@ class PunchoutGatewayRouteProviderPlugin extends AbstractRouteProviderPlugin
      */
     protected function addPunchoutGatewayOciSetupRoute(RouteCollection $routeCollection): RouteCollection
     {
-        $route = $this->buildPostRoute('/punchout-gateway/oci/{connectionSlug}', 'PunchoutGateway', 'Oci', 'index');
-        $route->setRequirement('connectionSlug', '[a-zA-Z0-9_-]+');
-        $routeCollection->add('punchout-gateway-oci-setup', $route);
+        $route = $this->buildPostRoute(PunchoutGatewayConfig::OCI_URL_PREFIX . '{connectionSlug}', 'PunchoutGateway', 'Oci', 'index');
+        $route->setRequirement('connectionSlug', PunchoutGatewayConfig::OCI_URL_SLUG);
+        $routeCollection->add('punchout-gateway-oci-setup-post', $route);
+
+        $route = $this->buildGetRoute(PunchoutGatewayConfig::OCI_URL_PREFIX . '{connectionSlug}', 'PunchoutGateway', 'Oci', 'index');
+        $route->setRequirement('connectionSlug', PunchoutGatewayConfig::OCI_URL_SLUG);
+        $routeCollection->add('punchout-gateway-oci-setup-get', $route);
 
         return $routeCollection;
     }

@@ -108,6 +108,58 @@ class ProcessPunchoutOciLoginRequestTest extends Unit
         $this->assertCount(0, $responseTransfer->getQuote()->getItems());
     }
 
+    public function testProcessOciLoginRequestWithEmptyStoredFormMethodAcceptsAnyMethod(): void
+    {
+        $requestUrl = sprintf('https://test.local/oci/%s', uniqid());
+        $username = sprintf('TestUser_%s', uniqid());
+        $password = 'test-password';
+
+        $customerTransfer = $this->tester->haveConfirmedCustomer(['storeName' => $this->storeTransfer->getName()]);
+        $connectionTransfer = $this->createOciConnection([
+            'request_url' => $requestUrl,
+            'configuration' => json_encode([]),
+        ]);
+
+        $this->tester->havePunchoutCredential([
+            'fk_punchout_connection' => $connectionTransfer->getIdPunchoutConnection(),
+            'fk_customer' => $customerTransfer->getIdCustomer(),
+            'username' => $username,
+            'password' => $password,
+        ]);
+
+        $responseTransfer = $this->tester->getFacade()->processPunchoutOciLoginRequest(
+            (new PunchoutOciLoginRequestTransfer())
+                ->setRequestUrl($requestUrl)
+                ->setFormMethod('GET')
+                ->setFormData([
+                    'USERNAME' => $username,
+                    'PASSWORD' => $password,
+                    'HOOK_URL' => 'https://buyer.example.com/punchout/return',
+                ]),
+        );
+
+        $this->assertTrue($responseTransfer->getIsSuccess(), $responseTransfer->getErrorMessage() ?? '');
+    }
+
+    public function testProcessOciLoginRequestWithMismatchedFormMethodReturnsError(): void
+    {
+        $requestUrl = sprintf('https://test.local/oci/%s', uniqid());
+
+        $this->createOciConnection([
+            'request_url' => $requestUrl,
+            'configuration' => json_encode(['formMethod' => 'POST']),
+        ]);
+
+        $responseTransfer = $this->tester->getFacade()->processPunchoutOciLoginRequest(
+            (new PunchoutOciLoginRequestTransfer())
+                ->setRequestUrl($requestUrl)
+                ->setFormMethod('GET'),
+        );
+
+        $this->assertFalse($responseTransfer->getIsSuccess());
+        $this->assertSame('Request HTTP method is wrong.', $responseTransfer->getErrorMessage());
+    }
+
     public function testProcessOciLoginRequestWithNoMatchingConnectionReturnsError(): void
     {
         $responseTransfer = $this->tester->getFacade()->processPunchoutOciLoginRequest(

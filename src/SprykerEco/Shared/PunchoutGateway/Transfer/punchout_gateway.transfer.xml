@@ -63,6 +63,7 @@
         <property name="requestUrl" type="string"/>
         <property name="idPunchoutConnection" type="int"/>
         <property name="idStore" type="int"/>
+        <property name="formMethod" type="string"/>
         <property name="formData" type="string[]" associative="true" singular="formInput"/>
     </transfer>
 
@@ -166,11 +167,58 @@
         <property name="fields" type="string[]" associative="true" singular="field"/>
     </transfer>
 
+    <transfer name="PunchoutConnectionCriteria" strict="true">
+        <property name="idStore" type="int"/>
+        <property name="protocolType" type="string"/>
+        <property name="isActive" type="bool"/>
+        <property name="searchTerm" type="string"/>
+        <property name="requestUrl" type="string"/>
+        <property name="notIdConnections" type="int[]" singular="notIdConnection"/>
+        <property name="pagination" type="Pagination"/>
+    </transfer>
+
+    <transfer name="PunchoutConnectionConditions" strict="true">
+        <property name="idStore" type="int"/>
+        <property name="protocolType" type="string"/>
+        <property name="isActive" type="bool"/>
+        <property name="searchTerm" type="string"/>
+    </transfer>
+
+    <transfer name="PunchoutCredentialCollection" strict="true">
+        <property name="punchoutCredentials" type="PunchoutCredential[]" singular="punchoutCredential"/>
+    </transfer>
+
+    <transfer name="PunchoutCredentialCriteria" strict="true">
+        <property name="idPunchoutConnection" type="int"/>
+        <property name="username" type="string"/>
+        <property name="notIdPunchoutCredentials" type="int[]" singular="notIdPunchoutCredential"/>
+        <property name="pagination" type="Pagination"/>
+    </transfer>
+
+    <transfer name="Pagination">
+        <property name="limit" type="int"/>
+        <property name="offset" type="int"/>
+        <property name="nbResults" type="int"/>
+        <property name="firstIndex" type="int"/>
+        <property name="lastIndex" type="int"/>
+        <property name="maxPerPage" type="int"/>
+        <property name="page" type="int"/>
+        <property name="lastPage" type="int"/>
+        <property name="firstPage" type="int"/>
+        <property name="nextPage" type="int"/>
+        <property name="previousPage" type="int"/>
+        <property name="paginationClass" type="string"/>
+    </transfer>
+
     <!-- Existing Spryker transfers this module depends on -->
     <transfer name="Customer">
         <property name="idCustomer" type="int"/>
         <property name="email" type="string"/>
         <property name="customerReference" type="string"/>
+    </transfer>
+
+    <transfer name="Filter">
+        <property name="searchTerm" type="string"/>
     </transfer>
 
     <transfer name="CustomerCriteria">
@@ -193,6 +241,22 @@
         <property name="shippingAddress" type="Address"/>
         <property name="items" type="Item[]" singular="item"/>
         <property name="punchoutSession" type="PunchoutSession"/>
+        <property name="totals" type="Totals"/>
+    </transfer>
+
+    <transfer name="Totals">
+        <property name="subtotal" type="int"/>
+        <property name="expenseTotal" type="int"/>
+        <property name="discountTotal" type="int"/>
+        <property name="taxTotal" type="TaxTotal"/>
+        <property name="grandTotal" type="int"/>
+        <property name="netTotal" type="int"/>
+        <property name="canceledTotal" type="int"/>
+        <property name="refundTotal" type="int"/>
+    </transfer>
+
+    <transfer name="TaxTotal">
+        <property name="amount" type="int"/>
     </transfer>
 
     <transfer name="QuoteResponse">

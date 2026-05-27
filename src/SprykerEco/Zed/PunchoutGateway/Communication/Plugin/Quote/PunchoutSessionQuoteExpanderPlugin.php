@@ -17,6 +17,7 @@ use Spryker\Zed\QuoteExtension\Dependency\Plugin\QuoteExpanderPluginInterface;
  * @method \SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig getConfig()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayBusinessFactory getBusinessFactory()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
  */
 class PunchoutSessionQuoteExpanderPlugin extends AbstractPlugin implements QuoteExpanderPluginInterface
 {

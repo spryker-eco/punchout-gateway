@@ -1,0 +1,309 @@
+<?php
+
+/**
+ * Copyright © 2016-present Spryker Systems GmbH. All rights reserved.
+ * Use of this software requires acceptance of the Evaluation License Agreement. See LICENSE file.
+ */
+
+declare(strict_types = 1);
+
+namespace SprykerEco\Zed\PunchoutGateway\Communication\Form;
+
+use Exception;
+use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
+use Generated\Shared\Transfer\PunchoutConnectionTransfer;
+use Spryker\Zed\Kernel\Communication\Form\AbstractType;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
+
+/**
+ * @method \SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface getRepository()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
+ * @method \SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig getConfig()
+ * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
+ */
+class PunchoutConnectionFormType extends AbstractType
+{
+    public const string OPTION_STORE_CHOICES = 'store_choices';
+
+    public const string OPTION_PROCESSOR_PLUGINS_CHOICES = 'processor_plugins_choices';
+
+    public const string OPTION_PROCESSOR_PLUGINS_TYPE_MAP = 'processor_plugins_type_map';
+
+    public const string OPTION_PROTOCOL_TYPE_CHOICES = 'protocol_type_choices';
+
+    public const string OPTION_ID_PUNCHOUT_CONNECTION = 'id_punchout_connection';
+
+    protected const string FIELD_NAME = PunchoutConnectionTransfer::NAME;
+
+    protected const string FIELD_REQUEST_URL = PunchoutConnectionTransfer::REQUEST_URL;
+
+    protected const string FIELD_ID_STORE = PunchoutConnectionTransfer::ID_STORE;
+
+    protected const string FIELD_PROTOCOL_TYPE = PunchoutConnectionTransfer::PROTOCOL_TYPE;
+
+    protected const string FIELD_IS_ACTIVE = PunchoutConnectionTransfer::IS_ACTIVE;
+
+    protected const string FIELD_ALLOW_IFRAME = PunchoutConnectionTransfer::ALLOW_IFRAME;
+
+    protected const string FIELD_PROCESSOR_PLUGIN_CLASS = PunchoutConnectionTransfer::PROCESSOR_PLUGIN_CLASS;
+
+    protected const string FIELD_CXML_CONFIGURATION = PunchoutConnectionTransfer::CXML_CONFIGURATION;
+
+    protected const string FIELD_OCI_CONFIGURATION = PunchoutConnectionTransfer::OCI_CONFIGURATION;
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $this->addNameField($builder)
+            ->addIdStoreField($builder, $options)
+            ->addProtocolTypeField($builder, $options)
+            ->addProcessorPluginClassField($builder, $options)
+            ->addIsActiveField($builder)
+            ->addAllowIframeField($builder);
+
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($options) {
+            $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+        });
+
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
+            $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+        });
+
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($options) {
+            $this->validateOci($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+            $this->validateProcessorPlugin($event);
+        });
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            static::OPTION_PROCESSOR_PLUGINS_CHOICES => [],
+            static::OPTION_PROCESSOR_PLUGINS_TYPE_MAP => [],
+            static::OPTION_STORE_CHOICES => [],
+            static::OPTION_PROTOCOL_TYPE_CHOICES => [],
+            PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => true,
+            static::OPTION_ID_PUNCHOUT_CONNECTION => null,
+        ]);
+    }
+
+    protected function addNameField(FormBuilderInterface $builder): static
+    {
+        $builder->add(static::FIELD_NAME, TextType::class, [
+            'label' => 'Connection Name',
+            'required' => true,
+            'constraints' => [
+                new NotBlank(),
+                new Length(['max' => 255]),
+            ],
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    protected function addIdStoreField(FormBuilderInterface $builder, array $options): static
+    {
+        $builder->add(static::FIELD_ID_STORE, ChoiceType::class, [
+            'label' => 'Store',
+            'required' => true,
+            'choices' => $options[static::OPTION_STORE_CHOICES],
+            'constraints' => [new NotBlank()],
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    protected function addProtocolTypeField(FormBuilderInterface $builder, array $options): static
+    {
+        $builder->add(static::FIELD_PROTOCOL_TYPE, ChoiceType::class, [
+            'label' => 'Protocol Type',
+            'required' => true,
+            'choices' => $options[static::OPTION_PROTOCOL_TYPE_CHOICES],
+            'constraints' => [new NotBlank()],
+            'attr' => ['data-protocol-type-selector' => 'true'],
+            'disabled' => $options['disabled'] ?? false,
+        ]);
+
+        return $this;
+    }
+
+    protected function addIsActiveField(FormBuilderInterface $builder): static
+    {
+        $builder->add(static::FIELD_IS_ACTIVE, CheckboxType::class, [
+            'label' => 'Active',
+            'required' => false,
+        ]);
+
+        return $this;
+    }
+
+    protected function addAllowIframeField(FormBuilderInterface $builder): static
+    {
+        $builder->add(static::FIELD_ALLOW_IFRAME, CheckboxType::class, [
+            'label' => 'Allow iFrame',
+            'required' => false,
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    protected function addProcessorPluginClassField(FormBuilderInterface $builder, array $options): static
+    {
+        $typeMap = $options[static::OPTION_PROCESSOR_PLUGINS_TYPE_MAP];
+
+        $builder->add(static::FIELD_PROCESSOR_PLUGIN_CLASS, ChoiceType::class, [
+            'label' => 'Processor Plugin Class',
+            'required' => true,
+            'choices' => $options[static::OPTION_PROCESSOR_PLUGINS_CHOICES],
+            'choice_attr' => static function (string $fqcn) use ($typeMap): array {
+                return ['data-protocol-type' => $typeMap[$fqcn] ?? ''];
+            },
+            'constraints' => [new NotBlank()],
+        ]);
+
+        return $this;
+    }
+
+    protected function addProtocolConfigurationFields(FormEvent $event, bool $isCreate, ?int $excludeId = null): void
+    {
+        $data = $event->getData();
+        $form = $event->getForm();
+
+        $protocolType = null;
+
+        if (is_array($data)) {
+            $protocolType = $data[static::FIELD_PROTOCOL_TYPE] ?? null;
+        }
+
+        if (!$isCreate) {
+            $form->remove(static::FIELD_PROTOCOL_TYPE);
+            $form->add(static::FIELD_PROTOCOL_TYPE, TextType::class, [
+                'label' => 'Protocol Type',
+                'disabled' => true,
+            ]);
+        }
+
+        if ($isCreate || $protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
+            $isCxml = $protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML;
+
+            $form->add(static::FIELD_CXML_CONFIGURATION, PunchoutCxmlConfigurationFormType::class, [
+                'label' => false,
+                'required' => false,
+                PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => $isCreate,
+                PunchoutCxmlConfigurationFormType::OPTION_IS_CXML => $isCxml,
+                PunchoutCxmlConfigurationFormType::OPTION_ID_PUNCHOUT_CONNECTION => $excludeId,
+            ]);
+        }
+
+        if ($isCreate || $protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+            $this->addRequestUrlField($form, $protocolType === PunchoutGatewayConfig::PROTOCOL_TYPE_OCI);
+
+            $form->add(static::FIELD_OCI_CONFIGURATION, PunchoutOciConfigurationFormType::class, [
+                'label' => false,
+                'required' => false,
+            ]);
+        }
+    }
+
+    protected function validateProcessorPlugin(FormEvent $event): void
+    {
+        $form = $event->getForm();
+
+        $type = $form->get(static::FIELD_PROTOCOL_TYPE)->getData();
+        $pluginClass = $form->get(static::FIELD_PROCESSOR_PLUGIN_CLASS)->getData();
+
+        if (!$type || !$pluginClass) {
+            return;
+        }
+
+        try {
+            /** @var \SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInterface $plugin */
+            $plugin = new $pluginClass();
+
+            if ($type !== $plugin->getType()) {
+                $form->get(static::FIELD_PROCESSOR_PLUGIN_CLASS)
+                    ->addError(new FormError('Processor plugin %pluginName is not compatible with the current protocol type.', null, ['%pluginName' => $pluginClass]));
+            }
+        } catch (Exception $e) {
+            $form->get(static::FIELD_PROCESSOR_PLUGIN_CLASS)
+                ->addError(new FormError('Cannot validate processor plugin %pluginName', null, ['%pluginName' => $pluginClass]));
+        }
+    }
+
+    protected function validateOci(FormEvent $event, ?int $excludeId): void
+    {
+        $form = $event->getForm();
+
+        if ($form->get(static::FIELD_PROTOCOL_TYPE)->getData() !== PunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+            return;
+        }
+
+        $requestUrl = $form->get(static::FIELD_REQUEST_URL)->getData();
+
+        if (!$requestUrl) {
+            return;
+        }
+
+        $requestUrl = PunchoutGatewayConfig::OCI_URL_PREFIX . $requestUrl;
+
+        $punchoutConnectionCriteriaTransfer = (new PunchoutConnectionCriteriaTransfer())
+            ->setRequestUrl($requestUrl);
+
+        if ($excludeId) {
+            $punchoutConnectionCriteriaTransfer->addNotIdConnection($excludeId);
+        }
+
+        $connectionTransfers = $this->getRepository()->getPunchoutConnectionCollection($punchoutConnectionCriteriaTransfer);
+
+        if ($connectionTransfers->getPunchoutConnections()->count() === 0) {
+            return;
+        }
+
+        $form->get(static::FIELD_REQUEST_URL)
+            ->addError(new FormError('An OCI connection with this Request URL already exists.'));
+    }
+
+    protected function addRequestUrlField(FormInterface $form, bool $isOCI): void
+    {
+        $options = [
+            new Regex([
+                'pattern' => '~^' . PunchoutGatewayConfig::OCI_URL_SLUG . '$~',
+                'message' => 'Only `_`, `-`, letters and numbers are allowed.',
+            ]),
+        ];
+
+        if ($isOCI) {
+            $options[] = new NotBlank();
+        }
+
+        $form->add(static::FIELD_REQUEST_URL, TextType::class, [
+            'label' => 'Request URL',
+            'required' => $isOCI,
+            'constraints' => $options,
+            'help' => 'This is a suffix to the request url.',
+        ]);
+    }
+}

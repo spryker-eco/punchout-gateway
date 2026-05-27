@@ -19,6 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @method \SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepositoryInterface getRepository()
  * @method \SprykerEco\Zed\PunchoutGateway\Business\PunchoutGatewayFacadeInterface getFacade()
+ * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
  */
 class PunchoutCxmlDemoConnectionCreateConsole extends Console
 {
@@ -33,8 +34,6 @@ class PunchoutCxmlDemoConnectionCreateConsole extends Console
     protected const string SENDER_IDENTITY = 'MyNewIdentity';
 
     protected const string SENDER_SHARED_SECRET = 'jd8je3$ndP';
-
-    protected const string CONFIGURATION_KEY_SENDER_SHARED_SECRET = 'senderSharedSecret';
 
     protected const bool ALLOW_IFRAME = true;
 
@@ -65,7 +64,7 @@ class PunchoutCxmlDemoConnectionCreateConsole extends Console
         $entity->setProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_CXML);
         $entity->setSenderIdentity(static::SENDER_IDENTITY);
         $entity->setConfiguration((string)json_encode([
-            static::CONFIGURATION_KEY_SENDER_SHARED_SECRET => password_hash(static::SENDER_SHARED_SECRET, PASSWORD_DEFAULT),
+            PunchoutGatewayConfig::CONFIGURATION_KEY_SENDER_SHARED_SECRET => password_hash(static::SENDER_SHARED_SECRET, PASSWORD_DEFAULT),
         ]));
         $entity->setProcessorPluginClass(DefaultCxmlProcessorPlugin::class);
         $entity->setAllowIframe(static::ALLOW_IFRAME);

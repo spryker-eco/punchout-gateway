@@ -1,0 +1,18 @@
+{% extends '@Gui/Layout/layout.twig' %}
+
+{% set widget_title = 'Punchout Connections' | trans %}
+
+{% block section_title widget_title %}
+{% block head_title widget_title %}
+
+{% block action %}
+    {{ createActionButton('/punchout-gateway/create/index', 'Create Connection' | trans) }}
+{% endblock %}
+
+{% block content %}
+    {% embed '@Gui/Partials/widget.twig' %}
+        {% block widget_content %}
+            {{ punchoutConnectionTable | raw }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

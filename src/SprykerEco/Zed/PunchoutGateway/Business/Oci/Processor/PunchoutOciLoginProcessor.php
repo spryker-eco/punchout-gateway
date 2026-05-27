@@ -10,6 +10,7 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Business\Oci\Processor;
 
 use Exception;
+use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionStartResponseTransfer;
@@ -54,12 +55,22 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
     ): PunchoutSessionStartResponseTransfer {
         $requestUrl = $ociLoginRequestTransfer->getRequestUrlOrFail();
 
-        $connectionTransfer = $this->repository->findActiveOciConnectionByRequestUrl($requestUrl);
+        $connectionTransfers = $this->repository->getPunchoutConnectionCollection((new PunchoutConnectionCriteriaTransfer())->setRequestUrl($requestUrl)->setIsActive(true));
+
+        $connectionTransfer = $connectionTransfers->getPunchoutConnections()[0] ?? null;
 
         if ($connectionTransfer === null) {
             $this->punchoutLogger->logRequestUrlFailure($requestUrl, SharedPunchoutGatewayConfig::ERROR_CONNECTION_NOT_FOUND);
 
             return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_CONNECTION_NOT_FOUND);
+        }
+
+        $storedFormMethod = $connectionTransfer->getOciConfiguration()->getFormMethod();
+
+        if ($storedFormMethod !== null && $storedFormMethod !== '' && $storedFormMethod !== $ociLoginRequestTransfer->getFormMethod()) {
+            $this->punchoutLogger->logRequestUrlFailure($requestUrl, SharedPunchoutGatewayConfig::ERROR_CONNECTION_WRONG_METHOD);
+
+            return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_CONNECTION_WRONG_METHOD);
         }
 
         $this->punchoutLogger->logConnectionFound($connectionTransfer);

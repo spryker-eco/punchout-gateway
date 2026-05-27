@@ -12,7 +12,7 @@ PunchOut Gateway module enables projects to handle eProcurement requests and bui
 Install the Punchout Gateway module using Composer:
 
 ```bash
-composer require spryker-eco/punchout-gateway:^0.1.0
+composer require spryker-eco/punchout-gateway:^0.4.0
 ```
 
 ## 2. Configure the module
@@ -24,7 +24,7 @@ To control logging through the AWS Parameter Store, add the following optional c
 ```php
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 
-$config[PunchoutGatewayConstants::ENABLE_LOGGING] = getenv('PUNCHOUT_GATEWAY_ENABLE_LOGGING') ?? false;
+$config[PunchoutGatewayConstants::ENABLE_LOGGING] = getenv('PUNCHOUT_GATEWAY_ENABLE_LOGGING');
 ```
 
 ### Configuration constants
@@ -212,7 +212,7 @@ To configure a connection, create a row in the `spy_punchout_connection` table:
 | `name` | Human-readable label                     | Used only for readability                                                                                                                                |
 | `is_active` | `true`                                   | Determines whether the connection can be used.                                                                                                           |
 | `allow_iframe` | `true` / `false`                         | Enforces iframe-specific headers when the PunchOut session is active. If **~TARGET** is sent during the request, the headers are sent regardless of this value. |
-| `protocol_type` | `'oci'` or `'xml'`                       | Flow type.                                                                                                                                               |
+| `protocol_type` | `'oci'` or `'cxml'`                      | Flow type.                                                                                                                                               |
 | `processor_plugin_class` | Full class name of the processor plugin. | Processor to be used.                                                                                                                                    |
 
 ### 10.1 OCI connection configuration
@@ -256,7 +256,7 @@ cXML-specific configuration columns:
 |--------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `request_url` | `'/punchout-gateway/cxml/my-company'`    | Endpoint path the cXML request is posted to. This URL without a domain is the unique identifier of each connection, and can be anything that starts with ``https://<shop-domain>/punchout-gateway/cxml/``.        |
 | `configuration` | JSON configuration                       | See below `cXML configuration`                                                                                                                                                                                    |
-| `protocol_type` | `'xml'`                       | Flow type.                                                                                                                                                                                                        |
+| `protocol_type` | `'cxml'`                                 | Flow type.                                                                                                                                                                                                        |
 | `processor_plugin_class` | Full class name of the processor plugin. | `\SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultCxmlProcessorPlugin` or a project's implementation,                                                                                  |
 
 Uniqueness: `sender_identity` MUST be globally unique — each cXML system maps to exactly one connection.

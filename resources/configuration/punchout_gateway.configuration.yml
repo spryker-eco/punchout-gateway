@@ -1,0 +1,90 @@
+# yaml-language-server: $schema=../../../../../src/Spryker/Configuration/resources/configuration/configuration-schema-v1.json
+features:
+    - key: punchout_gateway
+      name: Punchout Gateway
+      description: Punchout Gateway integration settings.
+      enabled: true
+      order: 100
+      tabs:
+          - key: general
+            name: General
+            enabled: true
+            order: 0
+            groups:
+                - key: logging
+                  name: Logging
+                  description: Controls request/response logging for the Punchout Gateway module.
+                  enabled: true
+                  order: 0
+                  scopes:
+                      - global
+                      - store
+                  settings:
+                      - key: enable_logging
+                        name: Enable Logging
+                        description: When enabled, the Punchout Gateway logs incoming and outgoing punchout requests and responses.
+                        type: boolean
+                        default_value: false
+                        enabled: true
+                        secret: false
+                        storefront: false
+                        order: 0
+                        scopes:
+                            - global
+                            - store
+          - key: cxml
+            name: cXML
+            enabled: true
+            order: 1
+            groups:
+                - key: session
+                  name: Session
+                  description: cXML session security and validity settings.
+                  enabled: true
+                  order: 0
+                  scopes:
+                      - global
+                      - store
+                  settings:
+                      - key: start_url_validity_in_seconds
+                        name: Session Start URL Validity (seconds)
+                        description: How long (in seconds) a cXML session start URL remains valid after generation.
+                        type: integer
+                        default_value: 600
+                        enabled: true
+                        secret: false
+                        storefront: false
+                        order: 0
+                        scopes:
+                            - global
+                            - store
+                        constraints:
+                            - type: 'Symfony\Component\Validator\Constraints\LessThanOrEqual'
+                              message: 'Session start should not be allowed for longer than 1 hour.'
+                              options:
+                                  value: 3600
+                            - type: 'Symfony\Component\Validator\Constraints\GreaterThan'
+                              message: 'Session start should be allowed for longer than 0 seconds.'
+                              options:
+                                  value: 0
+                      - key: token_length
+                        name: Session Token Length
+                        description: Length (in characters) of the randomly generated cXML session token.
+                        type: integer
+                        default_value: 32
+                        enabled: true
+                        secret: false
+                        storefront: false
+                        order: 1
+                        scopes:
+                            - global
+                            - store
+                        constraints:
+                            - type: 'Symfony\Component\Validator\Constraints\LessThanOrEqual'
+                              message: 'Token cannot be longer than 128 symbols.'
+                              options:
+                                  value: 128
+                            - type: 'Symfony\Component\Validator\Constraints\GreaterThanOrEqual'
+                              message: 'Token cannot be shorter than 16 symbols.'
+                              options:
+                                  value: 16

@@ -9,7 +9,11 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Persistence;
 
+use Generated\Shared\Transfer\PunchoutConnectionTransfer;
+use Generated\Shared\Transfer\PunchoutCredentialTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
+use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnection;
+use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutCredential;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutSession;
 use Spryker\Zed\Kernel\Persistence\AbstractEntityManager;
 
@@ -19,6 +23,96 @@ use Spryker\Zed\Kernel\Persistence\AbstractEntityManager;
 class PunchoutGatewayEntityManager extends AbstractEntityManager implements PunchoutGatewayEntityManagerInterface
 {
     protected const string DATE_TIME_FORMAT = 'Y-m-d H:i:s';
+
+    public function createPunchoutConnection(PunchoutConnectionTransfer $punchoutConnectionTransfer): PunchoutConnectionTransfer
+    {
+        $connectionEntity = new SpyPunchoutConnection();
+
+        $this->getFactory()
+            ->createPunchoutConnectionMapper()
+            ->mapPunchoutConnectionTransferToEntity($punchoutConnectionTransfer, $connectionEntity);
+
+        $connectionEntity->save();
+
+        $punchoutConnectionTransfer->setIdPunchoutConnection($connectionEntity->getIdPunchoutConnection());
+        $punchoutConnectionTransfer->setCreatedAt($connectionEntity->getCreatedAt()?->format(static::DATE_TIME_FORMAT));
+        $punchoutConnectionTransfer->setUpdatedAt($connectionEntity->getUpdatedAt()?->format(static::DATE_TIME_FORMAT));
+
+        return $punchoutConnectionTransfer;
+    }
+
+    public function updatePunchoutConnection(PunchoutConnectionTransfer $punchoutConnectionTransfer): PunchoutConnectionTransfer
+    {
+        $connectionEntity = $this->getFactory()
+            ->createSpyPunchoutConnectionQuery()
+            ->filterByIdPunchoutConnection($punchoutConnectionTransfer->getIdPunchoutConnectionOrFail())
+            ->findOne();
+
+        if ($connectionEntity === null) {
+            return $punchoutConnectionTransfer;
+        }
+
+        $this->getFactory()
+            ->createPunchoutConnectionMapper()
+            ->mapPunchoutConnectionTransferToEntity($punchoutConnectionTransfer, $connectionEntity);
+
+        $connectionEntity->save();
+
+        $punchoutConnectionTransfer->setUpdatedAt($connectionEntity->getUpdatedAt()?->format(static::DATE_TIME_FORMAT));
+
+        return $punchoutConnectionTransfer;
+    }
+
+    public function deletePunchoutConnection(int $idPunchoutConnection): bool
+    {
+        return $this->getFactory()
+            ->createSpyPunchoutConnectionQuery()
+            ->filterByIdPunchoutConnection($idPunchoutConnection)
+            ->delete() > 0;
+    }
+
+    public function createPunchoutCredential(PunchoutCredentialTransfer $punchoutCredentialTransfer): PunchoutCredentialTransfer
+    {
+        $credentialEntity = new SpyPunchoutCredential();
+
+        $this->getFactory()
+            ->createPunchoutCredentialMapper()
+            ->mapCredentialTransferToEntity($punchoutCredentialTransfer, $credentialEntity);
+
+        $credentialEntity->save();
+
+        $punchoutCredentialTransfer->setIdPunchoutCredential($credentialEntity->getIdPunchoutCredential());
+
+        return $punchoutCredentialTransfer;
+    }
+
+    public function updatePunchoutCredential(PunchoutCredentialTransfer $punchoutCredentialTransfer): PunchoutCredentialTransfer
+    {
+        $credentialEntity = $this->getFactory()
+            ->createSpyPunchoutCredentialQuery()
+            ->filterByIdPunchoutCredential($punchoutCredentialTransfer->getIdPunchoutCredentialOrFail())
+            ->findOne();
+
+        if ($credentialEntity === null) {
+            return $punchoutCredentialTransfer;
+        }
+
+        $this->getFactory()
+            ->createPunchoutCredentialMapper()
+            ->mapCredentialTransferToEntity($punchoutCredentialTransfer, $credentialEntity);
+
+        $credentialEntity->save();
+
+        return $punchoutCredentialTransfer;
+    }
+
+    public function deletePunchoutCredential(int $idPunchoutCredential): void
+    {
+        $this->getFactory()
+            ->createSpyPunchoutCredentialQuery()
+            ->filterByIdPunchoutCredential($idPunchoutCredential)
+            ->delete();
+    }
 
     public function deletePunchoutSessionByToken(PunchoutSessionTransfer $punchoutSessionTransfer): int
     {
@@ -56,6 +150,21 @@ class PunchoutGatewayEntityManager extends AbstractEntityManager implements Punc
     {
         $punchoutSessionEntity = new SpyPunchoutSession();
 
+        $punchoutSessionEntity = $this->mapPunchoutSessionTransferToSpyPunchoutSession($punchoutSessionEntity, $punchoutSessionTransfer);
+
+        $punchoutSessionEntity->save();
+
+        $punchoutSessionTransfer->setIdPunchoutSession($punchoutSessionEntity->getIdPunchoutSession());
+        $punchoutSessionTransfer->setCreatedAt($punchoutSessionEntity->getCreatedAt()?->format(static::DATE_TIME_FORMAT));
+        $punchoutSessionTransfer->setUpdatedAt($punchoutSessionEntity->getUpdatedAt()?->format(static::DATE_TIME_FORMAT));
+
+        return $punchoutSessionTransfer;
+    }
+
+    protected function mapPunchoutSessionTransferToSpyPunchoutSession(
+        SpyPunchoutSession $punchoutSessionEntity,
+        PunchoutSessionTransfer $punchoutSessionTransfer
+    ): SpyPunchoutSession {
         $data = $punchoutSessionTransfer->toArray();
         $punchoutSessionEntity->fromArray($data);
 
@@ -67,12 +176,6 @@ class PunchoutGatewayEntityManager extends AbstractEntityManager implements Punc
             $punchoutSessionEntity->setSessionData($this->getFactory()->getServiceUtilEncoding()->encodeJson($sessionDataTransfer->modifiedToArray()) ?? '[]');
         }
 
-        $punchoutSessionEntity->save();
-
-        $punchoutSessionTransfer->setIdPunchoutSession($punchoutSessionEntity->getIdPunchoutSession());
-        $punchoutSessionTransfer->setCreatedAt($punchoutSessionEntity->getCreatedAt()?->format(static::DATE_TIME_FORMAT));
-        $punchoutSessionTransfer->setUpdatedAt($punchoutSessionEntity->getUpdatedAt()?->format(static::DATE_TIME_FORMAT));
-
-        return $punchoutSessionTransfer;
+        return $punchoutSessionEntity;
     }
 }

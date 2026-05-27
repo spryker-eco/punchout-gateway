@@ -30,13 +30,14 @@ class OciController extends AbstractController
 
         $punchoutLogger->logGenericInfoMessage('Processing OCI session start...');
 
-        $punchoutSetupRequestTransfer = new PunchoutOciLoginRequestTransfer();
-        $punchoutSetupRequestTransfer->setFormData($request->request->all());
-        $punchoutSetupRequestTransfer->setRequestUrl($request->getPathInfo());
+        $punchoutOciLoginRequestTransfer = new PunchoutOciLoginRequestTransfer();
+        $punchoutOciLoginRequestTransfer->setFormMethod($request->getMethod());
+        $punchoutOciLoginRequestTransfer->setFormData($request->request->all());
+        $punchoutOciLoginRequestTransfer->setRequestUrl($request->getPathInfo());
 
         $sessionStartResponseTransfer = $this->getFactory()
             ->getPunchoutGatewayClient()
-            ->processPunchoutOciStartRequest($punchoutSetupRequestTransfer);
+            ->processPunchoutOciStartRequest($punchoutOciLoginRequestTransfer);
 
         if (!$sessionStartResponseTransfer->getIsSuccess() || !$sessionStartResponseTransfer->getCustomer()) {
             $punchoutLogger->logSessionStartFailed($sessionStartResponseTransfer);

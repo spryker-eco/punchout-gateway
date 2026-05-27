@@ -9,6 +9,12 @@ declare(strict_types = 1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Business;
 
+use Generated\Shared\Transfer\PunchoutConnectionCollectionTransfer;
+use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
+use Generated\Shared\Transfer\PunchoutConnectionTransfer;
+use Generated\Shared\Transfer\PunchoutCredentialCollectionTransfer;
+use Generated\Shared\Transfer\PunchoutCredentialCriteriaTransfer;
+use Generated\Shared\Transfer\PunchoutCredentialTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionStartRequestTransfer;
@@ -23,6 +29,106 @@ use Spryker\Zed\Kernel\Business\AbstractFacade;
  */
 class PunchoutGatewayFacade extends AbstractFacade implements PunchoutGatewayFacadeInterface
 {
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function createPunchoutConnection(PunchoutConnectionTransfer $punchoutConnectionTransfer): PunchoutConnectionTransfer
+    {
+        return $this->getEntityManager()->createPunchoutConnection($punchoutConnectionTransfer);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function updatePunchoutConnection(PunchoutConnectionTransfer $punchoutConnectionTransfer): PunchoutConnectionTransfer
+    {
+        return $this->getEntityManager()->updatePunchoutConnection($punchoutConnectionTransfer);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function deletePunchoutConnection(int $idPunchoutConnection): bool
+    {
+        return $this->getEntityManager()->deletePunchoutConnection($idPunchoutConnection);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function findPunchoutConnectionById(int $idPunchoutConnection): ?PunchoutConnectionTransfer
+    {
+        return $this->getRepository()->findPunchoutConnectionById($idPunchoutConnection);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function getPunchoutConnectionCollection(PunchoutConnectionCriteriaTransfer $criteriaTransfer): PunchoutConnectionCollectionTransfer
+    {
+        return $this->getRepository()->getPunchoutConnectionCollection($criteriaTransfer);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function createPunchoutCredential(PunchoutCredentialTransfer $punchoutCredentialTransfer): PunchoutCredentialTransfer
+    {
+        return $this->getEntityManager()->createPunchoutCredential($punchoutCredentialTransfer);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function updatePunchoutCredential(PunchoutCredentialTransfer $punchoutCredentialTransfer): PunchoutCredentialTransfer
+    {
+        return $this->getEntityManager()->updatePunchoutCredential($punchoutCredentialTransfer);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function deletePunchoutCredential(int $idPunchoutCredential): void
+    {
+        $this->getEntityManager()->deletePunchoutCredential($idPunchoutCredential);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function findPunchoutCredentialById(int $idPunchoutCredential): ?PunchoutCredentialTransfer
+    {
+        return $this->getRepository()->findPunchoutCredentialById($idPunchoutCredential);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function getPunchoutCredentialCollection(PunchoutCredentialCriteriaTransfer $criteriaTransfer): PunchoutCredentialCollectionTransfer
+    {
+        return $this->getRepository()->getPunchoutCredentialCollection($criteriaTransfer);
+    }
+
     /**
      * {@inheritDoc}
      *
