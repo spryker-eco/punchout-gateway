@@ -60,7 +60,9 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             return '';
         }
 
-        $fieldMap = $this->resolveFieldMap($quoteTransfer);
+        $fieldMap = $quoteTransfer->getPunchoutSession()
+            ?->getConnection()
+            ?->getMappings() ?? [];
         $source = $this->buildMappingSource($quoteTransfer);
 
         $punchoutOrderMessage = $this->buildPunchoutOrderMessage($quoteTransfer, $punchoutSessionTransfer, $fieldMap, $source);
@@ -108,12 +110,12 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         QuoteTransfer $quoteTransfer,
         PunchoutSessionTransfer $punchoutSessionTransfer,
         array $fieldMap,
-        MappingSourceTransfer $source,
+        MappingSourceTransfer $mappingSourceTransfer,
     ): PunchOutOrderMessage {
-        $language = $this->resolveWithFallback($fieldMap, 'attributes.language', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE);
-        $buyerCookie = $this->resolveWithFallback($fieldMap, 'attributes.buyerCookie', $source, fn () => (string)$punchoutSessionTransfer->getBuyerCookie());
-        $currency = $this->resolveWithFallback($fieldMap, 'attributes.currency', $source, fn () => (string)$quoteTransfer->getCurrency()?->getCode());
-        $operation = $this->resolveOrSkip($fieldMap, 'attributes.operationAllowed', $source) ?? $punchoutSessionTransfer->getOperation();
+        $language = $this->resolveWithFallback($fieldMap, 'attributes.language', $mappingSourceTransfer, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE);
+        $buyerCookie = $this->resolveWithFallback($fieldMap, 'attributes.buyerCookie', $mappingSourceTransfer, fn () => (string)$punchoutSessionTransfer->getBuyerCookie());
+        $currency = $this->resolveWithFallback($fieldMap, 'attributes.currency', $mappingSourceTransfer, fn () => (string)$quoteTransfer->getCurrency()?->getCode());
+        $operation = $this->resolveOrSkip($fieldMap, 'attributes.operationAllowed', $mappingSourceTransfer) ?? $punchoutSessionTransfer->getOperation();
 
         $builder = PunchOutOrderMessageBuilder::create(
             (string)$language,
@@ -125,9 +127,9 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         $extrinsics = $punchoutSessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields();
 
         $this->addItems($builder, $quoteTransfer, $extrinsics, $fieldMap);
-        $this->addShipTo($builder, $quoteTransfer, $fieldMap, $source);
-        $this->addShippingCost($builder, $quoteTransfer, $fieldMap, $source);
-        $this->addTax($builder, $quoteTransfer, $fieldMap, $source);
+        $this->addShipTo($builder, $quoteTransfer, $fieldMap, $mappingSourceTransfer);
+        $this->addShippingCost($builder, $quoteTransfer, $fieldMap, $mappingSourceTransfer);
+        $this->addTax($builder, $quoteTransfer, $fieldMap, $mappingSourceTransfer);
 
         return $builder->build();
     }
@@ -156,18 +158,6 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             $extrinsics,
             array_flip($this->config->getExtrinsicBlackList()),
         );
-    }
-
-    /**
-     * @return array<string, string|null>
-     */
-    protected function resolveFieldMap(QuoteTransfer $quoteTransfer): array
-    {
-        $dbMapping = $quoteTransfer->getPunchoutSession()
-            ?->getConnection()
-            ?->getMappings() ?? [];
-
-        return array_merge($this->config->getDefaultFieldMap(), $dbMapping);
     }
 
     protected function buildMappingSource(QuoteTransfer $quoteTransfer, ?ItemTransfer $itemTransfer = null): MappingSourceTransfer

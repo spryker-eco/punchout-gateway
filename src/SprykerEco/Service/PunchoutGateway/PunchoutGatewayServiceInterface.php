@@ -71,6 +71,16 @@ interface PunchoutGatewayServiceInterface
 
     /**
      * Specification:
+     * - Returns all possible source field plugin keys (e.g. "item", "quote").
+     *
+     * @api
+     *
+     * @return array<string>
+     */
+    public function getSourceFieldSuggestionNames(): array;
+
+    /**
+     * Specification:
      * - Returns the list of supported cXML field keys available for mapping.
      *
      * @api

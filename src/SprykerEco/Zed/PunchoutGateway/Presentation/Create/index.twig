@@ -10,9 +10,18 @@
 {% endblock %}
 
 {% block content %}
-    {% embed '@Gui/Partials/widget.twig' %}
-        {% block widget_content %}
-            {{ form_start(punchoutConnectionForm) }}
+    {{ form_start(punchoutConnectionForm) }}
+
+<div class="tabs-container" data-is-navigable="true" data-auto-errors="true">
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-content-connection" role="presentation">
+            <a href="#tab-content-connection">{{ 'Connection Details' | trans }}</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div id="tab-content-connection" class="tab-pane active" role="tabpanel">
+            <div class="panel-body">
             {{ form_errors(punchoutConnectionForm) }}
 
             <div class="col-sm-12">
@@ -113,13 +122,17 @@
                 </div>
             </div>
 
-            <div class="col-sm-12">
-                <button type="submit" class="btn btn-primary">{{ 'Save' | trans }}</button>
             </div>
+        </div>
+    </div>
 
-            {{ form_end(punchoutConnectionForm) }}
-        {% endblock %}
-    {% endembed %}
+    <div class="tabs-footer">
+        <input type="submit" class="btn btn-primary safe-submit" value="{{ 'Save' | trans }}">
+    </div>
+
+</div>
+{{ form_end(punchoutConnectionForm) }}
+
 {% endblock %}
 
 {% block footer_js %}

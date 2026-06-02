@@ -12,6 +12,7 @@ namespace SprykerEco\Zed\PunchoutGateway;
 use Spryker\Shared\Application\ApplicationConstants;
 use Spryker\Zed\Kernel\AbstractBundleConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 
 class PunchoutGatewayConfig extends AbstractBundleConfig
@@ -93,5 +94,15 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
             PunchoutGatewayPunchoutGatewayConfig::CONFIGURATION_KEY_CXML_SESSION_TOKEN_LENGTH,
             32,
         );
+    }
+
+    /**
+     * @api
+     *
+     * @return list<string>
+     */
+    public function getExtrinsicBlackList(): array
+    {
+        return SharedPunchoutGatewayConfig::EXTRINSIC_BLACKLIST;
     }
 }

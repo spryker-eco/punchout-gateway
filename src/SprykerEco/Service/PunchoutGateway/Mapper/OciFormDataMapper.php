@@ -67,7 +67,9 @@ class OciFormDataMapper implements OciFormDataMapperInterface
             return null;
         }
 
-        $fieldMap = $this->resolveFieldMap($quoteTransfer);
+        $fieldMap = $quoteTransfer->getPunchoutSession()
+            ?->getConnection()
+            ?->getMappings() ?? [];
         $formData = (new PunchoutFormDataTransfer())->setActionUrl($actionUrl);
 
         $this->setFormTarget($formData, $ociLoginRequest);
@@ -75,18 +77,6 @@ class OciFormDataMapper implements OciFormDataMapperInterface
         $this->addSapEchoFields($formData, $ociLoginRequest);
 
         return $formData;
-    }
-
-    /**
-     * @return array<string, string|null>
-     */
-    protected function resolveFieldMap(QuoteTransfer $quoteTransfer): array
-    {
-        $dbMapping = $quoteTransfer->getPunchoutSession()
-            ?->getConnection()
-            ?->getMappings() ?? [];
-
-        return array_merge($this->config->getDefaultOciFieldMap(), $dbMapping);
     }
 
     /**

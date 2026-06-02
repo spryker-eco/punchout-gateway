@@ -12,35 +12,41 @@ namespace SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
+use Spryker\Shared\Kernel\Transfer\AbstractTransfer;
 
 trait TransferPathTraversalTrait
 {
-    protected function traversePath(mixed $object, string $path): mixed
+    protected const int MAX_TRAVERSAL_DEPTH = 2;
+
+    /**
+     * @return \SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig
+     */
+    abstract public function getConfig();
+
+    protected function traversePath(?AbstractTransfer $objectTransfer, string $path): mixed
     {
-        if ($object === null) {
+        if ($objectTransfer === null) {
             return null;
         }
 
         $segments = explode('.', $path);
 
         foreach ($segments as $segment) {
-            if ($object === null) {
+            if ($objectTransfer === null) {
                 return null;
             }
 
             $getter = sprintf('get%s', ucfirst($segment));
 
-            if (!method_exists($object, $getter)) {
+            if (!method_exists($objectTransfer, $getter)) {
                 return null;
             }
 
-            $object = $object->$getter();
+            $objectTransfer = $objectTransfer->$getter();
         }
 
-        return $object;
+        return $objectTransfer;
     }
-
-    protected const int MAX_TRAVERSAL_DEPTH = 2;
 
     /**
      * @return array<string>
@@ -90,7 +96,7 @@ trait TransferPathTraversalTrait
 
             $fieldName = lcfirst(substr($methodName, 3));
 
-            if (str_starts_with($fieldName, 'spy') || str_starts_with($fieldName, 'pyz')) {
+            if ($this->isExcludedFieldPrefix($fieldName)) {
                 continue;
             }
 
@@ -191,5 +197,16 @@ trait TransferPathTraversalTrait
     protected function isTransferClass(string $className): bool
     {
         return str_contains($className, 'Generated\Shared\Transfer\\') || str_ends_with($className, 'Transfer');
+    }
+
+    protected function isExcludedFieldPrefix(string $fieldName): bool
+    {
+        foreach ($this->getConfig()->getNonAutocompleteTransferFieldPrefixes() as $prefix) {
+            if (str_starts_with($fieldName, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

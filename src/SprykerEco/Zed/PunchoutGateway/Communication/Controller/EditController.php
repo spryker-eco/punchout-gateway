@@ -83,6 +83,8 @@ class EditController extends AbstractController
             'credentialTable' => $credentialTable->render(),
             'idPunchoutConnection' => $idPunchoutConnection,
             'requestUrlPrefix' => PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX,
+            'reservedExtrinsicNames' => $this->getFactory()->getConfig()->getExtrinsicBlackList(),
+            'availableSourceExpressionData' => $this->getFactory()->getPunchoutGatewayService()->getSourceFieldSuggestionNames(),
         ]);
     }
 

@@ -11,9 +11,13 @@ namespace SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper;
 
 use Generated\Shared\Transfer\MappingSourceTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
+use Spryker\Service\Kernel\AbstractPlugin;
 use SprykerEco\Service\PunchoutGateway\Dependency\Plugin\PunchoutFieldMapperPluginInterface;
 
-class QuoteTransferFieldMapperPlugin implements PunchoutFieldMapperPluginInterface
+/**
+ * @method \SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig getConfig()
+ */
+class QuoteTransferFieldMapperPlugin extends AbstractPlugin implements PunchoutFieldMapperPluginInterface
 {
     use TransferPathTraversalTrait;
 

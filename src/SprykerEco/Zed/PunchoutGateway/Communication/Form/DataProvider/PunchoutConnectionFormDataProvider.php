@@ -113,13 +113,7 @@ class PunchoutConnectionFormDataProvider
     {
         $fields = $this->punchoutGatewayService->getSupportedCxmlFields();
 
-        $choices = [];
-
-        foreach ($fields as $field) {
-            $choices[$field] = $field;
-        }
-
-        return $choices;
+        return array_combine($fields, $fields);
     }
 
     /**
@@ -129,12 +123,6 @@ class PunchoutConnectionFormDataProvider
     {
         $fields = $this->punchoutGatewayService->getSupportedOciFields();
 
-        $choices = [];
-
-        foreach ($fields as $field) {
-            $choices[$field] = $field;
-        }
-
-        return $choices;
+        return array_combine($fields, $fields);
     }
 }

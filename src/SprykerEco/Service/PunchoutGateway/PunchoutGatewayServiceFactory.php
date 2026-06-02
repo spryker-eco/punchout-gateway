@@ -68,15 +68,23 @@ class PunchoutGatewayServiceFactory extends AbstractServiceFactory
     public function createFieldValueResolver(): FieldValueResolverInterface
     {
         return new FieldValueResolver(
-            $this->getProvidedDependency(PunchoutGatewayDependencyProvider::PLUGINS_FIELD_MAPPER),
+            $this->getFiledMapperPlugins(),
             $this->createPunchoutLogger(),
         );
+    }
+
+    /**
+     * @return array<string, \SprykerEco\Service\PunchoutGateway\Dependency\Plugin\PunchoutFieldMapperPluginInterface>
+     */
+    public function getFiledMapperPlugins(): array
+    {
+        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::PLUGINS_FIELD_MAPPER);
     }
 
     public function createFieldSuggestionCollector(): FieldSuggestionCollector
     {
         return new FieldSuggestionCollector(
-            $this->getProvidedDependency(PunchoutGatewayDependencyProvider::PLUGINS_FIELD_MAPPER),
+            $this->getFiledMapperPlugins(),
         );
     }
 

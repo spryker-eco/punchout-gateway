@@ -25,9 +25,11 @@ class FieldSuggestionCollector
     {
         $suggestions = [];
 
-        foreach ($this->fieldMapperPlugins as $plugin) {
-            $suggestions = array_merge($suggestions, $plugin->getPossibleValues());
+        foreach ($this->fieldMapperPlugins as $fieldMapperPlugin) {
+            $suggestions[] = $fieldMapperPlugin->getPossibleValues();
         }
+
+        $suggestions = array_merge(...$suggestions);
 
         sort($suggestions);
 
