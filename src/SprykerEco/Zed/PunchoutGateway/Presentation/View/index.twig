@@ -46,7 +46,7 @@
                     </tr>
                     <tr>
                         <th>{{ 'Allow iFrame' | trans }}</th>
-                        <td>{{ punchoutConnection.allowIframe ? 'Yes' : 'No' | trans }}</td>
+                        <td>{{ (punchoutConnection.allowIframe ? 'Yes' : 'No') | trans }}</td>
                     </tr>
                     {% if punchoutConnection.protocolType === 'cxml' %}
                         <tr>

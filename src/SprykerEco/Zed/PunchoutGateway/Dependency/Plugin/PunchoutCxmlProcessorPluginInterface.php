@@ -43,4 +43,12 @@ interface PunchoutCxmlProcessorPluginInterface extends PunchoutProcessorPluginIn
         PunchoutSetupResponseTransfer $responseTransfer,
         PunchoutCxmlSetupRequestTransfer $punchoutCxmlSetupRequestTransfer,
     ): PunchoutSetupResponseTransfer;
+
+    /**
+     * Specification:
+     * - performs static validation of the request.
+     *
+     * @api
+     */
+    public function isValid(PunchoutCxmlSetupRequestTransfer $punchoutCxmlSetupRequestTransfer): bool;
 }

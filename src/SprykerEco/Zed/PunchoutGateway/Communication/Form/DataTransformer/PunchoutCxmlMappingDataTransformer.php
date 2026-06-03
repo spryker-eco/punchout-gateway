@@ -85,8 +85,7 @@ class PunchoutCxmlMappingDataTransformer implements DataTransformerInterface
                 continue;
             }
 
-            $source = trim((string)($row[PunchoutExtrinsicMappingRowFormType::FIELD_SOURCE] ?? ''));
-            $mappings[$cxmlField] = $source !== '' ? $source : null;
+            $mappings[$cxmlField] = trim((string)($row[PunchoutExtrinsicMappingRowFormType::FIELD_SOURCE] ?? ''));
         }
 
         foreach ((array)($value[PunchoutCxmlConfigurationFormType::MAPPING_EXTRINSICS] ?? []) as $row) {
@@ -97,8 +96,7 @@ class PunchoutCxmlMappingDataTransformer implements DataTransformerInterface
             }
 
             $cxmlPath = SharedPunchoutGatewayConfig::EXTRINSIC_PREFIX . $extrinsicName;
-            $source = trim((string)($row[PunchoutExtrinsicMappingRowFormType::FIELD_SOURCE] ?? ''));
-            $mappings[$cxmlPath] = $source !== '' ? $source : null;
+            $mappings[$cxmlPath] = trim((string)($row[PunchoutExtrinsicMappingRowFormType::FIELD_SOURCE] ?? ''));
         }
 
         $value[static::MAPPINGS] = $mappings;

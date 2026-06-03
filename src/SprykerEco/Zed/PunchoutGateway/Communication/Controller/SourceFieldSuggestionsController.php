@@ -11,6 +11,7 @@ namespace SprykerEco\Zed\PunchoutGateway\Communication\Controller;
 
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @method \SprykerEco\Zed\PunchoutGateway\Communication\PunchoutGatewayCommunicationFactory getFactory()
@@ -19,15 +20,39 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  */
 class SourceFieldSuggestionsController extends AbstractController
 {
-    public function indexAction(): JsonResponse
+    protected const string PARAM_TERM = 'term';
+
+    public const string SEPARATOR = '&';
+
+    public function indexAction(Request $request): JsonResponse
     {
+        $term = (string)$request->query->get(static::PARAM_TERM, '');
+
         $suggestions = $this->getFactory()
             ->getPunchoutGatewayService()
             ->getSourceFieldSuggestions();
 
-        $response = new JsonResponse(['suggestions' => $suggestions]);
-        $response->headers->set('Cache-Control', 'private, max-age=60');
+        if ($term !== '') {
+            $separatorPosition = strrpos($term, static::SEPARATOR);
 
-        return $response;
+            if ($separatorPosition !== false) {
+                $prefix = substr($term, 0, $separatorPosition + 1);
+
+                $term = substr($term, $separatorPosition + 1);
+            }
+
+            $suggestions = array_values(
+                array_filter(
+                    $suggestions,
+                    static fn (string $suggestion): bool => stripos($suggestion, $term) !== false,
+                ),
+            );
+
+            if ($separatorPosition !== false) {
+                $suggestions = substr_replace($suggestions, $prefix, 0, 0);
+            }
+        }
+
+        return new JsonResponse($suggestions);
     }
 }

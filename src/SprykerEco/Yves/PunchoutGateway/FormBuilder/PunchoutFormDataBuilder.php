@@ -12,6 +12,7 @@ namespace SprykerEco\Yves\PunchoutGateway\FormBuilder;
 use Generated\Shared\Transfer\PunchoutFormDataTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class PunchoutFormDataBuilder implements PunchoutFormDataBuilderInterface
 {
@@ -36,7 +37,7 @@ class PunchoutFormDataBuilder implements PunchoutFormDataBuilderInterface
             return $plugin->handle($quoteTransfer);
         }
 
-        $this->punchoutLogger->logGenericErrorMessage('Form builder is failed to find a plugin for the quote.', ['quoteUuid' => $quoteTransfer->getUuid()]);
+        $this->punchoutLogger->logGenericErrorMessage(PunchoutGatewayConfig::ERROR_FORM_PLUGIN_NOT_FOUND, ['quoteUuid' => $quoteTransfer->getUuid()]);
 
         return null;
     }

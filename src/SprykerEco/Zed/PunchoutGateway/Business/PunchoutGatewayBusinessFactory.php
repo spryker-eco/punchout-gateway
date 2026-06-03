@@ -10,7 +10,6 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Business;
 
 use Spryker\Zed\Calculation\Business\CalculationFacadeInterface;
-use Spryker\Zed\Cart\Business\CartFacadeInterface;
 use Spryker\Zed\Currency\Business\CurrencyFacadeInterface;
 use Spryker\Zed\Customer\Business\CustomerFacadeInterface;
 use Spryker\Zed\Kernel\Business\AbstractBusinessFactory;
@@ -39,6 +38,8 @@ use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\CxmlPunchoutSessionReso
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\CxmlPunchoutSessionResolverInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\PunchoutSessionStarter;
 use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Session\PunchoutSessionStarterInterface;
+use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Validator\CxmlRequestValidator;
+use SprykerEco\Zed\PunchoutGateway\Business\Cxml\Validator\CxmlRequestValidatorInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Model\ProcessorPluginResolver;
 use SprykerEco\Zed\PunchoutGateway\Business\Model\ProcessorPluginResolverInterface;
 use SprykerEco\Zed\PunchoutGateway\Business\Oci\Authenticator\PunchoutOciAuthenticator;
@@ -155,9 +156,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
 
     public function createCxmlPunchoutQuoteExpander(): CxmlPunchoutQuoteExpanderInterface
     {
-        return new CxmlPunchoutQuoteExpander(
-            $this->getCartFacade(),
-        );
+        return new CxmlPunchoutQuoteExpander();
     }
 
     public function createCxmlPunchoutSessionResolver(): CxmlPunchoutSessionResolverInterface
@@ -214,6 +213,13 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return new DefaultCxmlContentParser();
     }
 
+    public function createCxmlRequestValidator(): CxmlRequestValidatorInterface
+    {
+        return new CxmlRequestValidator(
+            $this->createPunchoutLogger(),
+        );
+    }
+
     public function createProcessorPluginResolver(): ProcessorPluginResolverInterface
     {
         return new ProcessorPluginResolver();
@@ -260,10 +266,5 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     public function getPriceFacade(): PriceFacadeInterface
     {
         return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_PRICE);
-    }
-
-    public function getCartFacade(): CartFacadeInterface
-    {
-        return $this->getProvidedDependency(PunchoutGatewayDependencyProvider::FACADE_CART);
     }
 }

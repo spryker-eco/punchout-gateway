@@ -22,7 +22,6 @@ use Generated\Shared\Transfer\PunchoutAddressTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlConfigurationTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
-use Generated\Shared\Transfer\PunchoutItemTransfer;
 use Generated\Shared\Transfer\PunchoutSessionDataTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
@@ -292,34 +291,6 @@ class DefaultCxmlProcessorPluginTest extends Unit
             $this->assertNotNull($itemTransfer->getShipment());
             $this->assertSame($expectedAddress, $itemTransfer->getShipment()->getShippingAddress());
         }
-    }
-
-    /**
-     * @skip Managing items will be done in phase 3
-     */
-    public function testExpandQuoteWithEditOperationMapsItemsToQuote(): void
-    {
-        // Arrange
-        $quoteTransfer = new QuoteTransfer();
-        $setupRequestTransfer = (new PunchoutSetupRequestTransfer())
-            ->setCxmlSetupRequest(
-                (new PunchoutCxmlSetupRequestTransfer())
-                    ->setOperation(PunchoutGatewayConfig::OPERATION_EDIT)
-                    ->addItem(
-                        (new PunchoutItemTransfer())
-                            ->setSupplierPartId('SKU-123')
-                            ->setQuantity('2')
-                            ->setUnitPrice('1000'),
-                    ),
-            );
-        $plugin = new DefaultCxmlProcessorPlugin();
-
-        // Act
-        $result = $plugin->expandQuote($quoteTransfer, $setupRequestTransfer);
-
-        // Assert
-        $this->assertCount(1, $result->getItems());
-        $this->assertSame('SKU-123', $result->getItems()->offsetGet(0)->getSku());
     }
 
     public function testExpandSessionSetsBuyerCookieOperationAndSessionToken(): void

@@ -11,6 +11,7 @@ namespace SprykerEco\Service\PunchoutGateway\Mapper\Resolver;
 
 use Generated\Shared\Transfer\MappingSourceTransfer;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class FieldValueResolver implements FieldValueResolverInterface
 {
@@ -55,7 +56,7 @@ class FieldValueResolver implements FieldValueResolverInterface
 
         if ($dotPosition === false) {
             $this->punchoutLogger->logGenericErrorMessage(
-                sprintf('Field mapping expression "%s" is missing a dot separator.', $expression),
+                sprintf(PunchoutGatewayConfig::ERROR_FIELD_MAPPING_MISSING_DOT_SEPARATOR, $expression),
             );
 
             return null;
@@ -66,7 +67,7 @@ class FieldValueResolver implements FieldValueResolverInterface
 
         if (!isset($this->fieldMapperPlugins[$pluginKey])) {
             $this->punchoutLogger->logGenericErrorMessage(
-                sprintf('Field mapper plugin "%s" is not registered.', $pluginKey),
+                sprintf(PunchoutGatewayConfig::ERROR_FIELD_MAPPER_PLUGIN_NOT_REGISTERED, $pluginKey),
             );
 
             return null;

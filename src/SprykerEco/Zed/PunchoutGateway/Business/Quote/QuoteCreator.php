@@ -47,7 +47,7 @@ class QuoteCreator implements QuoteCreatorInterface
 
         $quoteTransfer = $processorPlugin->expandQuote($quoteTransfer, $setupRequestTransfer);
 
-        $quoteTransfer = $this->recalculateQuote($quoteTransfer);
+        $quoteTransfer = $this->resetEmptyQuoteTotals($quoteTransfer);
 
         $quoteTransfer = $this->saveQuote($quoteTransfer);
 
@@ -56,10 +56,10 @@ class QuoteCreator implements QuoteCreatorInterface
         return $setupRequestTransfer;
     }
 
-    protected function recalculateQuote(QuoteTransfer $quoteTransfer): QuoteTransfer
+    protected function resetEmptyQuoteTotals(QuoteTransfer $quoteTransfer): QuoteTransfer
     {
         if ($quoteTransfer->getItems()->count() > 0) {
-            return $this->calculationFacade->recalculateQuote($quoteTransfer);
+            return $quoteTransfer;
         }
 
         return $quoteTransfer->setTotals(

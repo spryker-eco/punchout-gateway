@@ -13,6 +13,7 @@ use Generated\Shared\Transfer\CustomerTransfer;
 use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Spryker\Zed\Customer\Business\CustomerFacadeInterface;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class OciCustomerResolver implements OciCustomerResolverInterface
 {
@@ -25,7 +26,7 @@ class OciCustomerResolver implements OciCustomerResolverInterface
     public function resolveCustomer(PunchoutSetupRequestTransfer $setupRequestTransfer): ?CustomerTransfer
     {
         if (!$setupRequestTransfer->getConnection()?->getIdCustomer()) {
-            $this->punchoutLogger->logGenericErrorMessage('Customer ID is null.');
+            $this->punchoutLogger->logGenericErrorMessage(PunchoutGatewayConfig::ERROR_CUSTOMER_ID_IS_NULL);
 
             return null;
         }

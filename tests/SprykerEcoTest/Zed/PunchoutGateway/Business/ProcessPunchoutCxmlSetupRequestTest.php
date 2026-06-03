@@ -12,18 +12,10 @@ namespace SprykerEcoTest\Zed\PunchoutGateway\Business;
 use Codeception\Test\Unit;
 use Generated\Shared\Transfer\CustomerTransfer;
 use Generated\Shared\Transfer\ItemTransfer;
-use Generated\Shared\Transfer\MoneyValueTransfer;
-use Generated\Shared\Transfer\PriceProductTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutItemTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Generated\Shared\Transfer\StoreTransfer;
-use Spryker\Zed\Calculation\CalculationDependencyProvider;
-use Spryker\Zed\Calculation\Communication\Plugin\Calculator\GrandTotalCalculatorPlugin;
-use Spryker\Zed\Calculation\Communication\Plugin\Calculator\RemoveTotalsCalculatorPlugin;
-use Spryker\Zed\Calculation\Communication\Plugin\Calculator\SubtotalCalculatorPlugin;
-use Spryker\Zed\Cart\CartDependencyProvider;
-use Spryker\Zed\ProductCartConnector\Communication\Plugin\ProductExistsCartPreCheckPlugin;
 use SprykerEcoTest\Zed\PunchoutGateway\Helper\CxmlRequestBuilder;
 use SprykerEcoTest\Zed\PunchoutGateway\PunchoutGatewayBusinessTester;
 use SprykerTest\Shared\Testify\Helper\LocatorHelperTrait;
@@ -47,12 +39,6 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
     {
         $this->storeTransfer = $this->getLocator()->store()->facade()->getAllStores()[0];
         $this->tester->addCurrentStore($this->storeTransfer);
-
-        $this->tester->setDependency(CartDependencyProvider::CART_PRE_CHECK_PLUGINS, [
-            new ProductExistsCartPreCheckPlugin(),
-        ]);
-
-        $this->setupQuoteCalculationPlugins();
     }
 
     public function testProcessCxmlSetupRequestCreateOperationWithoutItemsReturnsSuccessfulResponse(): void
@@ -95,9 +81,6 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $this->assertTrue($quoteResponseTransfer->getIsSuccessful());
     }
 
-    /**
-     * @group fail
-     */
     public function testProcessCxmlSetupRequestCreateOperationWithExistingItemsClearsQuoteItems(): void
     {
         $senderIdentity = sprintf('TestIdentity_%s', uniqid());
@@ -145,8 +128,8 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
 
         $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
         $this->assertCount(0, $quoteResponseTransfer->getQuoteTransfer()->getItems());
-        $this->assertSame(0, $quoteResponseTransfer->getQuoteTransfer()->getTotals()?->getGrandTotal() ?? -1, 'getGrandTotal is null: Totals were not recalculated');
-        $this->assertSame(0, $quoteResponseTransfer->getQuoteTransfer()->getTotals()?->getSubtotal() ?? -1, 'getSubtotal is null: Totals were not recalculated');
+        $this->assertSame(0, $quoteResponseTransfer->getQuoteTransfer()->getTotals()?->getGrandTotal() ?? -1, 'getGrandTotal is null: Totals were not zeroed after items cleared');
+        $this->assertSame(0, $quoteResponseTransfer->getQuoteTransfer()->getTotals()?->getSubtotal() ?? -1, 'getSubtotal is null: Totals were not zeroed after items cleared');
     }
 
     public function testProcessCxmlSetupRequestCreateOperationWithExistingQuoteReusesQuote(): void
@@ -195,7 +178,78 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
         $this->assertSame($email, $sessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields()['UserEmail']);
     }
 
-    public function testProcessCxmlSetupRequestEditOperationWithNonExistingProductsCreatesQuoteWithItems(): void
+    public function testProcessCxmlSetupRequestEditOperationPreservesModifiedQuoteItems(): void
+    {
+        $senderIdentity = sprintf('TestIdentity_%s', uniqid());
+        $sharedSecret = 'test-secret';
+        $requestUrl = 'https://test.local/punchout';
+        $email = sprintf('test_%s@example.com', uniqid());
+        $buyerCookie = sprintf('cookie_%s', uniqid());
+
+        $customerTransfer = $this->tester->haveConfirmedCustomer(['email' => $email, 'storeName' => $this->storeTransfer->getName()]);
+        $this->tester->havePunchoutConnection([
+            'fk_store' => $this->storeTransfer->getIdStore(),
+            'sender_identity' => $senderIdentity,
+            'shared_secret' => $sharedSecret,
+            'request_url' => $requestUrl,
+        ]);
+
+        // Phase 1: CREATE with empty cart
+        $rawXml = CxmlRequestBuilder::buildSetupRequest(
+            $this->buildCxmlSetupRequestTransfer($senderIdentity, $sharedSecret, 'create', $email, $buyerCookie),
+        );
+
+        $responseTransfer = $this->tester->getFacade()->processPunchoutCxmlSetupRequest(
+            $this->buildRequestTransfer($rawXml, $requestUrl . '/entry'),
+        );
+
+        $this->assertTrue($responseTransfer->getIsSuccess(), $responseTransfer->getErrorMessage() ?? '');
+
+        $sessionToken = $this->extractSessionToken($responseTransfer->getStartPageUrl());
+        $sessionTransfer = $this->tester->findPunchoutSessionBySessionToken($sessionToken);
+
+        $this->assertNotNull($sessionTransfer);
+        $this->assertSame('create', $sessionTransfer->getOperation());
+
+        $idQuote = $sessionTransfer->getIdQuote();
+
+        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($idQuote);
+        $this->assertCount(0, $quoteResponseTransfer->getQuoteTransfer()->getItems());
+
+        // Phase 2: modify cart (simulate storefront adding items)
+        $quoteTransfer = $quoteResponseTransfer->getQuoteTransfer();
+        $quoteTransfer->setCustomer($customerTransfer);
+        $quoteTransfer->addItem(
+            (new ItemTransfer())->setSku('EDIT-SKU-001')->setQuantity(1)->setUnitPrice(500),
+        );
+        $this->tester->getLocator()->quote()->facade()->updateQuote($quoteTransfer);
+
+        // Phase 3: EDIT with same buyerCookie
+        $rawXml = CxmlRequestBuilder::buildSetupRequest(
+            $this->buildCxmlSetupRequestTransfer($senderIdentity, $sharedSecret, 'edit', $email, $buyerCookie),
+        );
+
+        $responseTransfer = $this->tester->getFacade()->processPunchoutCxmlSetupRequest(
+            $this->buildRequestTransfer($rawXml, $requestUrl . '/entry'),
+        );
+
+        $this->assertTrue($responseTransfer->getIsSuccess(), $responseTransfer->getErrorMessage() ?? '');
+
+        $sessionToken = $this->extractSessionToken($responseTransfer->getStartPageUrl());
+        $sessionTransfer = $this->tester->findPunchoutSessionBySessionToken($sessionToken);
+
+        $this->assertNotNull($sessionTransfer);
+        $this->assertSame($idQuote, $sessionTransfer->getIdQuote());
+        $this->assertSame('edit', $sessionTransfer->getOperation());
+        $this->assertSame(1, $this->tester->countPunchoutSessionsByBuyerCookie($buyerCookie));
+
+        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($idQuote);
+        $items = $quoteResponseTransfer->getQuoteTransfer()->getItems();
+        $this->assertCount(1, $items);
+        $this->assertSame('EDIT-SKU-001', $items[0]->getSku());
+    }
+
+    public function testProcessCxmlSetupRequestEditOperationLeavesQuoteItemsUntouched(): void
     {
         $senderIdentity = sprintf('TestIdentity_%s', uniqid());
         $sharedSecret = 'test-secret';
@@ -231,134 +285,6 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
 
         $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
         $this->assertCount(0, $quoteResponseTransfer->getQuoteTransfer()->getItems());
-    }
-
-    /**
-     * @skip Managing items will be done in phase 3
-     */
-    public function testProcessCxmlSetupRequestEditOperationWithExistingProductsCreatesQuoteWithItems(): void
-    {
-        $senderIdentity = sprintf('TestIdentity_%s', uniqid());
-        $sharedSecret = 'test-secret';
-        $requestUrl = 'https://test.local/punchout';
-        $email = sprintf('test_%s@example.com', uniqid());
-
-        $this->tester->haveConfirmedCustomer(['email' => $email]);
-        $this->tester->havePunchoutConnection([
-            'fk_store' => $this->storeTransfer->getIdStore(),
-            'sender_identity' => $senderIdentity,
-            'shared_secret' => $sharedSecret,
-            'request_url' => $requestUrl,
-        ]);
-
-        $productConcreteTransfer1 = $this->tester->haveFullProduct();
-        $this->tester->havePriceProduct([
-            PriceProductTransfer::SKU_PRODUCT_ABSTRACT => $productConcreteTransfer1->getAbstractSku(),
-            PriceProductTransfer::MONEY_VALUE => [
-                MoneyValueTransfer::STORE => $this->storeTransfer,
-            ],
-        ]);
-
-        $productConcreteTransfer2 = $this->tester->haveFullProduct();
-        $this->tester->havePriceProduct([
-            PriceProductTransfer::SKU_PRODUCT_ABSTRACT => $productConcreteTransfer2->getAbstractSku(),
-            PriceProductTransfer::MONEY_VALUE => [
-                MoneyValueTransfer::STORE => $this->storeTransfer,
-            ],
-        ]);
-
-        $cxmlTransfer = $this->buildCxmlSetupRequestTransfer($senderIdentity, $sharedSecret, 'edit', $email);
-        $cxmlTransfer->addItem($this->buildPunchoutItem($productConcreteTransfer1->getSku(), '1', '10', 'EUR', 1));
-        $cxmlTransfer->addItem($this->buildPunchoutItem($productConcreteTransfer2->getSku(), '2', '20', 'EUR', 2));
-
-        $rawXml = CxmlRequestBuilder::buildSetupRequest($cxmlTransfer);
-
-        $responseTransfer = $this->tester->getFacade()->processPunchoutCxmlSetupRequest(
-            $this->buildRequestTransfer($rawXml, $requestUrl . '/entry'),
-        );
-
-        $this->assertTrue($responseTransfer->getIsSuccess(), $responseTransfer->getErrorMessage() ?? '');
-
-        $sessionToken = $this->extractSessionToken($responseTransfer->getStartPageUrl());
-        $sessionTransfer = $this->tester->findPunchoutSessionBySessionToken($sessionToken);
-
-        $this->assertNotNull($sessionTransfer);
-        $this->assertSame('edit', $sessionTransfer->getOperation());
-        $this->assertSame($email, $sessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields()['UserEmail']);
-
-        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
-        $this->assertCount(2, $quoteResponseTransfer->getQuoteTransfer()->getItems());
-    }
-
-    /**
-     * @skip Managing items will be done in phase 3
-     */
-    public function testProcessCxmlSetupRequestEditOperationWithExistingQuoteReplacesItems(): void
-    {
-        $senderIdentity = sprintf('TestIdentity_%s', uniqid());
-        $sharedSecret = 'test-secret';
-        $requestUrl = 'https://test.local/punchout';
-        $email = sprintf('test_%s@example.com', uniqid());
-        $buyerCookie = sprintf('cookie_%s', uniqid());
-
-        $customerTransfer = $this->tester->haveConfirmedCustomer(['email' => $email, 'storeName' => $this->storeTransfer->getName()]);
-        $connectionTransfer = $this->tester->havePunchoutConnection([
-            'fk_store' => $this->storeTransfer->getIdStore(),
-            'sender_identity' => $senderIdentity,
-            'shared_secret' => $sharedSecret,
-            'request_url' => $requestUrl,
-        ]);
-
-        $existingQuoteTransfer = $this->createQuoteForCustomer($customerTransfer);
-        $existingQuoteTransfer->addItem(
-            (new ItemTransfer())->setSku('001_25904008')->setQuantity(1)->setUnitPrice(1000),
-        );
-        $this->tester->getLocator()->quote()->facade()->updateQuote($existingQuoteTransfer);
-
-        $this->tester->havePunchoutSession([
-            'fk_quote' => $existingQuoteTransfer->getIdQuote(),
-            'fk_punchout_connection' => $connectionTransfer->getIdPunchoutConnection(),
-            'fk_customer' => $customerTransfer->getIdCustomer(),
-            'buyer_cookie' => $buyerCookie,
-        ]);
-
-        $productConcreteTransfer1 = $this->tester->haveFullProduct();
-        $this->tester->havePriceProduct([
-            PriceProductTransfer::SKU_PRODUCT_ABSTRACT => $productConcreteTransfer1->getAbstractSku(),
-            PriceProductTransfer::MONEY_VALUE => [
-                MoneyValueTransfer::STORE => $this->storeTransfer,
-            ],
-        ]);
-
-        $productConcreteTransfer2 = $this->tester->haveFullProduct();
-        $this->tester->havePriceProduct([
-            PriceProductTransfer::SKU_PRODUCT_ABSTRACT => $productConcreteTransfer2->getAbstractSku(),
-            PriceProductTransfer::MONEY_VALUE => [
-                MoneyValueTransfer::STORE => $this->storeTransfer,
-            ],
-        ]);
-
-        $cxmlTransfer = $this->buildCxmlSetupRequestTransfer($senderIdentity, $sharedSecret, 'edit', $email);
-        $cxmlTransfer->addItem($this->buildPunchoutItem($productConcreteTransfer1->getSku(), '1', '10', 'EUR', 1));
-        $cxmlTransfer->addItem($this->buildPunchoutItem($productConcreteTransfer2->getSku(), '2', '20', 'EUR', 2));
-
-        $rawXml = CxmlRequestBuilder::buildSetupRequest($cxmlTransfer);
-
-        $responseTransfer = $this->tester->getFacade()->processPunchoutCxmlSetupRequest(
-            $this->buildRequestTransfer($rawXml, $requestUrl . '/entry'),
-        );
-
-        $this->assertTrue($responseTransfer->getIsSuccess(), $responseTransfer->getErrorMessage() ?? '');
-
-        $sessionToken = $this->extractSessionToken($responseTransfer->getStartPageUrl());
-        $sessionTransfer = $this->tester->findPunchoutSessionBySessionToken($sessionToken);
-
-        $this->assertNotNull($sessionTransfer);
-        $this->assertSame($existingQuoteTransfer->getIdQuote(), $sessionTransfer->getIdQuote());
-        $this->assertSame($email, $sessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields()['UserEmail']);
-
-        $quoteResponseTransfer = $this->tester->getLocator()->quote()->facade()->findQuoteById($sessionTransfer->getIdQuote());
-        $this->assertCount(2, $quoteResponseTransfer->getQuoteTransfer()->getItems());
     }
 
     public function testProcessCxmlSetupRequestWithInvalidXmlReturnsError(): void
@@ -561,14 +487,5 @@ class ProcessPunchoutCxmlSetupRequestTest extends Unit
             ->setCurrency($currencyTransfer);
 
         return $this->tester->getLocator()->quote()->facade()->createQuote($quoteTransfer)->getQuoteTransfer();
-    }
-
-    protected function setupQuoteCalculationPlugins(): void
-    {
-        $this->tester->setDependency(CalculationDependencyProvider::QUOTE_CALCULATOR_PLUGIN_STACK, [
-            new RemoveTotalsCalculatorPlugin(),
-            new SubtotalCalculatorPlugin(),
-            new GrandTotalCalculatorPlugin(),
-        ]);
     }
 }

@@ -89,4 +89,8 @@ class NullPunchoutLogger implements PunchoutLoggerInterface
     public function logGenericInfoMessage(string $message, array $context = []): void
     {
     }
+
+    public function logRequestValidationFailed(string $reason): void
+    {
+    }
 }

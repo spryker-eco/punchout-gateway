@@ -9,9 +9,9 @@ declare(strict_types=1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Form;
 
+use Spryker\Zed\Gui\Communication\Form\Type\AutosuggestType;
 use Spryker\Zed\Kernel\Communication\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -43,18 +43,18 @@ class PunchoutFieldMappingRowFormType extends AbstractType
                 'placeholder' => 'Select field',
                 'constraints' => [new NotBlank()],
             ])
-            ->add(static::FIELD_SOURCE, TextType::class, [
+            ->add(static::FIELD_SOURCE, AutosuggestType::class, [
                 'label' => 'Source expression',
-                'required' => false,
+                'required' => true,
+                AutosuggestType::URL => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
                 'attr' => [
-                    'placeholder' => 'e.g. item.sku or leave blank to skip',
-                    'class' => 'js-source-combobox',
-                    'data-suggestions-url' => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
+                    'placeholder' => 'e.g. item.sku or "" to force an empty value',
                 ],
                 'constraints' => [
+                    new NotBlank(),
                     new Regex([
-                        'pattern' => '/^$|^(?:[A-Za-z_][A-Za-z0-9_]*\.[^&]+|"[^"]*"|\'[^\']*\')(?:&(?:[A-Za-z_][A-Za-z0-9_]*\.[^&]+|"[^"]*"|\'[^\']*\'))*$/',
-                        'message' => 'Must be empty, a plugin expression (pluginKey.field), a quoted constant ("EA"), or segments joined by & (item.sku&"_suffix").',
+                        'pattern' => '/^(?:[A-Za-z_][A-Za-z0-9_]*\.[^&]+|"[^"]*"|\'[^\']*\')(?:&(?:[A-Za-z_][A-Za-z0-9_]*\.[^&]+|"[^"]*"|\'[^\']*\'))*$/',
+                        'message' => 'Must be a plugin expression (pluginKey.field), a quoted constant ("EA"), segments joined by & (item.sku&"_suffix"), or "" to force an empty value.',
                     ]),
                 ],
             ]);
