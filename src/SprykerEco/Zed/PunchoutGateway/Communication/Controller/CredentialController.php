@@ -40,11 +40,12 @@ class CredentialController extends AbstractController
         $punchoutCredentialTransfer->setIsActive(!$punchoutCredentialTransfer->getIsActive());
         $this->getFacade()->updatePunchoutCredential($punchoutCredentialTransfer);
 
-        if ($punchoutCredentialTransfer->getIsActive()) {
-            $this->addSuccessMessage('Credentials `%username` were activated.', ['%username' => $punchoutCredentialTransfer->getUsername()]);
-        } else {
-            $this->addSuccessMessage('Credentials `%username` were deactivated.', ['%username' => $punchoutCredentialTransfer->getUsername()]);
-        }
+        $this->addSuccessMessage(
+            $punchoutCredentialTransfer->getIsActive()
+            ? 'Credentials `%username` were activated.'
+                : 'Credentials `%username` were deactivated.',
+            ['%username' => $punchoutCredentialTransfer->getUsername()],
+        );
 
         return $this->redirectResponse($redirectUrl);
     }

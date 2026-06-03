@@ -39,8 +39,6 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
 
     public const string FACADE_CART = 'FACADE_CART';
 
-    public const string FACADE_TRANSLATOR = 'FACADE_TRANSLATOR';
-
     public const string PLUGINS_PROCESSORS = 'PLUGINS_PROCESSORS';
 
     public function provideBusinessLayerDependencies(Container $container): Container
@@ -74,8 +72,8 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
         $container = $this->addStoreFacade($container);
         $container = $this->addCustomerFacade($container);
         $container = $this->addUtilEncodingService($container);
-        $container = $this->addTranslatorFacade($container);
         $container = $this->addPunchoutProcessorPlugins($container);
+        $container = $this->addPunchoutGatewayService($container);
 
         return $container;
     }
@@ -174,15 +172,6 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     {
         $container->set(static::FACADE_CART, function (Container $container) {
             return $container->getLocator()->cart()->facade();
-        });
-
-        return $container;
-    }
-
-    protected function addTranslatorFacade(Container $container): Container
-    {
-        $container->set(static::FACADE_TRANSLATOR, function (Container $container) {
-            return $container->getLocator()->translator()->facade();
         });
 
         return $container;

@@ -10,6 +10,9 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Controller;
 
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
+use Propel\Runtime\Exception\PropelException;
+use Propel\Runtime\Exception\RuntimeException;
+use Spryker\Shared\Log\LoggerTrait;
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
@@ -23,6 +26,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class CreateController extends AbstractController
 {
+    use LoggerTrait;
+
     /**
      * @return \Symfony\Component\HttpFoundation\RedirectResponse|array<string, mixed>
      */
@@ -37,7 +42,11 @@ class CreateController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            return $this->executeCreateAction($form->getData());
+            $result = $this->executeCreateAction($form->getData());
+
+            if ($result) {
+                return $result;
+            }
         }
 
         return $this->viewResponse([
@@ -49,7 +58,7 @@ class CreateController extends AbstractController
     /**
      * @param array<string, mixed> $formData
      */
-    protected function executeCreateAction(array $formData): RedirectResponse
+    protected function executeCreateAction(array $formData): ?RedirectResponse
     {
         $punchoutConnectionTransfer = (new PunchoutConnectionTransfer())->fromArray($formData, true);
 
@@ -61,15 +70,28 @@ class CreateController extends AbstractController
             $punchoutConnectionTransfer->setRequestUrl(null);
         }
 
-        $punchoutConnectionTransfer = $this->getFacade()->createPunchoutConnection($punchoutConnectionTransfer);
+        try {
+            $punchoutConnectionTransfer = $this->getFacade()->createPunchoutConnection($punchoutConnectionTransfer);
 
-        $this->addSuccessMessage('Punchout connection created successfully.');
+            $this->addSuccessMessage('Punchout connection created successfully.');
 
-        return $this->redirectResponse(sprintf(
-            '%s?%s=%d',
-            PunchoutGatewayConfig::URL_EDIT,
-            PunchoutGatewayConfig::PARAM_ID_CONNECTION,
-            $punchoutConnectionTransfer->getIdPunchoutConnectionOrFail(),
-        ));
+            return $this->redirectResponse(sprintf(
+                '%s?%s=%d',
+                PunchoutGatewayConfig::URL_EDIT,
+                PunchoutGatewayConfig::PARAM_ID_CONNECTION,
+                $punchoutConnectionTransfer->getIdPunchoutConnectionOrFail(),
+            ));
+        } catch (PropelException | RuntimeException $e) {
+            $this->addErrorMessage('Punchout connection was not saved, check the logs.');
+            $this->getLogger()->error(
+                'Punchout connection was not saved, check the logs.',
+                [
+                    'exception' => $e,
+                    'previousException' => $e->getPrevious(),
+                ],
+            );
+        }
+
+        return null;
     }
 }

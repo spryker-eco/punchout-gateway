@@ -21,6 +21,7 @@ use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
@@ -188,6 +189,10 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
             new CxmlEncoder(Serializer::create()),
             $logger ?? new PunchoutLogger(),
             new PunchoutGatewayConfig(),
+            new FieldValueResolver(
+                [],
+                $logger ?? new PunchoutLogger(),
+            ),
         );
     }
 

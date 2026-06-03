@@ -12,9 +12,13 @@ namespace SprykerEco\Zed\PunchoutGateway\Communication\Controller;
 use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Exception\RuntimeException;
+use Spryker\Shared\Log\LoggerTrait;
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
 use Spryker\Zed\Kernel\Exception\Controller\InvalidIdException;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
+use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataTransformer\PunchoutCxmlMappingDataTransformer;
+use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataTransformer\PunchoutOciMappingDataTransformer;
+use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutConnectionFormType;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,6 +30,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class EditController extends AbstractController
 {
+    use LoggerTrait;
+
     /**
      * @return \Symfony\Component\HttpFoundation\RedirectResponse|array<string, mixed>
      */
@@ -77,6 +83,8 @@ class EditController extends AbstractController
             'credentialTable' => $credentialTable->render(),
             'idPunchoutConnection' => $idPunchoutConnection,
             'requestUrlPrefix' => PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX,
+            'reservedExtrinsicNames' => $this->getFactory()->getConfig()->getExtrinsicBlackList(),
+            'availableSourceExpressionData' => $this->getFactory()->getPunchoutGatewayService()->getSourceFieldSuggestionNames(),
         ]);
     }
 
@@ -114,7 +122,20 @@ class EditController extends AbstractController
         $formData[PunchoutConnectionTransfer::ID_PUNCHOUT_CONNECTION] = $idPunchoutConnection;
 
         $punchoutConnectionTransfer = (new PunchoutConnectionTransfer())->fromArray($formData, true);
-        $punchoutConnectionTransfer->setRequestUrl(PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX . $punchoutConnectionTransfer->getRequestUrl());
+
+        $mappings = [];
+
+        if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
+            $punchoutConnectionTransfer->setRequestUrl(null);
+            $mappings = $formData[PunchoutConnectionFormType::FIELD_CXML_CONFIGURATION][PunchoutCxmlMappingDataTransformer::MAPPINGS] ?? [];
+        }
+
+        if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayPunchoutGatewayConfig::PROTOCOL_TYPE_OCI) {
+            $punchoutConnectionTransfer->setRequestUrl(PunchoutGatewayPunchoutGatewayConfig::OCI_URL_PREFIX . $punchoutConnectionTransfer->getRequestUrl());
+            $mappings = $formData[PunchoutConnectionFormType::FIELD_OCI_CONFIGURATION][PunchoutOciMappingDataTransformer::MAPPINGS] ?? [];
+        }
+
+        $punchoutConnectionTransfer->setMappings($mappings);
 
         try {
             $this->getFacade()->updatePunchoutConnection($punchoutConnectionTransfer);
@@ -125,7 +146,14 @@ class EditController extends AbstractController
                 sprintf('%s?%s=%d', PunchoutGatewayConfig::URL_EDIT, PunchoutGatewayConfig::PARAM_ID_CONNECTION, $idPunchoutConnection),
             );
         } catch (PropelException | RuntimeException $e) {
-            $this->addErrorMessage('Punchout connection was not saved: ' . $e->getMessage());
+            $this->addErrorMessage('Punchout connection was not saved, check the logs.');
+            $this->getLogger()->error(
+                'Punchout connection was not saved, check the logs.',
+                [
+                    'exception' => $e,
+                    'previousException' => $e->getPrevious(),
+                ],
+            );
         }
 
         return null;

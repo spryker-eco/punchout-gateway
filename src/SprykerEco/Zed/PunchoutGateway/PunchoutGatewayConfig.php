@@ -12,6 +12,7 @@ namespace SprykerEco\Zed\PunchoutGateway;
 use Spryker\Shared\Application\ApplicationConstants;
 use Spryker\Zed\Kernel\AbstractBundleConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayPunchoutGatewayConfig;
+use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 
 class PunchoutGatewayConfig extends AbstractBundleConfig
@@ -43,6 +44,8 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
     public const string URL_CREDENTIAL_TOGGLE_IS_ACTIVE = '/punchout-gateway/credential/toggle-is-active';
 
     public const string URL_CUSTOMER_SUGGEST = '/punchout-gateway/customer-suggest/index';
+
+    public const string URL_SOURCE_FIELD_SUGGESTIONS = '/punchout-gateway/source-field-suggestions/index';
 
     /**
      * @api
@@ -91,5 +94,15 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
             PunchoutGatewayPunchoutGatewayConfig::CONFIGURATION_KEY_CXML_SESSION_TOKEN_LENGTH,
             32,
         );
+    }
+
+    /**
+     * @api
+     *
+     * @return list<string>
+     */
+    public function getExtrinsicBlackList(): array
+    {
+        return SharedPunchoutGatewayConfig::EXTRINSIC_BLACKLIST;
     }
 }

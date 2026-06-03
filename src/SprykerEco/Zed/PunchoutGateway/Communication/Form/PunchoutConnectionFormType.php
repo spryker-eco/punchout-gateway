@@ -59,9 +59,9 @@ class PunchoutConnectionFormType extends AbstractType
 
     protected const string FIELD_PROCESSOR_PLUGIN_CLASS = PunchoutConnectionTransfer::PROCESSOR_PLUGIN_CLASS;
 
-    protected const string FIELD_CXML_CONFIGURATION = PunchoutConnectionTransfer::CXML_CONFIGURATION;
+    public const string FIELD_CXML_CONFIGURATION = PunchoutConnectionTransfer::CXML_CONFIGURATION;
 
-    protected const string FIELD_OCI_CONFIGURATION = PunchoutConnectionTransfer::OCI_CONFIGURATION;
+    public const string FIELD_OCI_CONFIGURATION = PunchoutConnectionTransfer::OCI_CONFIGURATION;
 
     /**
      * @param array<string, mixed> $options
@@ -76,11 +76,11 @@ class PunchoutConnectionFormType extends AbstractType
             ->addAllowIframeField($builder);
 
         $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($options) {
-            $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+            $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION], $options);
         });
 
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
-            $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+            $this->addProtocolConfigurationFields($event, $options[PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE], $options[static::OPTION_ID_PUNCHOUT_CONNECTION], $options);
         });
 
         $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($options) {
@@ -98,6 +98,9 @@ class PunchoutConnectionFormType extends AbstractType
             static::OPTION_PROTOCOL_TYPE_CHOICES => [],
             PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => true,
             static::OPTION_ID_PUNCHOUT_CONNECTION => null,
+            PunchoutCxmlConfigurationFormType::OPTION_CXML_FIELD_CHOICES => [],
+            PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL => '',
+            PunchoutOciConfigurationFormType::OPTION_OCI_FIELD_CHOICES => [],
         ]);
     }
 
@@ -187,7 +190,10 @@ class PunchoutConnectionFormType extends AbstractType
         return $this;
     }
 
-    protected function addProtocolConfigurationFields(FormEvent $event, bool $isCreate, ?int $excludeId = null): void
+    /**
+     * @param array<string, mixed> $options
+     */
+    protected function addProtocolConfigurationFields(FormEvent $event, bool $isCreate, ?int $excludeId = null, array $options = []): void
     {
         $data = $event->getData();
         $form = $event->getForm();
@@ -215,6 +221,8 @@ class PunchoutConnectionFormType extends AbstractType
                 PunchoutCxmlConfigurationFormType::OPTION_IS_CREATE => $isCreate,
                 PunchoutCxmlConfigurationFormType::OPTION_IS_CXML => $isCxml,
                 PunchoutCxmlConfigurationFormType::OPTION_ID_PUNCHOUT_CONNECTION => $excludeId,
+                PunchoutCxmlConfigurationFormType::OPTION_CXML_FIELD_CHOICES => $options[PunchoutCxmlConfigurationFormType::OPTION_CXML_FIELD_CHOICES] ?? [],
+                PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL => $options[PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL] ?? '',
             ]);
         }
 
@@ -224,6 +232,9 @@ class PunchoutConnectionFormType extends AbstractType
             $form->add(static::FIELD_OCI_CONFIGURATION, PunchoutOciConfigurationFormType::class, [
                 'label' => false,
                 'required' => false,
+                PunchoutOciConfigurationFormType::OPTION_IS_CREATE => $isCreate,
+                PunchoutOciConfigurationFormType::OPTION_OCI_FIELD_CHOICES => $options[PunchoutOciConfigurationFormType::OPTION_OCI_FIELD_CHOICES] ?? [],
+                PunchoutOciConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL => $options[PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL] ?? '',
             ]);
         }
     }

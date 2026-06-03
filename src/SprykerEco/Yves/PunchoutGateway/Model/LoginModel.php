@@ -14,7 +14,6 @@ use Generated\Shared\Transfer\PunchoutSessionStartResponseTransfer;
 use Spryker\Client\Customer\CustomerClientInterface;
 use Spryker\Client\Quote\QuoteClientInterface;
 use Spryker\Client\Session\SessionClientInterface;
-use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 use SprykerShop\Shared\CustomerPage\CustomerPageConfig;
 use SprykerShop\Yves\CustomerPage\Security\Customer;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -37,7 +36,6 @@ class LoginModel implements LoginModelInterface
         protected SessionClientInterface $sessionClient,
         protected CustomerClientInterface $customerClient,
         protected QuoteClientInterface $quoteClient,
-        protected PunchoutLoggerInterface $punchoutLogger,
     ) {
     }
 

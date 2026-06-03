@@ -18,10 +18,12 @@ use CXml\Model\ItemId;
 use CXml\Model\Message\PunchOutOrderMessage;
 use CXml\Model\PostalAddress;
 use Generated\Shared\Transfer\ItemTransfer;
+use Generated\Shared\Transfer\MappingSourceTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoderInterface;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolverInterface;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
@@ -30,18 +32,21 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
 {
     protected const string CLASSIFICATION_UNIT_OF_MEASURE = 'UNSPSC';
 
+    protected const string ITEM_DETAIL_EXTRINSIC_PREFIX = 'ItemDetail.Extrinsic.';
+
     public function __construct(
         protected CxmlEncoderInterface $cxmlEncoder,
         protected PunchoutLoggerInterface $punchoutLogger,
         protected PunchoutGatewayConfig $config,
+        protected FieldValueResolverInterface $fieldValueResolver,
     ) {
     }
 
     public function mapQuoteToCxml(QuoteTransfer $quoteTransfer): string
     {
-        $punchoutSession = $quoteTransfer->getPunchoutSession();
+        $punchoutSessionTransfer = $quoteTransfer->getPunchoutSession();
 
-        if ($punchoutSession === null) {
+        if ($punchoutSessionTransfer === null) {
             return '';
         }
 
@@ -49,20 +54,35 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
             return '';
         }
 
-        $cxmlSetupRequest = $this->resolveCxmlSetupRequest($punchoutSession);
+        $cxmlSetupRequest = $this->resolveCxmlSetupRequest($punchoutSessionTransfer);
 
         if ($cxmlSetupRequest === null) {
             return '';
         }
 
-        $punchoutOrderMessage = $this->buildPunchoutOrderMessage($quoteTransfer, $punchoutSession);
+        $fieldMap = $quoteTransfer->getPunchoutSession()
+            ?->getConnection()
+            ?->getMappings() ?? [];
+        $source = $this->buildMappingSource($quoteTransfer);
 
-        $cxml = Builder::create(SharedPunchoutGatewayConfig::DEFAULT_CXML_SENDER_USER_AGENT, SharedPunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE)
-            ->from(new Credential(SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getToIdentity()))
-            ->to(new Credential(SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getFromIdentity()))
+        $punchoutOrderMessage = $this->buildPunchoutOrderMessage($quoteTransfer, $punchoutSessionTransfer, $fieldMap, $source);
+
+        $language = $this->resolveWithFallback($fieldMap, 'cXML.attributes.xml:lang', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE);
+        $fromDomain = $this->resolveWithFallback($fieldMap, 'cXML.Header.From.Credential.domain', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN);
+        $fromIdentity = $this->resolveWithFallback($fieldMap, 'cXML.Header.From.Credential.Identity', $source, fn () => (string)$cxmlSetupRequest->getToIdentity());
+        $toDomain = $this->resolveWithFallback($fieldMap, 'cXML.Header.To.Credential.domain', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN);
+        $toIdentity = $this->resolveWithFallback($fieldMap, 'cXML.Header.To.Credential.Identity', $source, fn () => (string)$cxmlSetupRequest->getFromIdentity());
+        $senderDomain = $this->resolveWithFallback($fieldMap, 'cXML.Header.Sender.Credential.domain', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN);
+        $senderIdentity = $this->resolveWithFallback($fieldMap, 'cXML.Header.Sender.Credential.Identity', $source, fn () => (string)$cxmlSetupRequest->getToIdentity());
+        $senderSharedSecret = $this->resolveOrSkip($fieldMap, 'cXML.Header.Sender.Credential.SharedSecret', $source) ?? $cxmlSetupRequest->getSenderSharedSecret();
+        $userAgent = $this->resolveWithFallback($fieldMap, 'cXML.Header.Sender.UserAgent', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_SENDER_USER_AGENT);
+
+        $cxml = Builder::create((string)$userAgent, (string)$language)
+            ->from(new Credential((string)$fromDomain, (string)$fromIdentity))
+            ->to(new Credential((string)$toDomain, (string)$toIdentity))
             ->sender(
-                (new Credential(SharedPunchoutGatewayConfig::DEFAULT_CXML_CREDENTIAL_DOMAIN, (string)$cxmlSetupRequest->getToIdentity()))
-                    ->setSharedSecret($cxmlSetupRequest->getSenderSharedSecret()),
+                (new Credential((string)$senderDomain, (string)$senderIdentity))
+                    ->setSharedSecret($senderSharedSecret),
             )
             ->payload($punchoutOrderMessage)
             ->build();
@@ -70,9 +90,9 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         return $this->cxmlEncoder->encodeCxml($cxml);
     }
 
-    protected function resolveCxmlSetupRequest(PunchoutSessionTransfer $punchoutSession): ?PunchoutCxmlSetupRequestTransfer
+    protected function resolveCxmlSetupRequest(PunchoutSessionTransfer $punchoutSessionTransfer): ?PunchoutCxmlSetupRequestTransfer
     {
-        $punchoutData = $punchoutSession->getPunchoutData();
+        $punchoutData = $punchoutSessionTransfer->getPunchoutData();
 
         if ($punchoutData === null || $punchoutData->getCxmlSetupRequest() === null) {
             $this->punchoutLogger->logGenericErrorMessage('PunchoutSession must carry punchoutData.cxmlSetupRequest to build PunchOutOrderMessage.');
@@ -83,40 +103,47 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         return $punchoutData->getCxmlSetupRequest();
     }
 
+    /**
+     * @param array<string, string|null> $fieldMap
+     */
     protected function buildPunchoutOrderMessage(
         QuoteTransfer $quoteTransfer,
-        PunchoutSessionTransfer $punchoutSession
+        PunchoutSessionTransfer $punchoutSessionTransfer,
+        array $fieldMap,
+        MappingSourceTransfer $mappingSourceTransfer,
     ): PunchOutOrderMessage {
-        $currencyCode = (string)$quoteTransfer->getCurrency()?->getCode();
-        $buyerCookie = (string)$punchoutSession->getBuyerCookie();
-        $operation = $punchoutSession->getOperation();
+        $language = $this->resolveWithFallback($fieldMap, 'attributes.language', $mappingSourceTransfer, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE);
+        $buyerCookie = $this->resolveWithFallback($fieldMap, 'attributes.buyerCookie', $mappingSourceTransfer, fn () => (string)$punchoutSessionTransfer->getBuyerCookie());
+        $currency = $this->resolveWithFallback($fieldMap, 'attributes.currency', $mappingSourceTransfer, fn () => (string)$quoteTransfer->getCurrency()?->getCode());
+        $operation = $this->resolveOrSkip($fieldMap, 'attributes.operationAllowed', $mappingSourceTransfer) ?? $punchoutSessionTransfer->getOperation();
 
         $builder = PunchOutOrderMessageBuilder::create(
-            SharedPunchoutGatewayConfig::DEFAULT_CXML_LANGUAGE,
-            $buyerCookie,
-            $currencyCode,
-            $operation,
+            (string)$language,
+            (string)$buyerCookie,
+            (string)$currency,
+            $operation !== null ? (string)$operation : null,
         );
 
-        $this->addItems($builder, $quoteTransfer, $punchoutSession->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields());
-        $this->addShipTo($builder, $quoteTransfer);
-        $this->addShippingCost($builder, $quoteTransfer);
-        $this->addTax($builder, $quoteTransfer);
+        $extrinsics = $punchoutSessionTransfer->getPunchoutData()->getCxmlSetupRequest()->getExtrinsicFields();
 
-        $punchoutOrderMessage = $builder->build();
+        $this->addItems($builder, $quoteTransfer, $extrinsics, $fieldMap);
+        $this->addShipTo($builder, $quoteTransfer, $fieldMap, $mappingSourceTransfer);
+        $this->addShippingCost($builder, $quoteTransfer, $fieldMap, $mappingSourceTransfer);
+        $this->addTax($builder, $quoteTransfer, $fieldMap, $mappingSourceTransfer);
 
-        return $punchoutOrderMessage;
+        return $builder->build();
     }
 
     /**
      * @param array<string, string> $extrinsics
+     * @param array<string, string|null> $fieldMap
      */
-    protected function addItems(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer, array $extrinsics): void
+    protected function addItems(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer, array $extrinsics, array $fieldMap): void
     {
         $extrinsics = $this->filterExtrinsics($extrinsics);
 
         foreach ($quoteTransfer->getItems() as $item) {
-            $this->addItem($builder, $item, $extrinsics);
+            $this->addItem($builder, $item, $extrinsics, $fieldMap, $quoteTransfer);
         }
     }
 
@@ -133,59 +160,184 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         );
     }
 
+    protected function buildMappingSource(QuoteTransfer $quoteTransfer, ?ItemTransfer $itemTransfer = null): MappingSourceTransfer
+    {
+        $mappingSourceTransfer = new MappingSourceTransfer();
+        $mappingSourceTransfer->setQuote($quoteTransfer);
+
+        if ($itemTransfer !== null) {
+            $mappingSourceTransfer->setItem($itemTransfer);
+        }
+
+        return $mappingSourceTransfer;
+    }
+
     /**
      * @param array<string, string> $extrinsics
+     * @param array<string, string|null> $fieldMap
      */
-    protected function addItem(PunchOutOrderMessageBuilder $builder, ItemTransfer $item, array $extrinsics = []): void
-    {
+    protected function addItem(
+        PunchOutOrderMessageBuilder $builder,
+        ItemTransfer $itemTransfer,
+        array $extrinsics,
+        array $fieldMap,
+        QuoteTransfer $quoteTransfer,
+    ): void {
+        $source = $this->buildMappingSource($quoteTransfer, $itemTransfer);
+
         $itemId = new ItemId(
-            (string)$item->getSku(),
-            null,
-            $item->getGroupKey(),
+            $this->resolveWithFallback($fieldMap, 'ItemID.SupplierPartID', $source, fn () => (string)$itemTransfer->getSku()),
+            $this->resolveOrSkip($fieldMap, 'ItemID.SupplierPartAuxiliaryID', $source),
+            $this->resolveOrSkip($fieldMap, 'ItemID.BuyerPartID', $source) ?? $itemTransfer->getGroupKey(),
         );
+
+        $quantity = $this->resolveWithFallback($fieldMap, 'attributes.quantity', $source, fn () => (int)$itemTransfer->getQuantity());
+        $description = $this->resolveWithFallback($fieldMap, 'ItemDetail.Description', $source, fn () => (string)$itemTransfer->getName());
+        $unitOfMeasure = $this->resolveWithFallback($fieldMap, 'ItemDetail.UnitOfMeasure', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_UNIT_OF_MEASURE);
+        $unitPrice = $this->resolveWithFallback($fieldMap, 'ItemDetail.UnitPrice', $source, fn () => (int)$itemTransfer->getUnitPrice());
+        $manufacturerPartId = $this->resolveOrSkip($fieldMap, 'ItemDetail.ManufacturerPartID', $source);
+        $manufacturerName = $this->resolveOrSkip($fieldMap, 'ItemDetail.ManufacturerName', $source);
+        $leadTime = $this->resolveOrSkip($fieldMap, 'ItemDetail.LeadTime', $source);
+        $classificationDomain = $this->resolveWithFallback($fieldMap, 'ItemDetail.ClassificationDomain', $source, fn () => static::CLASSIFICATION_UNIT_OF_MEASURE);
+        $classificationValue = $this->resolveWithFallback($fieldMap, 'ItemDetail.ClassificationValue', $source, fn () => '');
+
+        $resolvedExtrinsics = $this->resolveExtrinsics($extrinsics, $fieldMap, $source);
 
         $builder->addPunchoutOrderMessageItem(
             $itemId,
-            (int)$item->getQuantity(),
-            (string)$item->getName(),
-            SharedPunchoutGatewayConfig::DEFAULT_UNIT_OF_MEASURE,
-            (int)$item->getUnitPrice(),
-            [new Classification(static::CLASSIFICATION_UNIT_OF_MEASURE, '')],
-            extrinsics: $extrinsics ?: null,
+            (int)$quantity,
+            (string)$description,
+            (string)$unitOfMeasure,
+            (int)$unitPrice,
+            [new Classification((string)$classificationDomain, (string)$classificationValue)],
+            manufacturerPartId: $manufacturerPartId !== null ? (string)$manufacturerPartId : null,
+            manufacturerName: $manufacturerName !== null ? (string)$manufacturerName : null,
+            leadTime: $leadTime !== null ? (int)$leadTime : null,
+            extrinsics: $resolvedExtrinsics ?: null,
         );
     }
 
-    protected function addShipTo(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
+    /**
+     * Resolves a required field: falls back to $fallback() when the map has null or expression resolves to null.
+     *
+     * @param array<string, string|null> $fieldMap
+     */
+    protected function resolveWithFallback(array $fieldMap, string $key, MappingSourceTransfer $source, callable $fallback): mixed
     {
+        if (!array_key_exists($key, $fieldMap) || $fieldMap[$key] === null || $fieldMap[$key] === '') {
+            return $fallback();
+        }
+
+        $resolved = $this->fieldValueResolver->resolve($fieldMap[$key], $source);
+
+        return $resolved ?? $fallback();
+    }
+
+    /**
+     * Resolves an optional field: returns null when the map has null or expression resolves to null.
+     *
+     * @param array<string, string|null> $fieldMap
+     */
+    protected function resolveOrSkip(array $fieldMap, string $key, MappingSourceTransfer $source): mixed
+    {
+        if (!array_key_exists($key, $fieldMap) || $fieldMap[$key] === null || $fieldMap[$key] === '') {
+            return null;
+        }
+
+        return $this->fieldValueResolver->resolve($fieldMap[$key], $source);
+    }
+
+    /**
+     * Merges session extrinsics with per-key map overrides.
+     * Map entry null = remove that key from session batch.
+     * Map entry expression = resolve per-item and override/add.
+     *
+     * @param array<string, string> $sessionExtrinsics
+     * @param array<string, string|null> $fieldMap
+     *
+     * @return array<string, string>
+     */
+    protected function resolveExtrinsics(array $sessionExtrinsics, array $fieldMap, MappingSourceTransfer $source): array
+    {
+        $result = $sessionExtrinsics;
+
+        foreach ($fieldMap as $cxmlKey => $expression) {
+            if (!str_starts_with($cxmlKey, static::ITEM_DETAIL_EXTRINSIC_PREFIX)) {
+                continue;
+            }
+
+            $extrinsicName = substr($cxmlKey, strlen(static::ITEM_DETAIL_EXTRINSIC_PREFIX));
+
+            if ($expression === null || $expression === '') {
+                unset($result[$extrinsicName]);
+
+                continue;
+            }
+
+            $resolvedValue = $this->fieldValueResolver->resolve($expression, $source);
+
+            if ($resolvedValue !== null) {
+                $result[$extrinsicName] = (string)$resolvedValue;
+
+                continue;
+            }
+
+            unset($result[$extrinsicName]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, string|null> $fieldMap
+     */
+    protected function addShipTo(
+        PunchOutOrderMessageBuilder $builder,
+        QuoteTransfer $quoteTransfer,
+        array $fieldMap,
+        MappingSourceTransfer $source,
+    ): void {
         $address = $quoteTransfer->getShippingAddress();
 
         if ($address === null) {
             return;
         }
 
-        $streetLines = array_values(array_filter([
-            $address->getAddress1(),
-            $address->getAddress2(),
-            $address->getAddress3(),
-        ]));
+        $street1 = $this->resolveOrSkip($fieldMap, 'ShipTo.Address.PostalAddress.Street1', $source) ?? $address->getAddress1();
+        $street2 = $this->resolveOrSkip($fieldMap, 'ShipTo.Address.PostalAddress.Street2', $source) ?? $address->getAddress2();
+        $street3 = $this->resolveOrSkip($fieldMap, 'ShipTo.Address.PostalAddress.Street3', $source) ?? $address->getAddress3();
+        $city = $this->resolveWithFallback($fieldMap, 'ShipTo.Address.PostalAddress.City', $source, fn () => (string)$address->getCity());
+        $countryCode = $this->resolveWithFallback($fieldMap, 'ShipTo.Address.PostalAddress.CountryCode', $source, fn () => (string)$address->getIso2Code());
+        $state = $this->resolveOrSkip($fieldMap, 'ShipTo.Address.PostalAddress.State', $source) ?? $address->getRegion() ?? $address->getState();
+        $postalCode = $this->resolveOrSkip($fieldMap, 'ShipTo.Address.PostalAddress.PostalCode', $source) ?? $address->getZipCode();
+
+        $streetLines = array_values(array_filter([$street1, $street2, $street3]));
 
         $postalAddress = new PostalAddress(
             [],
             $streetLines,
-            (string)$address->getCity(),
-            new Country((string)$address->getIso2Code()),
+            (string)$city,
+            new Country((string)$countryCode),
             null,
-            $address->getRegion() ?? $address->getState(),
-            $address->getZipCode(),
+            $state,
+            $postalCode,
         );
 
-        $addressName = trim(sprintf('%s %s', $address->getFirstName(), $address->getLastName()));
+        $defaultName = trim(sprintf('%s %s', $address->getFirstName(), $address->getLastName()));
+        $addressName = $this->resolveWithFallback($fieldMap, 'ShipTo.Address.Name', $source, fn () => $defaultName ?: 'Ship To');
 
-        $builder->shipTo($addressName ?: 'Ship To', $postalAddress);
+        $builder->shipTo((string)$addressName, $postalAddress);
     }
 
-    protected function addShippingCost(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
-    {
+    /**
+     * @param array<string, string|null> $fieldMap
+     */
+    protected function addShippingCost(
+        PunchOutOrderMessageBuilder $builder,
+        QuoteTransfer $quoteTransfer,
+        array $fieldMap,
+        MappingSourceTransfer $source,
+    ): void {
         $totals = $quoteTransfer->getTotals();
 
         if ($totals === null || $totals->getExpenseTotal() === null) {
@@ -193,22 +345,37 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         }
 
         foreach ($quoteTransfer->getExpenses() as $expenseTransfer) {
-            if ($expenseTransfer->getType() === SharedPunchoutGatewayConfig::SHIPMENT_EXPENSE_TYPE) {
-                $builder->shipping((int)$expenseTransfer->getSumGrossPrice(), SharedPunchoutGatewayConfig::DEFAULT_CXML_SHIPPING_DESCRIPTION);
-
-                break;
+            if ($expenseTransfer->getType() !== SharedPunchoutGatewayConfig::SHIPMENT_EXPENSE_TYPE) {
+                continue;
             }
+
+            $amount = $this->resolveWithFallback($fieldMap, 'Shipping.Money', $source, fn () => (int)$expenseTransfer->getSumGrossPrice());
+            $description = $this->resolveWithFallback($fieldMap, 'Shipping.Description', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_SHIPPING_DESCRIPTION);
+
+            $builder->shipping((int)$amount, (string)$description);
+
+            break;
         }
     }
 
-    protected function addTax(PunchOutOrderMessageBuilder $builder, QuoteTransfer $quoteTransfer): void
-    {
+    /**
+     * @param array<string, string|null> $fieldMap
+     */
+    protected function addTax(
+        PunchOutOrderMessageBuilder $builder,
+        QuoteTransfer $quoteTransfer,
+        array $fieldMap,
+        MappingSourceTransfer $source,
+    ): void {
         $totals = $quoteTransfer->getTotals();
 
         if ($totals === null || $totals->getTaxTotal() === null || $totals->getTaxTotal()->getAmount() === null) {
             return;
         }
 
-        $builder->tax((int)$totals->getTaxTotal()->getAmount(), SharedPunchoutGatewayConfig::DEFAULT_CXML_TAX_DESCRIPTION);
+        $amount = $this->resolveWithFallback($fieldMap, 'Tax.Money', $source, fn () => (int)$totals->getTaxTotal()->getAmount());
+        $description = $this->resolveWithFallback($fieldMap, 'Tax.Description', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_CXML_TAX_DESCRIPTION);
+
+        $builder->tax((int)$amount, (string)$description);
     }
 }

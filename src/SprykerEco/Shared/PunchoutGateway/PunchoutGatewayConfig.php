@@ -93,6 +93,8 @@ interface PunchoutGatewayConfig
         'UserPhoneNumber',
     ];
 
+    public const string EXTRINSIC_PREFIX = 'ItemDetail.Extrinsic.';
+
     public const string CONFIGURATION_KEY_SENDER_SHARED_SECRET = 'senderSharedSecret';
 
     public const string CONFIGURATION_KEY_FORM_METHOD = 'formMethod';

@@ -29,11 +29,11 @@ class DeleteController extends AbstractController
         $idPunchoutConnection = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CONNECTION));
         $redirectUrl = (string)$request->query->get(PunchoutGatewayConfig::PARAM_REDIRECT_URL, PunchoutGatewayConfig::URL_LIST);
 
-        if ($this->getFacade()->deletePunchoutConnection($idPunchoutConnection)) {
-            $this->addSuccessMessage('Punchout connection deleted.');
-        } else {
-            $this->addSuccessMessage('Punchout connection was not deleted.');
-        }
+        $result = $this->getFacade()->deletePunchoutConnection($idPunchoutConnection);
+
+            $this->addSuccessMessage($result
+            ? 'Punchout connection deleted.'
+                : 'Punchout connection was not deleted.');
 
         return $this->redirectResponse($redirectUrl);
     }

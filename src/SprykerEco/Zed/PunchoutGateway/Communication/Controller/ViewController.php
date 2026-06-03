@@ -53,7 +53,7 @@ class ViewController extends AbstractController
                 $this->getFactory()->getConfig()->getBaseUrlYves() . $punchoutConnectionTransfer->getRequestUrl(),
             );
 
-            $credentialTable = $this->getFactory()->createPunchoutCredentialTableForView($idPunchoutConnection);
+            $credentialTable = $this->getFactory()->createPunchoutCredentialTable($idPunchoutConnection);
 
             $data['credentialTable'] = $credentialTable->render();
             $data['defaultUsernameField'] = SharedPunchoutGatewayConfig::OCI_DEFAULT_USERNAME_FIELD;
