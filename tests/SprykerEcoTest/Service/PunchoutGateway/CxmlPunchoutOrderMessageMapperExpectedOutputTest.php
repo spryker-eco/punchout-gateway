@@ -29,6 +29,7 @@ use SprykerEco\Service\PunchoutGateway\Dependency\Plugin\PunchoutFieldMapperPlug
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\MappingFieldResolver;
 use SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper\ItemTransferFieldMapperPlugin;
 use SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper\QuoteTransferFieldMapperPlugin;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
@@ -239,14 +240,16 @@ class CxmlPunchoutOrderMessageMapperExpectedOutputTest extends Unit
             new CxmlEncoder(Serializer::create()),
             new PunchoutLogger(),
             new PunchoutGatewayConfig(),
-            new FieldValueResolver(
-                [
-                    'item' => new ItemTransferFieldMapperPlugin(),
-                    'quote' => new QuoteTransferFieldMapperPlugin(),
-                    'itemAttr' => $this->createItemAttributesFieldMapperPlugin(),
-                    'lit' => $this->createLiteralFieldMapperPlugin(),
-                ],
-                new PunchoutLogger(),
+            new MappingFieldResolver(
+                new FieldValueResolver(
+                    [
+                        'item' => new ItemTransferFieldMapperPlugin(),
+                        'quote' => new QuoteTransferFieldMapperPlugin(),
+                        'itemAttr' => $this->createItemAttributesFieldMapperPlugin(),
+                        'lit' => $this->createLiteralFieldMapperPlugin(),
+                    ],
+                    new PunchoutLogger(),
+                ),
             ),
         );
     }

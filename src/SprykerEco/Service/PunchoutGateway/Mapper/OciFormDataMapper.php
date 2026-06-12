@@ -14,7 +14,7 @@ use Generated\Shared\Transfer\MappingSourceTransfer;
 use Generated\Shared\Transfer\PunchoutFormDataTransfer;
 use Generated\Shared\Transfer\PunchoutOciLoginRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
-use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolverInterface;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\MappingFieldResolverInterface;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
 
@@ -43,7 +43,7 @@ class OciFormDataMapper implements OciFormDataMapperInterface
 
     public function __construct(
         protected PunchoutGatewayConfig $config,
-        protected FieldValueResolverInterface $fieldValueResolver,
+        protected MappingFieldResolverInterface $mappingFieldResolver,
     ) {
     }
 
@@ -57,7 +57,7 @@ class OciFormDataMapper implements OciFormDataMapperInterface
 
         $actionUrl = $punchoutSession->getBrowserFormPostUrl();
 
-        if (!$actionUrl) {
+        if ($actionUrl === null || $actionUrl === '') {
             return null;
         }
 
@@ -92,7 +92,7 @@ class OciFormDataMapper implements OciFormDataMapperInterface
         $index = 1;
 
         foreach ($quoteTransfer->getItems() as $itemTransfer) {
-            $source = $this->buildMappingSource($quoteTransfer, $itemTransfer);
+            $source = $this->mappingFieldResolver->buildMappingSource($quoteTransfer, $itemTransfer);
             $this->addSingleItemFields($formData, $itemTransfer, $source, $index, $fieldMap, $currencyCode, $fractionDigits);
             $index++;
         }
@@ -112,22 +112,22 @@ class OciFormDataMapper implements OciFormDataMapperInterface
     ): void {
         $formData->addField(
             sprintf('NEW_ITEM-DESCRIPTION[%d]', $index),
-            (string)$this->resolveWithFallback($fieldMap, 'NEW_ITEM-DESCRIPTION', $source, fn () => $itemTransfer->getName()),
+            (string)$this->mappingFieldResolver->resolveWithFallback($fieldMap, 'NEW_ITEM-DESCRIPTION', $source, fn () => $itemTransfer->getName()),
         );
 
         $formData->addField(
             sprintf('NEW_ITEM-VENDORMAT[%d]', $index),
-            (string)$this->resolveWithFallback($fieldMap, 'NEW_ITEM-VENDORMAT', $source, fn () => $itemTransfer->getSku()),
+            (string)$this->mappingFieldResolver->resolveWithFallback($fieldMap, 'NEW_ITEM-VENDORMAT', $source, fn () => $itemTransfer->getSku()),
         );
 
         $formData->addField(
             sprintf('NEW_ITEM-QUANTITY[%d]', $index),
-            (string)$this->resolveWithFallback($fieldMap, 'NEW_ITEM-QUANTITY', $source, fn () => $itemTransfer->getQuantity()),
+            (string)$this->mappingFieldResolver->resolveWithFallback($fieldMap, 'NEW_ITEM-QUANTITY', $source, fn () => $itemTransfer->getQuantity()),
         );
 
         $formData->addField(
             sprintf('NEW_ITEM-UNIT[%d]', $index),
-            (string)$this->resolveWithFallback($fieldMap, 'NEW_ITEM-UNIT', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_UNIT_OF_MEASURE),
+            (string)$this->mappingFieldResolver->resolveWithFallback($fieldMap, 'NEW_ITEM-UNIT', $source, fn () => SharedPunchoutGatewayConfig::DEFAULT_UNIT_OF_MEASURE),
         );
 
         $formData->addField(
@@ -137,7 +137,7 @@ class OciFormDataMapper implements OciFormDataMapperInterface
 
         $formData->addField(
             sprintf('NEW_ITEM-CURRENCY[%d]', $index),
-            (string)$this->resolveWithFallback($fieldMap, 'NEW_ITEM-CURRENCY', $source, fn () => $currencyCode),
+            (string)$this->mappingFieldResolver->resolveWithFallback($fieldMap, 'NEW_ITEM-CURRENCY', $source, fn () => $currencyCode),
         );
 
         $this->addOptionalItemFields($formData, $source, $index, $fieldMap);
@@ -157,7 +157,7 @@ class OciFormDataMapper implements OciFormDataMapperInterface
                 continue;
             }
 
-            $resolved = $this->resolveOrSkip($fieldMap, $ociField, $source);
+            $resolved = $this->mappingFieldResolver->resolveOrSkip($fieldMap, $ociField, $source);
 
             if ($resolved === null) {
                 continue;
@@ -182,7 +182,7 @@ class OciFormDataMapper implements OciFormDataMapperInterface
         ItemTransfer $itemTransfer,
         int $fractionDigits,
     ): string {
-        $centAmount = (int)$this->resolveWithFallback(
+        $centAmount = (int)$this->mappingFieldResolver->resolveWithFallback(
             $fieldMap,
             'NEW_ITEM-PRICE',
             $source,
@@ -195,18 +195,6 @@ class OciFormDataMapper implements OciFormDataMapperInterface
     protected function formatPrice(int $centAmount, int $fractionDigits): string
     {
         return number_format($centAmount / (10 ** $fractionDigits), 3, '.', '');
-    }
-
-    protected function buildMappingSource(QuoteTransfer $quoteTransfer, ?ItemTransfer $itemTransfer = null): MappingSourceTransfer
-    {
-        $mappingSourceTransfer = new MappingSourceTransfer();
-        $mappingSourceTransfer->setQuote($quoteTransfer);
-
-        if ($itemTransfer !== null) {
-            $mappingSourceTransfer->setItem($itemTransfer);
-        }
-
-        return $mappingSourceTransfer;
     }
 
     protected function setFormTarget(
@@ -235,31 +223,5 @@ class OciFormDataMapper implements OciFormDataMapperInterface
 
             $formData->addField($fieldName, $loginFormData[$fieldName]);
         }
-    }
-
-    /**
-     * @param array<string, string|null> $fieldMap
-     */
-    protected function resolveWithFallback(array $fieldMap, string $key, MappingSourceTransfer $source, callable $fallback): mixed
-    {
-        if (!array_key_exists($key, $fieldMap) || $fieldMap[$key] === null || $fieldMap[$key] === '') {
-            return $fallback();
-        }
-
-        $resolved = $this->fieldValueResolver->resolve($fieldMap[$key], $source);
-
-        return $resolved ?? $fallback();
-    }
-
-    /**
-     * @param array<string, string|null> $fieldMap
-     */
-    protected function resolveOrSkip(array $fieldMap, string $key, MappingSourceTransfer $source): mixed
-    {
-        if (!array_key_exists($key, $fieldMap) || $fieldMap[$key] === null || $fieldMap[$key] === '') {
-            return null;
-        }
-
-        return $this->fieldValueResolver->resolve($fieldMap[$key], $source);
     }
 }

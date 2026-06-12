@@ -65,7 +65,7 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
             return $this->createErrorResponse(SharedPunchoutGatewayConfig::ERROR_CONNECTION_NOT_FOUND);
         }
 
-        $storedFormMethod = $connectionTransfer->getOciConfiguration()->getFormMethod();
+        $storedFormMethod = $connectionTransfer->getOciConfiguration()?->getFormMethod();
 
         if ($storedFormMethod !== null && $storedFormMethod !== '' && $storedFormMethod !== $ociLoginRequestTransfer->getFormMethod()) {
             $this->punchoutLogger->logRequestUrlFailure($requestUrl, SharedPunchoutGatewayConfig::ERROR_CONNECTION_WRONG_METHOD);
@@ -121,7 +121,7 @@ class PunchoutOciLoginProcessor implements PunchoutOciLoginProcessorInterface
             ->setCustomer($customerTransfer)
             ->setQuote($setupRequestTransfer->getQuote()->setPunchoutSession($punchoutSessionTransfer))
             ->setRedirectUrl($this->config->getOciDefaultStartUrl())
-            ->setStoreName($setupRequestTransfer->getQuote()->getStore()->getName());
+            ->setStoreName($setupRequestTransfer->getQuote()->getStore()?->getName());
     }
 
     protected function buildSetupRequestTransfer(

@@ -25,21 +25,21 @@ use Symfony\Component\Validator\Constraints\Regex;
  */
 class PunchoutFieldMappingRowFormType extends AbstractType
 {
-    public const string FIELD_CXML_FIELD = 'cxmlField';
+    public const string FIELD_FIELD = 'field';
 
     public const string FIELD_SOURCE = 'source';
 
-    public const string OPTION_CXML_FIELD_CHOICES = 'cxml_field_choices';
+    public const string OPTION_FIELD_CHOICES = 'field_choices';
 
     public const string OPTION_SOURCE_SUGGESTIONS_URL = 'source_suggestions_url';
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add(static::FIELD_CXML_FIELD, ChoiceType::class, [
+            ->add(static::FIELD_FIELD, ChoiceType::class, [
                 'label' => 'Field',
                 'required' => true,
-                'choices' => $options[static::OPTION_CXML_FIELD_CHOICES],
+                'choices' => $options[static::OPTION_FIELD_CHOICES],
                 'placeholder' => 'Select field',
                 'constraints' => [new NotBlank()],
             ])
@@ -63,7 +63,7 @@ class PunchoutFieldMappingRowFormType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            static::OPTION_CXML_FIELD_CHOICES => [],
+            static::OPTION_FIELD_CHOICES => [],
             static::OPTION_SOURCE_SUGGESTIONS_URL => '',
         ]);
     }

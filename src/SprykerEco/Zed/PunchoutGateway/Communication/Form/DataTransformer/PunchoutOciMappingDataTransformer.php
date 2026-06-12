@@ -36,7 +36,7 @@ class PunchoutOciMappingDataTransformer implements DataTransformerInterface
 
         foreach ($mapping as $ociField => $source) {
             $mappingFields[] = [
-                PunchoutFieldMappingRowFormType::FIELD_CXML_FIELD => (string)$ociField,
+                PunchoutFieldMappingRowFormType::FIELD_FIELD => (string)$ociField,
                 PunchoutFieldMappingRowFormType::FIELD_SOURCE => (string)($source ?? ''),
             ];
         }
@@ -60,7 +60,7 @@ class PunchoutOciMappingDataTransformer implements DataTransformerInterface
         $mappings = [];
 
         foreach ((array)($value[PunchoutOciConfigurationFormType::MAPPING_FIELDS] ?? []) as $row) {
-            $ociField = trim((string)($row[PunchoutFieldMappingRowFormType::FIELD_CXML_FIELD] ?? ''));
+            $ociField = trim((string)($row[PunchoutFieldMappingRowFormType::FIELD_FIELD] ?? ''));
 
             if ($ociField === '') {
                 continue;

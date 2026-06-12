@@ -30,7 +30,7 @@ class SessionCreator implements SessionCreatorInterface
         PunchoutSetupRequestTransfer $setupRequestTransfer,
     ): ?PunchoutSessionTransfer {
         $punchoutSessionTransfer = new PunchoutSessionTransfer();
-        $punchoutSessionTransfer->setIdQuote($setupRequestTransfer->getQuote()->getIdQuote());
+        $punchoutSessionTransfer->setIdQuote($setupRequestTransfer->getQuote()?->getIdQuote());
         $punchoutSessionTransfer->setIdPunchoutConnection($setupRequestTransfer->getConnection()->getIdPunchoutConnection());
         $punchoutSessionTransfer->setIdCustomer($setupRequestTransfer->getCustomer()->getIdCustomer());
         $punchoutSessionTransfer->setPunchoutData(new PunchoutSessionDataTransfer());

@@ -72,7 +72,6 @@ class PunchoutOciDemoConnectionCreateConsole extends Console
         $punchoutConnectionEntity->setFkStore($storeTransfer->getIdStoreOrFail());
         $punchoutConnectionEntity->setName(static::CONNECTION_NAME);
         $punchoutConnectionEntity->setIsActive(true);
-        $punchoutConnectionEntity->setAllowIframe(true);
         $punchoutConnectionEntity->setProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_OCI);
         $punchoutConnectionEntity->setRequestUrl(static::REQUEST_URL);
         $punchoutConnectionEntity->setAllowIframe(static::ALLOW_IFRAME);

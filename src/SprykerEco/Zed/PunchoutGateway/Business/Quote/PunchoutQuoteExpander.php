@@ -26,6 +26,10 @@ class PunchoutQuoteExpander implements PunchoutQuoteExpanderInterface
 
     public function expand(QuoteTransfer $quoteTransfer): QuoteTransfer
     {
+        if ($quoteTransfer->getIdQuote() === null) {
+            return $quoteTransfer;
+        }
+
         $punchoutSessionTransfer = $this->repository->findPunchoutSessionByIdQuote(
             $quoteTransfer->getIdQuote(),
         );

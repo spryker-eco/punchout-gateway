@@ -20,6 +20,23 @@ class PunchoutSessionMapper
     {
     }
 
+    public function mapPunchoutSessionTransferToEntity(
+        PunchoutSessionTransfer $punchoutSessionTransfer,
+        SpyPunchoutSession $punchoutSessionEntity,
+    ): SpyPunchoutSession {
+        $punchoutSessionEntity->fromArray($punchoutSessionTransfer->toArray());
+        $punchoutSessionEntity->setFkQuote($punchoutSessionTransfer->getIdQuote());
+        $punchoutSessionEntity->setFkPunchoutConnection($punchoutSessionTransfer->getIdPunchoutConnection());
+        $punchoutSessionEntity->setFkCustomer($punchoutSessionTransfer->getIdCustomer());
+
+        $sessionDataTransfer = $punchoutSessionTransfer->getPunchoutData();
+        if ($sessionDataTransfer !== null) {
+            $punchoutSessionEntity->setSessionData($this->utilEncodingService->encodeJson($sessionDataTransfer->modifiedToArray()) ?? '[]');
+        }
+
+        return $punchoutSessionEntity;
+    }
+
     public function mapPunchoutSessionEntityToTransfer(
         SpyPunchoutSession $punchoutSessionEntity,
         PunchoutSessionTransfer $punchoutSessionTransfer,

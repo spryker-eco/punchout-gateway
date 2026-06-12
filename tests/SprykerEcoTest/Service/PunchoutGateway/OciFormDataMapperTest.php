@@ -20,6 +20,7 @@ use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Mapper\OciFormDataMapper;
 use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\MappingFieldResolver;
 use SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper\ItemTransferFieldMapperPlugin;
 use SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper\QuoteTransferFieldMapperPlugin;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
@@ -234,12 +235,14 @@ class OciFormDataMapperTest extends Unit
     {
         return new OciFormDataMapper(
             $config ?? new PunchoutGatewayConfig(),
-            new FieldValueResolver(
-                [
-                    'item' => new ItemTransferFieldMapperPlugin(),
-                    'quote' => new QuoteTransferFieldMapperPlugin(),
-                ],
-                new PunchoutLogger(),
+            new MappingFieldResolver(
+                new FieldValueResolver(
+                    [
+                        'item' => new ItemTransferFieldMapperPlugin(),
+                        'quote' => new QuoteTransferFieldMapperPlugin(),
+                    ],
+                    new PunchoutLogger(),
+                ),
             ),
         );
     }

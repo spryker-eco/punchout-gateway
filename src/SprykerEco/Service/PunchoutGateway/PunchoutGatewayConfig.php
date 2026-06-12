@@ -29,9 +29,9 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
      *
      * @return list<string>
      */
-    public function getExtrinsicBlackList(): array
+    public function getExtrinsicDenyList(): array
     {
-        return SharedPunchoutGatewayConfig::EXTRINSIC_BLACKLIST;
+        return SharedPunchoutGatewayConfig::EXTRINSIC_DENY_LIST;
     }
 
     /**

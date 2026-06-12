@@ -136,7 +136,7 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
             'label' => 'cXML Field Mapping',
             'entry_type' => PunchoutFieldMappingRowFormType::class,
             'entry_options' => [
-                PunchoutFieldMappingRowFormType::OPTION_CXML_FIELD_CHOICES => $options[static::OPTION_CXML_FIELD_CHOICES],
+                PunchoutFieldMappingRowFormType::OPTION_FIELD_CHOICES => $options[static::OPTION_CXML_FIELD_CHOICES],
                 PunchoutFieldMappingRowFormType::OPTION_SOURCE_SUGGESTIONS_URL => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
             ],
             'allow_add' => true,

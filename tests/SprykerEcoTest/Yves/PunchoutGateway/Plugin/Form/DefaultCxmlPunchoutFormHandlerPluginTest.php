@@ -78,7 +78,9 @@ class DefaultCxmlPunchoutFormHandlerPluginTest extends Unit
         $serviceMock = $this->createMock(PunchoutGatewayServiceInterface::class);
         $serviceMock->method('buildCxmlPunchoutOrderMessage')->willReturn($cxmlPayload);
 
-        $factoryMock = $this->createMock(PunchoutGatewayFactory::class);
+        $factoryMock = $this->getMockBuilder(PunchoutGatewayFactory::class)
+            ->onlyMethods(['getPunchoutGatewayService'])
+            ->getMock();
         $factoryMock->method('getPunchoutGatewayService')->willReturn($serviceMock);
 
         $plugin = $this->getMockBuilder(DefaultCxmlPunchoutFormHandlerPlugin::class)

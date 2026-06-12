@@ -45,7 +45,7 @@ class PunchoutExtrinsicMappingRowFormType extends AbstractType
                     new NotBlank(),
                     new Regex(['pattern' => '/^[A-Za-z0-9_]+$/']),
                     new Callback(static function (mixed $value, ExecutionContextInterface $context): void {
-                        if (in_array($value, SharedPunchoutGatewayConfig::EXTRINSIC_BLACKLIST, true)) {
+                        if (in_array($value, SharedPunchoutGatewayConfig::EXTRINSIC_DENY_LIST, true)) {
                             $context->addViolation('Extrinsic name "%name%" is reserved for user identity.', ['%name%' => $value]);
                         }
                     }),

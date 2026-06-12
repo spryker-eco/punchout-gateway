@@ -101,7 +101,7 @@ interface PunchoutGatewayConfig
     /**
      * @var array<string>
      */
-    public const array EXTRINSIC_BLACKLIST = [
+    public const array EXTRINSIC_DENY_LIST = [
         'User',
         'UniqueUsername',
         'UniqueName',
@@ -130,4 +130,6 @@ interface PunchoutGatewayConfig
     public const string CONFIGURATION_KEY_CXML_SESSION_START_URL_VALIDITY_IN_SECONDS = 'punchout_gateway:cxml:session:start_url_validity_in_seconds';
 
     public const string CONFIGURATION_KEY_CXML_SESSION_TOKEN_LENGTH = 'punchout_gateway:cxml:session:token_length';
+
+    public const string DIRECTIVE_FRAME_ANCESTORS = 'frame-ancestors';
 }

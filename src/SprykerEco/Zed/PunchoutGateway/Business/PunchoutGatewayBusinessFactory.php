@@ -70,7 +70,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     public function createSessionCreator(): SessionCreatorInterface
     {
         return new SessionCreator(
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
             $this->getEntityManager(),
         );
     }
@@ -83,7 +83,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
             $this->getCurrencyFacade(),
             $this->getCalculationFacade(),
             $this->getPriceFacade(),
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
         );
     }
 
@@ -94,7 +94,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
             $this->createQuoteCreator(),
             $this->createSessionCreator(),
             $this->createProcessorPluginResolver(),
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
             $this->getRepository(),
         );
     }
@@ -105,7 +105,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
             $this->createQuoteCreator(),
             $this->createSessionCreator(),
             $this->createProcessorPluginResolver(),
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
             $this->getRepository(),
             $this->getConfig(),
         );
@@ -116,7 +116,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return new PunchoutSessionStarter(
             $this->getCustomerFacade(),
             $this->getQuoteFacade(),
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
             $this->getRepository(),
             $this->getConfig(),
         );
@@ -126,7 +126,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     {
         return new PunchoutOciAuthenticator(
             $this->getRepository(),
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
         );
     }
 
@@ -142,7 +142,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     {
         return new CxmlCustomerResolver(
             $this->getCustomerFacade(),
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
         );
     }
 
@@ -150,7 +150,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     {
         return new OciCustomerResolver(
             $this->getCustomerFacade(),
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
         );
     }
 
@@ -176,7 +176,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
         return new CxmlPunchoutQuoteFinder(
             $this->getQuoteFacade(),
             $this->getRepository(),
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
         );
     }
 
@@ -188,24 +188,34 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     public function createOciPunchoutSessionResolver(): OciPunchoutSessionResolverInterface
     {
         return new OciPunchoutSessionResolver(
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
         );
     }
 
     public function createPunchoutCxmlAuthenticator(): PunchoutCxmlAuthenticatorInterface
     {
         return new PunchoutCxmlAuthenticator(
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
         );
+    }
+
+    public function getPunchoutLogger(): PunchoutLoggerInterface
+    {
+        if (!$this->getConfig()->isLoggingEnabled()) {
+            return $this->createNullPunchoutLogger();
+        }
+
+        return $this->createPunchoutLogger();
     }
 
     public function createPunchoutLogger(): PunchoutLoggerInterface
     {
-        if (!$this->getConfig()->isLoggingEnabled()) {
-            return new NullPunchoutLogger();
-        }
-
         return new PunchoutLogger();
+    }
+
+    public function createNullPunchoutLogger(): PunchoutLoggerInterface
+    {
+        return new NullPunchoutLogger();
     }
 
     public function createDefaultCxmlContentParser(): DefaultCxmlContentParserInterface
@@ -216,7 +226,7 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     public function createCxmlRequestValidator(): CxmlRequestValidatorInterface
     {
         return new CxmlRequestValidator(
-            $this->createPunchoutLogger(),
+            $this->getPunchoutLogger(),
         );
     }
 

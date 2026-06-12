@@ -11,9 +11,9 @@ namespace SprykerEcoTest\Zed\PunchoutGateway\Persistence;
 
 use Codeception\Test\Unit;
 use DateTime;
-use Generated\Shared\Transfer\PaginationTransfer;
 use Generated\Shared\Transfer\PunchoutConnectionCriteriaTransfer;
 use Generated\Shared\Transfer\PunchoutCredentialCriteriaTransfer;
+use Generated\Shared\Transfer\PunchoutCredentialPaginationTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Generated\Shared\Transfer\StoreTransfer;
 use SprykerEco\Zed\PunchoutGateway\Persistence\PunchoutGatewayRepository;
@@ -243,7 +243,7 @@ class PunchoutGatewayRepositoryTest extends Unit
         $this->tester->havePunchoutCredential(['fk_punchout_connection' => $connectionTransfer->getIdPunchoutConnectionOrFail()]);
         $this->tester->havePunchoutCredential(['fk_punchout_connection' => $connectionTransfer->getIdPunchoutConnectionOrFail()]);
 
-        $paginationTransfer = (new PaginationTransfer())->setLimit(2);
+        $paginationTransfer = (new PunchoutCredentialPaginationTransfer())->setLimit(2);
         $criteriaTransfer = (new PunchoutCredentialCriteriaTransfer())
             ->setIdPunchoutConnection($connectionTransfer->getIdPunchoutConnectionOrFail())
             ->setPagination($paginationTransfer);

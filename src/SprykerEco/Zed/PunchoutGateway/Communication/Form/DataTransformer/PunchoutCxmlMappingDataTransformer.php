@@ -52,7 +52,7 @@ class PunchoutCxmlMappingDataTransformer implements DataTransformerInterface
             }
 
             $mappingFields[] = [
-                PunchoutFieldMappingRowFormType::FIELD_CXML_FIELD => (string)$cxmlPath,
+                PunchoutFieldMappingRowFormType::FIELD_FIELD => (string)$cxmlPath,
                 PunchoutExtrinsicMappingRowFormType::FIELD_SOURCE => $source,
             ];
         }
@@ -79,7 +79,7 @@ class PunchoutCxmlMappingDataTransformer implements DataTransformerInterface
         $mappings = [];
 
         foreach ((array)($value[PunchoutCxmlConfigurationFormType::MAPPING_FIELDS] ?? []) as $row) {
-            $cxmlField = trim((string)($row[PunchoutFieldMappingRowFormType::FIELD_CXML_FIELD] ?? ''));
+            $cxmlField = trim((string)($row[PunchoutFieldMappingRowFormType::FIELD_FIELD] ?? ''));
 
             if ($cxmlField === '') {
                 continue;

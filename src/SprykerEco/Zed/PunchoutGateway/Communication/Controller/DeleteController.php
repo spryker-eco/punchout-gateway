@@ -10,6 +10,7 @@ declare(strict_types = 1);
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Controller;
 
 use Spryker\Zed\Kernel\Communication\Controller\AbstractController;
+use Spryker\Zed\Kernel\Exception\Controller\InvalidIdException;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,14 +27,20 @@ class DeleteController extends AbstractController
      */
     public function indexAction(Request $request): array|RedirectResponse
     {
-        $idPunchoutConnection = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CONNECTION));
         $redirectUrl = (string)$request->query->get(PunchoutGatewayConfig::PARAM_REDIRECT_URL, PunchoutGatewayConfig::URL_LIST);
 
-        $result = $this->getFacade()->deletePunchoutConnection($idPunchoutConnection);
+        try {
+            $idPunchoutConnection = $this->castId($request->query->get(PunchoutGatewayConfig::PARAM_ID_CONNECTION));
 
-            $this->addSuccessMessage($result
-            ? 'Punchout connection deleted.'
-                : 'Punchout connection was not deleted.');
+            $result = $this->getFacade()->deletePunchoutConnection($idPunchoutConnection);
+
+            $this->addSuccessMessage(
+                $result
+                ? 'Punchout connection deleted.'
+                : 'Punchout connection was not deleted.',
+            );
+        } catch (InvalidIdException) {
+        }
 
         return $this->redirectResponse($redirectUrl);
     }

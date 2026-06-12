@@ -27,7 +27,7 @@ class CxmlPunchoutQuoteFinder implements CxmlPunchoutQuoteFinderInterface
 
     public function resolveQuote(PunchoutSetupRequestTransfer $setupRequestTransfer): QuoteTransfer
     {
-        $buyerCookie = $setupRequestTransfer->getCxmlSetupRequest()->getBuyerCookie();
+        $buyerCookie = $setupRequestTransfer->getCxmlSetupRequest()?->getBuyerCookie();
 
         if ($buyerCookie === null || $buyerCookie === '') {
             $this->punchoutLogger->logGenericInfoMessage('BuyerCookie is empty, create new quote.');
@@ -37,7 +37,7 @@ class CxmlPunchoutQuoteFinder implements CxmlPunchoutQuoteFinderInterface
 
         $existingQuoteTransfer = $this->findQuoteByBuyerCookie($buyerCookie);
 
-        if ($existingQuoteTransfer === null) {
+        if ($existingQuoteTransfer === null || $existingQuoteTransfer->getStore() === null) {
             $this->punchoutLogger->logGenericInfoMessage('Quote not found by BuyerCookie, create new quote.', ['BuyerCookie' => $buyerCookie]);
 
             return $this->createDefaultQuote();

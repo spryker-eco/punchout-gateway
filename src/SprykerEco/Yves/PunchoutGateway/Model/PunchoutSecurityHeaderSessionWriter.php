@@ -12,12 +12,9 @@ namespace SprykerEco\Yves\PunchoutGateway\Model;
 use Generated\Shared\Transfer\PunchoutSessionStartResponseTransfer;
 use Spryker\Client\Session\SessionClientInterface;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
-use SprykerEco\Shared\PunchoutGateway\SecurityHeader\SecurityHeaderHelperTrait;
 
 class PunchoutSecurityHeaderSessionWriter implements PunchoutSecurityHeaderSessionWriterInterface
 {
-    use SecurityHeaderHelperTrait;
-
     protected const string DIRECTIVE_FORM_ACTION = 'form-action';
 
     /**
@@ -29,9 +26,9 @@ class PunchoutSecurityHeaderSessionWriter implements PunchoutSecurityHeaderSessi
     ) {
     }
 
-    public function writeFromResponse(PunchoutSessionStartResponseTransfer $response): void
+    public function writeFromResponse(PunchoutSessionStartResponseTransfer $responseTransfer): void
     {
-        $punchoutSession = $response->getQuote()?->getPunchoutSession();
+        $punchoutSession = $responseTransfer->getQuote()?->getPunchoutSession();
 
         if (!$punchoutSession) {
             return;
@@ -46,7 +43,7 @@ class PunchoutSecurityHeaderSessionWriter implements PunchoutSecurityHeaderSessi
         $directives = [sprintf('%s %s', static::DIRECTIVE_FORM_ACTION, $origin)];
 
         if ($punchoutSession->getConnection()?->getAllowIframe()) {
-            $directives = $this->addFrameAncestors($directives, $origin);
+            $directives[] = sprintf('%s %s', PunchoutGatewayConfig::DIRECTIVE_FRAME_ANCESTORS, $origin);
         }
 
         foreach ($this->securityHeaderExpanderPlugins as $plugin) {

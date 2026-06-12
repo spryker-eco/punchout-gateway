@@ -13,5 +13,5 @@ use Generated\Shared\Transfer\PunchoutSessionStartResponseTransfer;
 
 interface PunchoutSecurityHeaderSessionWriterInterface
 {
-    public function writeFromResponse(PunchoutSessionStartResponseTransfer $response): void;
+    public function writeFromResponse(PunchoutSessionStartResponseTransfer $responseTransfer): void;
 }

@@ -23,6 +23,7 @@ use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\MappingFieldResolver;
 use SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper\ItemTransferFieldMapperPlugin;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
@@ -220,9 +221,11 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
             new CxmlEncoder(Serializer::create()),
             new PunchoutLogger(),
             new PunchoutGatewayConfig(),
-            new FieldValueResolver(
-                ['item' => new ItemTransferFieldMapperPlugin()],
-                new PunchoutLogger(),
+            new MappingFieldResolver(
+                new FieldValueResolver(
+                    ['item' => new ItemTransferFieldMapperPlugin()],
+                    new PunchoutLogger(),
+                ),
             ),
         );
     }
@@ -266,9 +269,11 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
             new CxmlEncoder(Serializer::create()),
             $logger ?? new PunchoutLogger(),
             new PunchoutGatewayConfig(),
-            new FieldValueResolver(
-                [],
-                $logger ?? new PunchoutLogger(),
+            new MappingFieldResolver(
+                new FieldValueResolver(
+                    [],
+                    $logger ?? new PunchoutLogger(),
+                ),
             ),
         );
     }

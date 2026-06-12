@@ -17,8 +17,6 @@ interface CxmlRequestValidatorInterface
      * Specification:
      * - Returns true when the operation is null, 'create', 'edit', or 'inspect'.
      * - Returns false for any other operation value.
-     *
-     * @api
      */
     public function validate(PunchoutCxmlSetupRequestTransfer $punchoutCxmlSetupRequestTransfer): bool;
 }

@@ -193,22 +193,12 @@
         <property name="idPunchoutConnection" type="int"/>
         <property name="username" type="string"/>
         <property name="notIdPunchoutCredentials" type="int[]" singular="notIdPunchoutCredential"/>
-        <property name="pagination" type="Pagination"/>
+        <property name="pagination" type="PunchoutCredentialPagination"/>
     </transfer>
 
-    <transfer name="Pagination">
+    <transfer name="PunchoutCredentialPagination" strict="true">
         <property name="limit" type="int"/>
         <property name="offset" type="int"/>
-        <property name="nbResults" type="int"/>
-        <property name="firstIndex" type="int"/>
-        <property name="lastIndex" type="int"/>
-        <property name="maxPerPage" type="int"/>
-        <property name="page" type="int"/>
-        <property name="lastPage" type="int"/>
-        <property name="firstPage" type="int"/>
-        <property name="nextPage" type="int"/>
-        <property name="previousPage" type="int"/>
-        <property name="paginationClass" type="string"/>
     </transfer>
 
     <!-- Existing Spryker transfers this module depends on -->

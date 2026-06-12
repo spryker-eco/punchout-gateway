@@ -10,14 +10,14 @@ declare(strict_types = 1);
 namespace SprykerEco\Yves\PunchoutGateway\Plugin\SecurityHeader;
 
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
-use SprykerEco\Shared\PunchoutGateway\SecurityHeader\SecurityHeaderHelperTrait;
+use Spryker\Yves\Kernel\AbstractPlugin;
 use SprykerEco\Yves\PunchoutGateway\Dependency\Plugin\PunchoutSecurityHeaderExpanderPluginInterface;
 
-class DefaultOciSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderExpanderPluginInterface
+/**
+ * @method \SprykerEco\Yves\PunchoutGateway\PunchoutGatewayFactory getFactory()
+ */
+class DefaultOciSecurityHeaderExpanderPlugin extends AbstractPlugin implements PunchoutSecurityHeaderExpanderPluginInterface
 {
-    use SecurityHeaderHelperTrait;
-
     /**
      * {@inheritDoc}
      *
@@ -27,17 +27,8 @@ class DefaultOciSecurityHeaderExpanderPlugin implements PunchoutSecurityHeaderEx
      */
     public function expand(array $directives, PunchoutSessionTransfer $punchoutSession, string $origin): array
     {
-        if ($this->needsFrameAncestors($punchoutSession)) {
-            $directives = $this->addFrameAncestors($directives, $origin);
-        }
-
-        return $directives;
-    }
-
-    protected function needsFrameAncestors(PunchoutSessionTransfer $punchoutSession): bool
-    {
-        $formData = $punchoutSession->getPunchoutData()?->getOciLoginRequest()?->getFormData() ?? [];
-
-        return !empty($formData[PunchoutGatewayConfig::FORM_DATA_FIELD_TARGET]);
+        return $this->getFactory()
+            ->createOciSecurityHeaderExpander()
+            ->expand($directives, $punchoutSession, $origin);
     }
 }
