@@ -15,6 +15,7 @@ use CXml\Model\Message\PunchOutOrderMessage;
 use CXml\Serializer;
 use Generated\Shared\Transfer\CurrencyTransfer;
 use Generated\Shared\Transfer\ItemTransfer;
+use Generated\Shared\Transfer\PunchoutConnectionTransfer;
 use Generated\Shared\Transfer\PunchoutCxmlSetupRequestTransfer;
 use Generated\Shared\Transfer\PunchoutSessionDataTransfer;
 use Generated\Shared\Transfer\PunchoutSessionTransfer;
@@ -22,6 +23,8 @@ use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\MappingFieldResolver;
+use SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper\ItemTransferFieldMapperPlugin;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
@@ -150,6 +153,83 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
         }
     }
 
+    public function testMapQuoteToCxmlResolvesDescriptionPerItemFromConcreteAttributes(): void
+    {
+        $cxmlSetupRequest = $this->buildCxmlSetupRequest([]);
+
+        $session = (new PunchoutSessionTransfer())
+            ->setBuyerCookie(static::BUYER_COOKIE)
+            ->setOperation('create')
+            ->setConnection(
+                (new PunchoutConnectionTransfer())->setMappings([
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.Description' => '"value="&item.concreteAttributes.color',
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.Extrinsic.SomeData' => '"value="&item.concreteAttributes.color',
+                ]),
+            )
+            ->setPunchoutData((new PunchoutSessionDataTransfer())->setCxmlSetupRequest($cxmlSetupRequest));
+
+        $quote = (new QuoteTransfer())
+            ->setCurrency((new CurrencyTransfer())->setCode('EUR'))
+            ->setPunchoutSession($session)
+            ->addItem(
+                (new ItemTransfer())
+                    ->setSku('SKU-001')->setQuantity(1)->setName('Product Red')->setUnitPrice(100)->setGroupKey('SKU-001')
+                    ->setConcreteAttributes(['color' => 'red']),
+            )
+            ->addItem(
+                (new ItemTransfer())
+                    ->setSku('SKU-002')->setQuantity(1)->setName('Product Green')->setUnitPrice(200)->setGroupKey('SKU-002')
+                    ->setConcreteAttributes(['color' => 'green']),
+            )
+            ->addItem(
+                (new ItemTransfer())
+                    ->setSku('SKU-003')->setQuantity(1)->setName('Product Blue')->setUnitPrice(300)->setGroupKey('SKU-003')
+                    ->setConcreteAttributes(['color' => 'blue']),
+            );
+
+        $xml = $this->createMapperWithItemPlugin()->mapQuoteToCxml($quote);
+
+        $this->assertSame(['value=red', 'value=green', 'value=blue'], $this->decodeAllItemDescriptions($xml));
+        $this->assertSame(
+            [['SomeData' => 'value=red'], ['SomeData' => 'value=green'], ['SomeData' => 'value=blue']],
+            $this->decodeAllItemExtrinsics($xml),
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function decodeAllItemDescriptions(string $xml): array
+    {
+        $cxml = Serializer::create()->deserialize($xml);
+
+        $this->assertInstanceOf(CXml::class, $cxml);
+        $payload = $cxml->message?->payload;
+        $this->assertInstanceOf(PunchOutOrderMessage::class, $payload);
+
+        $descriptions = [];
+        foreach ($payload->getPunchoutOrderMessageItems() as $item) {
+            $descriptions[] = $item->itemDetail->descriptions[0]->value ?? '';
+        }
+
+        return $descriptions;
+    }
+
+    protected function createMapperWithItemPlugin(): CxmlPunchoutOrderMessageMapper
+    {
+        return new CxmlPunchoutOrderMessageMapper(
+            new CxmlEncoder(Serializer::create()),
+            new PunchoutLogger(),
+            new PunchoutGatewayConfig(),
+            new MappingFieldResolver(
+                new FieldValueResolver(
+                    ['item' => new ItemTransferFieldMapperPlugin()],
+                    new PunchoutLogger(),
+                ),
+            ),
+        );
+    }
+
     /**
      * @return array<string, string>
      */
@@ -189,9 +269,11 @@ class CxmlPunchoutOrderMessageMapperTest extends Unit
             new CxmlEncoder(Serializer::create()),
             $logger ?? new PunchoutLogger(),
             new PunchoutGatewayConfig(),
-            new FieldValueResolver(
-                [],
-                $logger ?? new PunchoutLogger(),
+            new MappingFieldResolver(
+                new FieldValueResolver(
+                    [],
+                    $logger ?? new PunchoutLogger(),
+                ),
             ),
         );
     }

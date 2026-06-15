@@ -18,6 +18,7 @@ use Generated\Shared\Transfer\PunchoutSessionTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Service\PunchoutGateway\Mapper\OciFormDataMapper;
 use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\MappingFieldResolver;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayService;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceFactory;
@@ -206,7 +207,9 @@ class DefaultOciPunchoutFormHandlerPluginTest extends Unit
     {
         $config = new PunchoutGatewayConfig();
         $fieldValueResolver = new FieldValueResolver([], new NullPunchoutLogger());
-        $mapper = new OciFormDataMapper($config, $fieldValueResolver);
+        $resolver = new MappingFieldResolver($fieldValueResolver);
+
+        $mapper = new OciFormDataMapper($config, $resolver);
 
         $factoryMock = $this->getMockBuilder(PunchoutGatewayServiceFactory::class)
             ->onlyMethods(['createOciFormDataMapper'])

@@ -57,4 +57,6 @@ interface PunchoutLoggerInterface
      * @param array<mixed> $context
      */
     public function logGenericInfoMessage(string $message, array $context = []): void;
+
+    public function logRequestValidationFailed(string $reason): void;
 }

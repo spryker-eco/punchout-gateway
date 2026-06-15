@@ -29,10 +29,6 @@ class PunchoutSessionQuoteExpanderPlugin extends AbstractPlugin implements Quote
      */
     public function expand(QuoteTransfer $quoteTransfer): QuoteTransfer
     {
-        if ($quoteTransfer->getIdQuote() === null) {
-            return $quoteTransfer;
-        }
-
         return $this->getBusinessFactory()
             ->createPunchoutQuoteExpander()
             ->expand($quoteTransfer);

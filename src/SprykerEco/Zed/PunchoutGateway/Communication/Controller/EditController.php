@@ -65,14 +65,15 @@ class EditController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $result = $this->executeUpdateAction($idPunchoutConnection, $form->getData());
 
-            if ($result) {
+            if ($result !== null) {
                 return $result;
             }
         }
 
+        $punchoutCredentialFormDataProvider = $this->getFactory()->createPunchoutCredentialFormDataProvider();
         $credentialForm = $this->getFactory()->createPunchoutCredentialForm(
-            $this->getFactory()->createPunchoutCredentialFormDataProvider()->getData(),
-            $this->getFactory()->createPunchoutCredentialFormDataProvider()->getOptions(),
+            $punchoutCredentialFormDataProvider->getData(),
+            $punchoutCredentialFormDataProvider->getOptions(),
         );
         $credentialTable = $this->getFactory()->createPunchoutCredentialTable($idPunchoutConnection);
 

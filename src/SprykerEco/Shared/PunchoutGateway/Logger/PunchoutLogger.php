@@ -174,4 +174,9 @@ class PunchoutLogger implements PunchoutLoggerInterface
             'exception_class' => $throwable::class,
         ]);
     }
+
+    public function logRequestValidationFailed(string $reason): void
+    {
+        $this->getLogger()->error($reason);
+    }
 }

@@ -59,7 +59,7 @@ class PunchoutGatewayService extends AbstractService implements PunchoutGatewayS
 
     public function getSourceFieldSuggestionNames(): array
     {
-        return array_keys($this->getFactory()->getFiledMapperPlugins());
+        return array_keys($this->getFactory()->getFieldMapperPlugins());
     }
 
     public function getSupportedCxmlFields(): array

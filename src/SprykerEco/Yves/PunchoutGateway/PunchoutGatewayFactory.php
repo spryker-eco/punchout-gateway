@@ -18,8 +18,12 @@ use SprykerEco\Service\PunchoutGateway\PunchoutGatewayServiceInterface;
 use SprykerEco\Shared\PunchoutGateway\Logger\NullPunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
+use SprykerEco\Yves\PunchoutGateway\Expander\OciSecurityHeaderExpander;
+use SprykerEco\Yves\PunchoutGateway\Expander\OciSecurityHeaderExpanderInterface;
 use SprykerEco\Yves\PunchoutGateway\Expander\PunchoutSecurityHeaderExpander;
 use SprykerEco\Yves\PunchoutGateway\Expander\PunchoutSecurityHeaderExpanderInterface;
+use SprykerEco\Yves\PunchoutGateway\FormBuilder\CxmlFormFieldBuilder;
+use SprykerEco\Yves\PunchoutGateway\FormBuilder\CxmlFormFieldBuilderInterface;
 use SprykerEco\Yves\PunchoutGateway\FormBuilder\OciFormFieldBuilder;
 use SprykerEco\Yves\PunchoutGateway\FormBuilder\OciFormFieldBuilderInterface;
 use SprykerEco\Yves\PunchoutGateway\FormBuilder\PunchoutFormDataBuilder;
@@ -88,6 +92,11 @@ class PunchoutGatewayFactory extends AbstractFactory
         );
     }
 
+    public function createOciSecurityHeaderExpander(): OciSecurityHeaderExpanderInterface
+    {
+        return new OciSecurityHeaderExpander();
+    }
+
     public function createPunchoutSecurityHeaderExpander(): PunchoutSecurityHeaderExpanderInterface
     {
         return new PunchoutSecurityHeaderExpander($this->getSessionClient());
@@ -120,6 +129,11 @@ class PunchoutGatewayFactory extends AbstractFactory
             $this->getPunchoutFormHandlerPlugins(),
             $this->createPunchoutLogger(),
         );
+    }
+
+    public function createCxmlFormFieldBuilder(): CxmlFormFieldBuilderInterface
+    {
+        return new CxmlFormFieldBuilder($this->getPunchoutGatewayService());
     }
 
     public function createOciFormFieldBuilder(): OciFormFieldBuilderInterface

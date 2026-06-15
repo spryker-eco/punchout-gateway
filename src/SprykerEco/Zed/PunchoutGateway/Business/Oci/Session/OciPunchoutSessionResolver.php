@@ -33,7 +33,7 @@ class OciPunchoutSessionResolver implements OciPunchoutSessionResolverInterface
         $punchoutSessionTransfer->setBrowserFormPostUrl($setupRequestTransfer->getOciLoginRequest()?->getFormData()[PunchoutGatewayConfig::OCI_HOOK_URL_FIELD] ?? null);
 
         if ($punchoutSessionTransfer->getBrowserFormPostUrl() === null || !str_starts_with($punchoutSessionTransfer->getBrowserFormPostUrl(), static::REQUIRED_HOOK_URL_PREFIX)) {
-            $this->punchoutLogger->logGenericErrorMessage('Form data is missing or wrong', [
+            $this->punchoutLogger->logGenericErrorMessage(PunchoutGatewayConfig::ERROR_OCI_FORM_DATA_INVALID, [
                 PunchoutGatewayConfig::OCI_HOOK_URL_FIELD => $punchoutSessionTransfer->getBrowserFormPostUrl(),
             ]);
 

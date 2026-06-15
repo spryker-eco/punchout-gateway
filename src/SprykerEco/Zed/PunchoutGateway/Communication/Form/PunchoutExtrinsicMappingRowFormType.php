@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SprykerEco\Zed\PunchoutGateway\Communication\Form;
 
+use Spryker\Zed\Gui\Communication\Form\Type\AutosuggestType;
 use Spryker\Zed\Kernel\Communication\Form\AbstractType;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig as SharedPunchoutGatewayConfig;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -44,24 +45,24 @@ class PunchoutExtrinsicMappingRowFormType extends AbstractType
                     new NotBlank(),
                     new Regex(['pattern' => '/^[A-Za-z0-9_]+$/']),
                     new Callback(static function (mixed $value, ExecutionContextInterface $context): void {
-                        if (in_array($value, SharedPunchoutGatewayConfig::EXTRINSIC_BLACKLIST, true)) {
+                        if (in_array($value, SharedPunchoutGatewayConfig::EXTRINSIC_DENY_LIST, true)) {
                             $context->addViolation('Extrinsic name "%name%" is reserved for user identity.', ['%name%' => $value]);
                         }
                     }),
                 ],
             ])
-            ->add(static::FIELD_SOURCE, TextType::class, [
+            ->add(static::FIELD_SOURCE, AutosuggestType::class, [
                 'label' => 'Source expression',
-                'required' => false,
+                'required' => true,
+                AutosuggestType::URL => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
                 'attr' => [
-                    'placeholder' => 'e.g. item.sku or leave blank to skip',
-                    'class' => 'js-source-combobox',
-                    'data-suggestions-url' => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
+                    'placeholder' => 'e.g. item.sku or "" to force an empty value',
                 ],
                 'constraints' => [
+                    new NotBlank(),
                     new Regex([
-                        'pattern' => '/^$|^(?:[A-Za-z_][A-Za-z0-9_]*\.[^&]+|"[^"]*"|\'[^\']*\')(?:&(?:[A-Za-z_][A-Za-z0-9_]*\.[^&]+|"[^"]*"|\'[^\']*\'))*$/',
-                        'message' => 'Must be empty, a plugin expression (pluginKey.field), a quoted constant ("EA"), or segments joined by & (item.sku&"_suffix").',
+                        'pattern' => '/^(?:[A-Za-z_][A-Za-z0-9_]*\.[^&]+|"[^"]*"|\'[^\']*\')(?:&(?:[A-Za-z_][A-Za-z0-9_]*\.[^&]+|"[^"]*"|\'[^\']*\'))*$/',
+                        'message' => 'Must be a plugin expression (pluginKey.field), a quoted constant ("EA"), segments joined by & (item.sku&"_suffix"), or "" to force an empty value.',
                     ]),
                 ],
             ]);

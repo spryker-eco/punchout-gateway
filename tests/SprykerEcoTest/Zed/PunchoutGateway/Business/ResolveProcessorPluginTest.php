@@ -163,6 +163,11 @@ class DummyPunchoutCxmlProcessorPlugin extends DummyPunchoutProcessorPlugin impl
     ): PunchoutSetupResponseTransfer {
         return $responseTransfer;
     }
+
+    public function isValid(PunchoutCxmlSetupRequestTransfer $punchoutCxmlSetupRequestTransfer): bool
+    {
+        return true;
+    }
 }
 
 // phpcs:ignore PSR1.Classes.ClassDeclaration.MultipleClasses

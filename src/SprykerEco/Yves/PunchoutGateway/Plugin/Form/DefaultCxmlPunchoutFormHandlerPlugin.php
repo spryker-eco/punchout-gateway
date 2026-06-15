@@ -12,7 +12,6 @@ namespace SprykerEco\Yves\PunchoutGateway\Plugin\Form;
 use Generated\Shared\Transfer\PunchoutFormDataTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use Spryker\Yves\Kernel\AbstractPlugin;
-use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 /**
  * @method \SprykerEco\Yves\PunchoutGateway\PunchoutGatewayFactory getFactory()
@@ -28,22 +27,8 @@ class DefaultCxmlPunchoutFormHandlerPlugin extends AbstractPlugin implements Pun
 
     public function handle(QuoteTransfer $quoteTransfer): ?PunchoutFormDataTransfer
     {
-        $actionUrl = $quoteTransfer->getPunchoutSession()?->getBrowserFormPostUrl();
-
-        if (!$actionUrl) {
-            return null;
-        }
-
-        $cxmlPayload = $this->getFactory()
-            ->getPunchoutGatewayService()
-            ->buildCxmlPunchoutOrderMessage($quoteTransfer);
-
-        if (!$cxmlPayload) {
-            return null;
-        }
-
-        return (new PunchoutFormDataTransfer())
-            ->setActionUrl($actionUrl)
-            ->addField(PunchoutGatewayConfig::CXML_FORM_FIELD_NAME, $cxmlPayload);
+        return $this->getFactory()
+            ->createCxmlFormFieldBuilder()
+            ->build($quoteTransfer);
     }
 }

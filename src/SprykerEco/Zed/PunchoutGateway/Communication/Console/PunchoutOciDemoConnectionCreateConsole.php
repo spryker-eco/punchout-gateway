@@ -11,7 +11,6 @@ use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnection;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnectionQuery;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutCredential;
 use Spryker\Zed\Kernel\Communication\Console\Console;
-use Spryker\Zed\Kernel\Locator;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultOciProcessorPlugin;
 use Symfony\Component\Console\Input\InputInterface;
@@ -56,7 +55,7 @@ class PunchoutOciDemoConnectionCreateConsole extends Console
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $storeTransfer = Locator::getInstance()->store()->facade()->getStoreByName(static::STORE_NAME);
+        $storeTransfer = $this->getFactory()->getStoreFacade()->getStoreByName(static::STORE_NAME);
 
         $existingEntity = SpyPunchoutConnectionQuery::create()
             ->filterByFkStore($storeTransfer->getIdStoreOrFail())
@@ -73,7 +72,6 @@ class PunchoutOciDemoConnectionCreateConsole extends Console
         $punchoutConnectionEntity->setFkStore($storeTransfer->getIdStoreOrFail());
         $punchoutConnectionEntity->setName(static::CONNECTION_NAME);
         $punchoutConnectionEntity->setIsActive(true);
-        $punchoutConnectionEntity->setAllowIframe(true);
         $punchoutConnectionEntity->setProtocolType(PunchoutGatewayConfig::PROTOCOL_TYPE_OCI);
         $punchoutConnectionEntity->setRequestUrl(static::REQUEST_URL);
         $punchoutConnectionEntity->setAllowIframe(static::ALLOW_IFRAME);

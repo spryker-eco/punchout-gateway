@@ -89,6 +89,14 @@ class PunchoutCxmlSetupRequestProcessor implements PunchoutCxmlSetupRequestProce
 
         $this->punchoutLogger->logRequestParsed($punchoutCxmlSetupRequestTransfer);
 
+        if (!$processorPlugin->isValid($punchoutCxmlSetupRequestTransfer)) {
+            $this->punchoutLogger->logRequestValidationFailed(PunchoutGatewayConfig::ERROR_VALIDATION_FAILED);
+
+            return $this->createErrorResponse(
+                PunchoutGatewayConfig::ERROR_VALIDATION_FAILED,
+            );
+        }
+
         $setupRequestTransfer = $this->buildSetupRequest($punchoutCxmlSetupRequestTransfer, $connectionTransfer);
 
         $connectionTransfer = $processorPlugin->authenticate($setupRequestTransfer);

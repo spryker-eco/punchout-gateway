@@ -37,6 +37,18 @@ class CustomerSuggestController extends AbstractController
     {
         $searchTerm = (string)$request->query->get(static::PARAM_TERM, '');
 
+        return $this->jsonResponse(
+            [
+                static::KEY_RESULTS => $this->getCustomerSuggestions($searchTerm),
+            ],
+        );
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getCustomerSuggestions(string $searchTerm): array
+    {
         $customerCriteriaFilterTransfer = new CustomerCriteriaFilterTransfer();
         $customerCriteriaFilterTransfer->setSearchTerms(
             (new CustomerCriteriaSearchTermsTransfer())
@@ -59,7 +71,7 @@ class CustomerSuggestController extends AbstractController
             ];
         }
 
-        return $this->jsonResponse([static::KEY_RESULTS => $results]);
+        return $results;
     }
 
     protected function formatCustomerLabel(CustomerTransfer $customerTransfer): string

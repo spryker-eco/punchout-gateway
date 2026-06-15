@@ -34,28 +34,28 @@
             <div id="tab-content-connection" class="tab-pane active" role="tabpanel">
                 <div class="panel-body">
                     <div class="col-sm-12">
-                        <div class="form-group {% if punchoutConnectionForm.name.errors|length > 0 %}has-error{% endif %}">
+                        <div class="form-group {% if punchoutConnectionForm.name.vars.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.name) }}
                             {{ form_widget(punchoutConnectionForm.name) }}
                             {{ form_errors(punchoutConnectionForm.name) }}
                             {{ form_help(punchoutConnectionForm.name) }}
                         </div>
 
-                        <div class="form-group {% if punchoutConnectionForm.idStore.errors|length > 0 %}has-error{% endif %}">
+                        <div class="form-group {% if punchoutConnectionForm.idStore.vars.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.idStore) }}
                             {{ form_widget(punchoutConnectionForm.idStore) }}
                             {{ form_errors(punchoutConnectionForm.idStore) }}
                             {{ form_help(punchoutConnectionForm.idStore) }}
                         </div>
 
-                        <div class="form-group {% if punchoutConnectionForm.protocolType.errors|length > 0 %}has-error{% endif %}">
+                        <div class="form-group {% if punchoutConnectionForm.protocolType.vars.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.protocolType) }}
                             {{ form_widget(punchoutConnectionForm.protocolType, {'attr': {'id': 'protocol-type-select'}}) }}
                             {{ form_errors(punchoutConnectionForm.protocolType) }}
                             {{ form_help(punchoutConnectionForm.protocolType) }}
                         </div>
 
-                        <div class="form-group {% if punchoutConnectionForm.processorPluginClass.errors|length > 0 %}has-error{% endif %}">
+                        <div class="form-group {% if punchoutConnectionForm.processorPluginClass.vars.errors|length > 0 %}has-error{% endif %}">
                             {{ form_label(punchoutConnectionForm.processorPluginClass) }}
                             {{ form_widget(punchoutConnectionForm.processorPluginClass) }}
                             {{ form_errors(punchoutConnectionForm.processorPluginClass) }}
@@ -65,13 +65,13 @@
                         {% if punchoutConnectionForm.cxmlConfiguration is defined %}
                         <div id="cxml-config-section" style="display:none;">
                             <h4>{{ 'cXML Configuration' | trans }}</h4>
-                            <div class="form-group {% if punchoutConnectionForm.cxmlConfiguration.senderIdentity.errors|length > 0 %}has-error{% endif %}">
+                            <div class="form-group {% if punchoutConnectionForm.cxmlConfiguration.senderIdentity.vars.errors|length > 0 %}has-error{% endif %}">
                                 {{ form_label(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
                                 {{ form_widget(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
                                 {{ form_errors(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
                                 {{ form_help(punchoutConnectionForm.cxmlConfiguration.senderIdentity) }}
                             </div>
-                            <div class="form-group {% if punchoutConnectionForm.cxmlConfiguration.senderSharedSecret.errors|length > 0 %}has-error{% endif %}">
+                            <div class="form-group {% if punchoutConnectionForm.cxmlConfiguration.senderSharedSecret.vars.errors|length > 0 %}has-error{% endif %}">
                                 {{ form_label(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                                 {{ form_widget(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
                                 {{ form_errors(punchoutConnectionForm.cxmlConfiguration.senderSharedSecret) }}
@@ -97,19 +97,19 @@
                                     {{ form_errors(punchoutConnectionForm.requestUrl) }}
                                 </div>
                             {% endif %}
-                            <div class="form-group {% if punchoutConnectionForm.ociConfiguration.formMethod.errors|length > 0 %}has-error{% endif %}">
+                            <div class="form-group {% if punchoutConnectionForm.ociConfiguration.formMethod.vars.errors|length > 0 %}has-error{% endif %}">
                                 {{ form_label(punchoutConnectionForm.ociConfiguration.formMethod) }}
                                 {{ form_widget(punchoutConnectionForm.ociConfiguration.formMethod) }}
                                 {{ form_errors(punchoutConnectionForm.ociConfiguration.formMethod) }}
                                 {{ form_help(punchoutConnectionForm.ociConfiguration.formMethod) }}
                             </div>
-                            <div class="form-group {% if punchoutConnectionForm.ociConfiguration.usernameField.errors|length > 0 %}has-error{% endif %}">
+                            <div class="form-group {% if punchoutConnectionForm.ociConfiguration.usernameField.vars.errors|length > 0 %}has-error{% endif %}">
                                 {{ form_label(punchoutConnectionForm.ociConfiguration.usernameField) }}
                                 {{ form_widget(punchoutConnectionForm.ociConfiguration.usernameField) }}
                                 {{ form_errors(punchoutConnectionForm.ociConfiguration.usernameField) }}
                                 {{ form_help(punchoutConnectionForm.ociConfiguration.usernameField) }}
                             </div>
-                            <div class="form-group {% if punchoutConnectionForm.ociConfiguration.passwordField.errors|length > 0 %}has-error{% endif %}">
+                            <div class="form-group {% if punchoutConnectionForm.ociConfiguration.passwordField.vars.errors|length > 0 %}has-error{% endif %}">
                                 {{ form_label(punchoutConnectionForm.ociConfiguration.passwordField) }}
                                 {{ form_widget(punchoutConnectionForm.ociConfiguration.passwordField) }}
                                 {{ form_errors(punchoutConnectionForm.ociConfiguration.passwordField) }}
@@ -138,60 +138,108 @@
             <div id="tab-content-field-mapping" class="tab-pane" role="tabpanel">
                 <div class="panel-body">
                     <div class="col-sm-12">
+                        {{ 'Use "value" for a constant (e.g. "EA"). Join segments with & (e.g. item.sku&"_suffix"). & inside quoted strings is not supported.' | trans }}<br/>
+                        {{ 'Available data sources: %datasources%.' | trans({'%datasources%' : availableSourceExpressionData | join(', ')}) }}<br/>
+                        {{ 'Autocomplete works only at the end of the mapping string.' | trans }}<br/>
+                        {{ 'Every part of mapping, that evaluates to NULL or doesn\'t exist, results in an empty string.' | trans }}<br/>
+                        {{ 'When you see a * in the end of the suggested mapping value, it means a key-value array, and you have to replace * with a known to you key name.' | trans }}<br/>
+                        {{ 'When PunchOut response is built, all fields evaluated to NULL are not sent in response.' | trans }}<br/>
+                        <br/>
+                    </div>
+
+                    <div class="col-sm-12">
                         {% if punchoutConnectionForm.cxmlConfiguration is defined %}
                         <div id="cxml-mapping-section" style="display:none;">
                             <h5>{{ 'Custom Field Mapping' | trans }}</h5>
                             <p class="help-block">
-                                {{ 'Map cXML fields to source expressions (e.g. item.sku, quote.currency.code).' | trans }}<br/>
-
-                                {{ 'Default mapping, which follows protocl description, can be found in <a href="%url%">the public documentation</a>.'
+                                {{ 'Default mapping, which follows protocol description, can be found in <a target="_blank" href="%url%">the public documentation</a>.'
                                 | trans({'%url%':'https://docs.spryker.com/docs/pbc/all/punchout-gateway/punchout-protocol-coverage#returned-elements-spryker-to-buyer'}) | raw }}<br/>
-
-                                {{ 'Use "value" for a constant (e.g. "EA"). Join segments with & (e.g. item.sku&"_suffix"). & inside quoted strings is not supported.' | trans }}<br/>
-                                {{ 'Available data sources: %datasources%.' | trans({'%datasources%' : availableSourceExpressionData | join(', ')}) }}<br/>
                             </p>
 
+                            {% set _p = punchoutConnectionForm.cxmlConfiguration.mappingFields.vars.prototype %}
+                            {% set _cxmlMappingProto %}
+                                <div class="col-sm-5">{{ form_widget(_p.field) }}</div>
+                                <div class="col-sm-5">{{ form_widget(_p.source) }}</div>
+                                <div class="col-sm-2"><button type="button" class="btn btn-danger btn-sm js-remove-mapping-row">{{ 'Remove' | trans }}</button></div>
+                            {% endset %}
                             <div id="cxml-mapping-rows"
-                                 data-prototype="{{ form_widget(punchoutConnectionForm.cxmlConfiguration.mappingFields.vars.prototype) | e('html_attr') }}">
+                                 data-prototype="{{ _cxmlMappingProto | e('html_attr') }}">
+                                <div class="row" style="margin-bottom:4px;">
+                                    <div class="col-sm-5">
+                                        <label class="form-label">{{ 'cXML field' | trans }}</label>
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <label class="form-label">{{ 'Field Mapping' | trans }}</label>
+                                    </div>
+                                    <div class="col-sm-2"></div>
+                                </div>
                                 {% for row in punchoutConnectionForm.cxmlConfiguration.mappingFields %}
                                     <div class="cxml-mapping-row row" style="margin-bottom:4px;">
-                                        <div class="col-sm-5">{{ form_widget(row.cxmlField, {'attr': {'class': 'form-control'}}) }}</div>
-                                        <div class="col-sm-5">{{ form_widget(row.source, {'attr': {'class': 'form-control'}}) }}</div>
+                                        <div class="col-sm-5">
+                                            {{ form_widget(row.field) }}
+                                            {{ form_errors(row.field) }}
+                                        </div>
+                                        <div class="col-sm-5">
+                                            {{ form_widget(row.source) }}
+                                            {{ form_errors(row.source) }}
+                                        </div>
                                         <div class="col-sm-2">
                                             <button type="button" class="btn btn-danger btn-sm js-remove-mapping-row">{{ 'Remove' | trans }}</button>
                                         </div>
-                                        {{ form_errors(row.cxmlField) }}
-                                        {{ form_errors(row.source) }}
                                     </div>
                                 {% endfor %}
                             </div>
-                            <button type="button" class="btn btn-default btn-sm" id="js-add-mapping-row">{{ 'Add Field Mapping' | trans }}</button>
-
+                            <button type="button" class="btn btn-default btn-sm" id="js-add-mapping-row">+ {{ 'Add Field Mapping' | trans }}</button>
                             <br/>
                             <br/>
 
                             <h5>{{ 'Extrinsic Fields Mapping' | trans }}</h5>
                             <p class="help-block">
                                 {{ 'Map custom Extrinsic fields. Name must not be a reserved user-identity name.' | trans }}<br/>
-                                {{ 'Available data sources: %datasources%.' | trans({'%datasources%' : availableSourceExpressionData | join(', ')}) }}<br/>
-                                {{ 'Reserved names: %reserved%.' | trans({'%reserved%' : reservedExtrinsicNames | join(', ')}) }}
+
+                                {{ 'Reserved names: %reserved%.' | trans({'%reserved%' : reservedExtrinsicNames | join(', ')}) }}<br/>
+
+                                {{ 'All but reserved extrinsic data from the request is mapped automatically.' | trans }}<br/>
                             </p>
 
+
+                            {% set _p = punchoutConnectionForm.cxmlConfiguration.mappingExtrinsics.vars.prototype %}
+                            {% set _cxmlExtrinsicMappingProto %}
+                                <div class="col-sm-5">{{ form_widget(_p.extrinsicName) }}</div>
+                                <div class="col-sm-5">{{ form_widget(_p.source) }}</div>
+                                <div class="col-sm-2">
+                                    <button type="button" class="btn btn-danger btn-sm js-remove-extrinsic-row">{{ 'Remove' | trans }}</button>
+                                </div>
+                            {% endset %}
+
                             <div id="cxml-extrinsic-rows"
-                                 data-prototype="{{ form_widget(punchoutConnectionForm.cxmlConfiguration.mappingExtrinsics.vars.prototype) | e('html_attr') }}">
+                                 data-prototype="{{ _cxmlExtrinsicMappingProto | e('html_attr') }}">
+                                <div class="row" style="margin-bottom:4px;">
+                                    <div class="col-sm-5">
+                                        <label class="form-label">{{ 'Extrinsic Field' | trans }}</label>
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <label class="form-label">{{ 'Field Mapping' | trans }}</label>
+                                    </div>
+                                    <div class="col-sm-2"></div>
+                                </div>
+
                                 {% for row in punchoutConnectionForm.cxmlConfiguration.mappingExtrinsics %}
                                     <div class="cxml-extrinsic-row row" style="margin-bottom:4px;">
-                                        <div class="col-sm-5">{{ form_widget(row.extrinsicName, {'attr': {'class': 'form-control'}}) }}</div>
-                                        <div class="col-sm-5">{{ form_widget(row.source, {'attr': {'class': 'form-control'}}) }}</div>
+                                        <div class="col-sm-5">
+                                            {{ form_widget(row.extrinsicName) }}
+                                            {{ form_errors(row.extrinsicName) }}</div>
+                                        <div class="col-sm-5">
+                                            {{ form_widget(row.source) }}
+                                            {{ form_errors(row.source) }}
+                                        </div>
                                         <div class="col-sm-2">
                                             <button type="button" class="btn btn-danger btn-sm js-remove-extrinsic-row">{{ 'Remove' | trans }}</button>
                                         </div>
-                                        {{ form_errors(row.extrinsicName) }}
-                                        {{ form_errors(row.source) }}
                                     </div>
                                 {% endfor %}
                             </div>
-                            <button type="button" class="btn btn-default btn-sm" id="js-add-extrinsic-row">{{ 'Add Extrinsic Field' | trans }}</button>
+                            <button type="button" class="btn btn-default btn-sm" id="js-add-extrinsic-row">+ {{ 'Add Extrinsic Field Mapping' | trans }}</button>
                         </div>
                         {% endif %}
 
@@ -200,31 +248,47 @@
                             {% if punchoutConnectionForm.ociConfiguration.mappingFields is defined %}
                                 <h5>{{ 'Custom Field Mapping' | trans }}</h5>
                                 <p class="help-block">
-                                    {{ 'Map OCI output fields to source expressions.' | trans }}<br/>
-
-                                    {{ 'Default mapping, which follows protocl description, can be found in <a href="%url%">the public documentation</a>.'
+                                    {{ 'Default mapping, which follows protocol description, can be found in <a target="_blank" href="%url%">the public documentation</a>.'
                                     | trans({'%url%':'https://docs.spryker.com/docs/pbc/all/punchout-gateway/punchout-protocol-coverage#returned-fields-spryker-to-buyer'}) | raw }}<br/>
-
-                                    {{ 'Use "value" for a constant (e.g. "EA"). Join segments with & (e.g. item.sku&"_suffix"). & inside quoted strings is not supported.' | trans }}<br/>
-
-                                    {{ 'Available data sources: %datasources%.' | trans({'%datasources%' : availableSourceExpressionData | join(', ')}) }}<br/>
                                 </p>
 
+                                {% set _p = punchoutConnectionForm.ociConfiguration.mappingFields.vars.prototype %}
+                                {% set _ociMappingProto %}
+                                <div class="col-sm-5">{{ form_widget(_p.field) }}</div>
+                                <div class="col-sm-5">{{ form_widget(_p.source) }}</div>
+                                <div class="col-sm-2">
+                                    <button type="button" class="btn btn-danger btn-sm js-remove-oci-mapping-row">{{ 'Remove' | trans }}</button>
+                                </div>
+                                {% endset %}
+
                                 <div id="oci-mapping-rows"
-                                     data-prototype="{{ form_widget(punchoutConnectionForm.ociConfiguration.mappingFields.vars.prototype) | e('html_attr') }}">
+                                     data-prototype="{{ _ociMappingProto | e('html_attr') }}">
+                                    <div class="row" style="margin-bottom:4px;">
+                                        <div class="col-sm-5">
+                                            <label class="form-label">{{ 'OCI Field' | trans }}</label>
+                                        </div>
+                                        <div class="col-sm-5">
+                                            <label class="form-label">{{ 'Field Mapping' | trans }}</label>
+                                        </div>
+                                        <div class="col-sm-2"></div>
+                                    </div>
                                     {% for row in punchoutConnectionForm.ociConfiguration.mappingFields %}
                                         <div class="oci-mapping-row row" style="margin-bottom:4px;">
-                                            <div class="col-sm-5">{{ form_widget(row.cxmlField, {'attr': {'class': 'form-control'}}) }}</div>
-                                            <div class="col-sm-5">{{ form_widget(row.source, {'attr': {'class': 'form-control js-source-combobox', 'data-suggestions-url': row.source.vars.attr['data-suggestions-url']|default('')}}) }}</div>
+                                            <div class="col-sm-5">
+                                                {{ form_widget(row.field) }}
+                                                {{ form_errors(row.field) }}
+                                            </div>
+                                            <div class="col-sm-5">
+                                                {{ form_widget(row.source) }}
+                                                {{ form_errors(row.source) }}
+                                            </div>
                                             <div class="col-sm-2">
                                                 <button type="button" class="btn btn-danger btn-sm js-remove-oci-mapping-row">{{ 'Remove' | trans }}</button>
                                             </div>
-                                            {{ form_errors(row.cxmlField) }}
-                                            {{ form_errors(row.source) }}
                                         </div>
                                     {% endfor %}
                                 </div>
-                                <button type="button" class="btn btn-default btn-sm" id="js-add-oci-mapping-row">{{ 'Add Field Mapping' | trans }}</button>
+                                <button type="button" class="btn btn-default btn-sm" id="js-add-oci-mapping-row">+ {{ 'Add Field Mapping' | trans }}</button>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -254,159 +318,17 @@
 
     </div>
 
+    {% if punchoutConnectionForm.cxmlConfiguration is defined %}
+        {% do punchoutConnectionForm.cxmlConfiguration.mappingFields.setRendered() %}
+        {% do punchoutConnectionForm.cxmlConfiguration.mappingExtrinsics.setRendered() %}
+    {% endif %}
+    {% if punchoutConnectionForm.ociConfiguration is defined %}
+        {% do punchoutConnectionForm.ociConfiguration.mappingFields.setRendered() %}
+    {% endif %}
     {{ form_end(punchoutConnectionForm) }}
 {% endblock %}
 
 {% block footer_js %}
     {{ parent() }}
-    <script>
-        (function () {
-            var sel = document.getElementById('punchout_connection_form_protocolType');
-            var cxmlSection = document.getElementById('cxml-config-section');
-            var ociSection = document.getElementById('oci-config-section');
-            var cxmlMappingSection = document.getElementById('cxml-mapping-section');
-            var ociMappingSection = document.getElementById('oci-mapping-section');
-            var pluginSel = document.getElementById('punchout_connection_form_processorPluginClass');
-
-            function updatePluginFilter() {
-                if (!pluginSel) return;
-
-                var type = sel ? sel.value : '';
-                var currentValue = pluginSel.value;
-                var hasMatch = false;
-
-                for (var i = 0; i < pluginSel.options.length; i++) {
-                    var opt = pluginSel.options[i];
-                    var optType = opt.getAttribute('data-protocol-type') || '';
-                    var visible = optType === '' || optType === type;
-                    opt.hidden = !visible;
-                    opt.disabled = !visible;
-                    if (visible && opt.value === currentValue) hasMatch = true;
-                }
-
-                if (!hasMatch) pluginSel.value = '';
-            }
-
-            function updateVisibility() {
-                var val = sel ? sel.value : '';
-                if (cxmlSection) cxmlSection.style.display = (val === 'cxml') ? '' : 'none';
-                if (ociSection) ociSection.style.display = (val === 'oci') ? '' : 'none';
-                if (cxmlMappingSection) cxmlMappingSection.style.display = (val === 'cxml') ? '' : 'none';
-                if (ociMappingSection) ociMappingSection.style.display = (val === 'oci') ? '' : 'none';
-                updatePluginFilter();
-            }
-
-            if (sel) {
-                sel.addEventListener('change', updateVisibility);
-                updateVisibility();
-            }
-        })();
-
-        (function () {
-            var suggestionsByUrl = {};
-
-            function loadSuggestions(url, callback) {
-                if (suggestionsByUrl[url]) {
-                    callback(suggestionsByUrl[url]);
-                    return;
-                }
-                fetch(url)
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        suggestionsByUrl[url] = (data.suggestions || []).map(function (s) {
-                            return {id: s, text: s};
-                        });
-                        callback(suggestionsByUrl[url]);
-                    });
-            }
-
-            function initSourceCombobox(input) {
-                var url = input.getAttribute('data-suggestions-url');
-                if (!url || input.getAttribute('data-select2-init')) return;
-                input.setAttribute('data-select2-init', '1');
-                input.addEventListener('focus', function onFirstFocus() {
-                    input.removeEventListener('focus', onFirstFocus);
-                    loadSuggestions(url, function (suggestions) {
-                        if (typeof jQuery === 'undefined' || !jQuery.fn.select2) return;
-
-                        var currentValue = input.value;
-                        var select = document.createElement('select');
-                        select.name = input.name;
-                        select.id = input.id;
-                        select.className = input.className;
-
-                        var emptyOption = document.createElement('option');
-                        emptyOption.value = '';
-                        select.appendChild(emptyOption);
-
-                        if (currentValue) {
-                            var currentOption = document.createElement('option');
-                            currentOption.value = currentValue;
-                            currentOption.text = currentValue;
-                            currentOption.selected = true;
-                            select.appendChild(currentOption);
-                        }
-
-                        suggestions.forEach(function (s) {
-                            if (s.id === currentValue) return;
-                            var option = document.createElement('option');
-                            option.value = s.id;
-                            option.text = s.text;
-                            select.appendChild(option);
-                        });
-
-                        input.parentNode.replaceChild(select, input);
-
-                        jQuery(select).select2({
-                            tags: true,
-                            placeholder: select.getAttribute('placeholder') || input.getAttribute('placeholder') || '',
-                            allowClear: true,
-                            width: '100%'
-                        });
-                    });
-                }, {once: false});
-            }
-
-            function initAllSourceComboboxes(container) {
-                container.querySelectorAll('.js-source-combobox').forEach(initSourceCombobox);
-            }
-
-            function addMappingRow(containerId, addBtnId, rowClass, removeBtnClass) {
-                var container = document.getElementById(containerId);
-                var addBtn = document.getElementById(addBtnId);
-                if (!container || !addBtn) return;
-                var index = container.querySelectorAll('.' + rowClass).length;
-                addBtn.addEventListener('click', function () {
-                    var prototype = container.getAttribute('data-prototype');
-                    var html = prototype.replace(/__name__/g, index);
-                    var div = document.createElement('div');
-                    div.className = rowClass + ' row';
-                    div.style.marginBottom = '4px';
-                    div.innerHTML = html;
-                    container.appendChild(div);
-                    initAllSourceComboboxes(div);
-                    index++;
-                });
-                container.addEventListener('click', function (e) {
-                    if (e.target && e.target.classList.contains(removeBtnClass)) {
-                        e.target.closest('.' + rowClass).remove();
-                    }
-                });
-            }
-
-            document.addEventListener('DOMContentLoaded', function () {
-                var urls = new Set();
-                document.querySelectorAll('.js-source-combobox[data-suggestions-url]').forEach(function (el) {
-                    var url = el.getAttribute('data-suggestions-url');
-                    if (url) urls.add(url);
-                });
-                urls.forEach(function (url) { loadSuggestions(url, function () {}); });
-
-                initAllSourceComboboxes(document);
-                addMappingRow('cxml-mapping-rows', 'js-add-mapping-row', 'cxml-mapping-row', 'js-remove-mapping-row');
-                addMappingRow('cxml-extrinsic-rows', 'js-add-extrinsic-row', 'cxml-extrinsic-row', 'js-remove-extrinsic-row');
-                addMappingRow('oci-mapping-rows', 'js-add-oci-mapping-row', 'oci-mapping-row', 'js-remove-oci-mapping-row');
-            });
-        })();
-    </script>
+    <script src="{{ assetsPath('js/spryker-zed-punchout-gateway-edit.js') }}"></script>
 {% endblock %}

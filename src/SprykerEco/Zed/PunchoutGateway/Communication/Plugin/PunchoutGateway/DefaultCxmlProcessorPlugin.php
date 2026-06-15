@@ -141,4 +141,16 @@ class DefaultCxmlProcessorPlugin extends AbstractPlugin implements PunchoutCxmlP
             ->createCxmlPunchoutResponseExpander()
             ->expand($punchoutSessionTransfer, $responseTransfer, $punchoutCxmlSetupRequestTransfer);
     }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @api
+     */
+    public function isValid(PunchoutCxmlSetupRequestTransfer $punchoutCxmlSetupRequestTransfer): bool
+    {
+        return $this->getBusinessFactory()
+            ->createCxmlRequestValidator()
+            ->validate($punchoutCxmlSetupRequestTransfer);
+    }
 }

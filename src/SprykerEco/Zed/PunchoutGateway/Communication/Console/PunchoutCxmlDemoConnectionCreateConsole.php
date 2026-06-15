@@ -10,7 +10,6 @@ namespace SprykerEco\Zed\PunchoutGateway\Communication\Console;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnection;
 use Orm\Zed\PunchoutGateway\Persistence\SpyPunchoutConnectionQuery;
 use Spryker\Zed\Kernel\Communication\Console\Console;
-use Spryker\Zed\Kernel\Locator;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 use SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultCxmlProcessorPlugin;
 use Symfony\Component\Console\Input\InputInterface;
@@ -55,7 +54,7 @@ class PunchoutCxmlDemoConnectionCreateConsole extends Console
             return static::CODE_SUCCESS;
         }
 
-        $storeTransfer = Locator::getInstance()->store()->facade()->getStoreByName(static::STORE_NAME);
+        $storeTransfer = $this->getFactory()->getStoreFacade()->getStoreByName(static::STORE_NAME);
 
         $entity = new SpyPunchoutConnection();
         $entity->setFkStore($storeTransfer->getIdStoreOrFail());

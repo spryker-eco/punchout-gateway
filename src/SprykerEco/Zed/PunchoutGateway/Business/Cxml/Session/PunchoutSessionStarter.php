@@ -45,7 +45,7 @@ class PunchoutSessionStarter implements PunchoutSessionStarterInterface
 
         if ($punchoutSessionTransfer === null) {
             $this->punchoutLogger->logGenericErrorMessage(
-                'Valid session was not found.',
+                SharedPunchoutGatewayConfig::ERROR_SESSION_NOT_FOUND,
                 ['token' => $sessionStartRequestTransfer->getSessionToken()],
             );
 
@@ -85,7 +85,7 @@ class PunchoutSessionStarter implements PunchoutSessionStarterInterface
 
             if (!$quoteResponseTransfer->getIsSuccessful()) {
                 $this->punchoutLogger->logGenericErrorMessage(
-                    'Quote was not found for this session.',
+                    SharedPunchoutGatewayConfig::ERROR_QUOTE_NOT_FOUND_FOR_SESSION,
                 );
 
                 return (new PunchoutSessionStartResponseTransfer())

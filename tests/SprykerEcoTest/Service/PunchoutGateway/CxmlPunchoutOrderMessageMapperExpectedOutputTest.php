@@ -29,6 +29,7 @@ use SprykerEco\Service\PunchoutGateway\Dependency\Plugin\PunchoutFieldMapperPlug
 use SprykerEco\Service\PunchoutGateway\Encoder\CxmlEncoder;
 use SprykerEco\Service\PunchoutGateway\Mapper\CxmlPunchoutOrderMessageMapper;
 use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\FieldValueResolver;
+use SprykerEco\Service\PunchoutGateway\Mapper\Resolver\MappingFieldResolver;
 use SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper\ItemTransferFieldMapperPlugin;
 use SprykerEco\Service\PunchoutGateway\Plugin\FieldMapper\QuoteTransferFieldMapperPlugin;
 use SprykerEco\Service\PunchoutGateway\PunchoutGatewayConfig;
@@ -133,6 +134,20 @@ class CxmlPunchoutOrderMessageMapperExpectedOutputTest extends Unit
 
     protected const string UNIT_OF_MEASURE_OVERRIDE = 'KG';
 
+    protected const string MESSAGE_LANG = 'fr-FR';
+
+    protected const int QUANTITY_OVERRIDE = 2;
+
+    protected const string SUPPLIER_PART_ID_OVERRIDE = 'AM2692-OVERRIDE';
+
+    protected const string BUYER_PART_ID_OVERRIDE = 'BUYER-PART-001';
+
+    protected const string DESCRIPTION_OVERRIDE = 'Override Description';
+
+    protected const int UNIT_PRICE_CENT_OVERRIDE = 30000;
+
+    protected const string ITEM_URL_OVERRIDE = 'https://example.com/product/AM2692';
+
     public function testMapQuoteToCxmlReproducesProvidedPunchOutOrderMessage(): void
     {
         $xml = $this->createMapper()->mapQuoteToCxml($this->buildQuote());
@@ -163,9 +178,9 @@ class CxmlPunchoutOrderMessageMapperExpectedOutputTest extends Unit
         // PunchOutOrderMessage attributes
         $this->assertSame(static::BUYER_COOKIE_OVERRIDE, $payload->buyerCookie);
         $this->assertSame(static::OPERATION_OVERRIDE, $header->getOperationAllowed());
-        $this->assertSame(static::TOTAL_CENT_NO_TAX, $header->total->money->getValueCent());
+        $this->assertSame(static::UNIT_PRICE_CENT_OVERRIDE * static::QUANTITY_OVERRIDE, $header->total->money->getValueCent());
 
-        // Tax (overridden amount, description, and currency via attributes.currency)
+        // Tax (overridden amount, description, and currency via cXML.Message.PunchOutOrderMessage.attr.currency)
         $this->assertNotNull($header->tax);
         $this->assertSame(static::TAX_CENT_OVERRIDE, $header->tax->money->getValueCent());
         $this->assertSame(static::TAX_DESCRIPTION_OVERRIDE, $header->tax->description->value);
@@ -190,14 +205,17 @@ class CxmlPunchoutOrderMessageMapperExpectedOutputTest extends Unit
         $this->assertSame(static::SHIP_TO_POSTAL_CODE, $shipTo->address->postalAddress->postalCode);
 
         // ItemIn / ItemID
-        $this->assertSame(static::QUANTITY, $item->quantity);
-        $this->assertSame(static::SUPPLIER_PART_ID, $item->itemId->supplierPartId);
+        $this->assertSame(static::QUANTITY_OVERRIDE, $item->quantity);
+        $this->assertSame(static::SUPPLIER_PART_ID_OVERRIDE, $item->itemId->supplierPartId);
         $this->assertSame(static::SUPPLIER_PART_AUXILIARY_ID, $item->itemId->supplierPartAuxiliaryId);
+        $this->assertSame(static::BUYER_PART_ID_OVERRIDE, $item->itemId->buyerPartId);
 
         // ItemDetail
-        $this->assertSame(static::DESCRIPTION, $itemDetail->descriptions[0]->value);
+        $this->assertSame(static::DESCRIPTION_OVERRIDE, $itemDetail->descriptions[0]->value);
+        $this->assertSame(static::MESSAGE_LANG, $itemDetail->descriptions[0]->lang);
         $this->assertSame(static::UNIT_OF_MEASURE_OVERRIDE, $itemDetail->unitOfMeasure);
-        $this->assertSame(static::UNIT_PRICE_CENT, $itemDetail->unitPrice->money->getValueCent());
+        $this->assertSame(static::UNIT_PRICE_CENT_OVERRIDE, $itemDetail->unitPrice->money->getValueCent());
+        $this->assertSame(static::ITEM_URL_OVERRIDE, $itemDetail->getUrl());
         $this->assertSame(static::MANUFACTURER_PART_ID, $itemDetail->getManufacturerPartId());
         $this->assertSame(static::MANUFACTURER_NAME, $itemDetail->getManufacturerName());
         $this->assertSame(static::LEAD_TIME, $itemDetail->getLeadtime());
@@ -222,14 +240,16 @@ class CxmlPunchoutOrderMessageMapperExpectedOutputTest extends Unit
             new CxmlEncoder(Serializer::create()),
             new PunchoutLogger(),
             new PunchoutGatewayConfig(),
-            new FieldValueResolver(
-                [
-                    'item' => new ItemTransferFieldMapperPlugin(),
-                    'quote' => new QuoteTransferFieldMapperPlugin(),
-                    'itemAttr' => $this->createItemAttributesFieldMapperPlugin(),
-                    'lit' => $this->createLiteralFieldMapperPlugin(),
-                ],
-                new PunchoutLogger(),
+            new MappingFieldResolver(
+                new FieldValueResolver(
+                    [
+                        'item' => new ItemTransferFieldMapperPlugin(),
+                        'quote' => new QuoteTransferFieldMapperPlugin(),
+                        'itemAttr' => $this->createItemAttributesFieldMapperPlugin(),
+                        'lit' => $this->createLiteralFieldMapperPlugin(),
+                    ],
+                    new PunchoutLogger(),
+                ),
             ),
         );
     }
@@ -309,43 +329,52 @@ class CxmlPunchoutOrderMessageMapperExpectedOutputTest extends Unit
         $connection = (new PunchoutConnectionTransfer())
             ->setMappings([
                     // Envelope
-                    'cXML.attributes.xml:lang' => sprintf('lit.%s', static::CXML_LANG),
-                    'cXML.Header.From.Credential.domain' => sprintf('lit.%s', static::FROM_DOMAIN),
+                    'cXML.attr.xml:lang' => sprintf('lit.%s', static::CXML_LANG),
+                    'cXML.Header.From.Credential.attr.domain' => sprintf('lit.%s', static::FROM_DOMAIN),
                     'cXML.Header.From.Credential.Identity' => sprintf('lit.%s', static::FROM_IDENTITY_OVERRIDE),
-                    'cXML.Header.To.Credential.domain' => sprintf('lit.%s', static::TO_DOMAIN),
+                    'cXML.Header.To.Credential.attr.domain' => sprintf('lit.%s', static::TO_DOMAIN),
                     'cXML.Header.To.Credential.Identity' => sprintf('lit.%s', static::TO_IDENTITY_OVERRIDE),
-                    'cXML.Header.Sender.Credential.domain' => sprintf('lit.%s', static::SENDER_DOMAIN),
+                    'cXML.Header.Sender.Credential.attr.domain' => sprintf('lit.%s', static::SENDER_DOMAIN),
                     'cXML.Header.Sender.Credential.Identity' => sprintf('lit.%s', static::SENDER_IDENTITY),
                     'cXML.Header.Sender.Credential.SharedSecret' => sprintf('lit.%s', static::SENDER_SHARED_SECRET_OVERRIDE),
                     'cXML.Header.Sender.UserAgent' => sprintf('lit.%s', static::USER_AGENT),
-                    // PunchOutOrderMessage attributes
-                    'attributes.buyerCookie' => sprintf('lit.%s', static::BUYER_COOKIE_OVERRIDE),
-                    'attributes.currency' => sprintf('lit.%s', static::CURRENCY_OVERRIDE),
-                    'attributes.operationAllowed' => sprintf('lit.%s', static::OPERATION_OVERRIDE),
+                    // PunchOutOrderMessage
+                    'cXML.Message.PunchOutOrderMessage.BuyerCookie' => sprintf('lit.%s', static::BUYER_COOKIE_OVERRIDE),
+                    // Cross-cutting: builder propagates xml:lang to every Description element.
+                    'cXML.Message.PunchOutOrderMessage.attr.xml:lang' => sprintf('lit.%s', static::MESSAGE_LANG),
+                    // Cross-cutting: builder propagates currency to every Money element (Total, Shipping, Tax, UnitPrice).
+                    'cXML.Message.PunchOutOrderMessage.attr.currency' => sprintf('lit.%s', static::CURRENCY_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.attr.operationAllowed' => sprintf('lit.%s', static::OPERATION_OVERRIDE),
                     // Tax
-                    'Tax.Money' => sprintf('lit.%d', static::TAX_CENT_OVERRIDE),
-                    'Tax.Description' => sprintf('lit.%s', static::TAX_DESCRIPTION_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.Tax.Money' => sprintf('lit.%d', static::TAX_CENT_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.Tax.Description' => sprintf('lit.%s', static::TAX_DESCRIPTION_OVERRIDE),
                     // Shipping
-                    'Shipping.Money' => sprintf('lit.%d', static::SHIPPING_CENT_OVERRIDE),
-                    'Shipping.Description' => sprintf('lit.%s', static::SHIPPING_DESCRIPTION_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.Shipping.Money' => sprintf('lit.%d', static::SHIPPING_CENT_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.Shipping.Description' => sprintf('lit.%s', static::SHIPPING_DESCRIPTION_OVERRIDE),
                     // ShipTo
-                    'ShipTo.Address.Name' => sprintf('lit.%s', static::SHIP_TO_NAME),
-                    'ShipTo.Address.PostalAddress.Street1' => sprintf('lit.%s', static::SHIP_TO_STREET1),
-                    'ShipTo.Address.PostalAddress.Street2' => sprintf('lit.%s', static::SHIP_TO_STREET2),
-                    'ShipTo.Address.PostalAddress.Street3' => sprintf('lit.%s', static::SHIP_TO_STREET3),
-                    'ShipTo.Address.PostalAddress.City' => sprintf('lit.%s', static::SHIP_TO_CITY),
-                    'ShipTo.Address.PostalAddress.CountryCode' => sprintf('lit.%s', static::SHIP_TO_COUNTRY),
-                    'ShipTo.Address.PostalAddress.State' => sprintf('lit.%s', static::SHIP_TO_STATE),
-                    'ShipTo.Address.PostalAddress.PostalCode' => sprintf('lit.%s', static::SHIP_TO_POSTAL_CODE),
-                    // ItemDetail
-                    'ItemDetail.UnitOfMeasure' => sprintf('lit.%s', static::UNIT_OF_MEASURE_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.ShipTo.Address.attr.name' => sprintf('lit.%s', static::SHIP_TO_NAME),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.ShipTo.Address.PostalAddress.Street1' => sprintf('lit.%s', static::SHIP_TO_STREET1),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.ShipTo.Address.PostalAddress.Street2' => sprintf('lit.%s', static::SHIP_TO_STREET2),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.ShipTo.Address.PostalAddress.Street3' => sprintf('lit.%s', static::SHIP_TO_STREET3),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.ShipTo.Address.PostalAddress.City' => sprintf('lit.%s', static::SHIP_TO_CITY),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.ShipTo.Address.PostalAddress.Country.attr.isoCountryCode' => sprintf('lit.%s', static::SHIP_TO_COUNTRY),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.ShipTo.Address.PostalAddress.State' => sprintf('lit.%s', static::SHIP_TO_STATE),
+                    'cXML.Message.PunchOutOrderMessage.PunchOutOrderMessageHeader.ShipTo.Address.PostalAddress.PostalCode' => sprintf('lit.%s', static::SHIP_TO_POSTAL_CODE),
+                    // ItemIn
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.attr.quantity' => sprintf('lit.%d', static::QUANTITY_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemID.SupplierPartID' => sprintf('lit.%s', static::SUPPLIER_PART_ID_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemID.BuyerPartID' => sprintf('lit.%s', static::BUYER_PART_ID_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.Description' => sprintf('lit.%s', static::DESCRIPTION_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.UnitPrice.Money' => sprintf('lit.%d', static::UNIT_PRICE_CENT_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.UnitOfMeasure' => sprintf('lit.%s', static::UNIT_OF_MEASURE_OVERRIDE),
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.URL' => sprintf('lit.%s', static::ITEM_URL_OVERRIDE),
                     // Item fields via itemAttr plugin
-                    'ItemID.SupplierPartAuxiliaryID' => 'itemAttr.supplierId',
-                    'ItemDetail.ManufacturerPartID' => 'item.sku',
-                    'ItemDetail.ManufacturerName' => 'itemAttr.manufacturerName',
-                    'ItemDetail.LeadTime' => 'itemAttr.leadTime',
-                    'ItemDetail.ClassificationDomain' => 'itemAttr.classificationDomain',
-                    'ItemDetail.ClassificationValue' => 'itemAttr.classificationValue',
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemID.SupplierPartAuxiliaryID' => 'itemAttr.supplierId',
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.ManufacturerPartID' => 'item.sku',
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.ManufacturerName' => 'itemAttr.manufacturerName',
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.LeadTime' => 'itemAttr.leadTime',
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.Classification.attr.domain' => 'itemAttr.classificationDomain',
+                    'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.Classification' => 'itemAttr.classificationValue',
                 ]);
 
         return (new PunchoutSessionTransfer())

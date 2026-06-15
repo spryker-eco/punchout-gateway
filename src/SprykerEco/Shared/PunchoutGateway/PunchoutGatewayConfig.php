@@ -25,13 +25,35 @@ interface PunchoutGatewayConfig
 
     public const string OPERATION_CREATE = 'create';
 
+    public const string OPERATION_INSPECT = 'inspect';
+
     public const string OCI_HOOK_URL_FIELD = 'HOOK_URL';
 
     public const string ERROR_QUOTE_WAS_NOT_CREATED = 'Failed to create a cart for the session.';
 
     public const string ERROR_CUSTOMER_NOT_RESOLVED = 'Customer could not be resolved';
 
+    public const string ERROR_CUSTOMER_ID_IS_NULL = 'Customer ID is null.';
+
+    public const string ERROR_VALIDATION_FAILED = 'Invalid setup request call';
+
+    public const string ERROR_UNSUPPORTED_OPERATION = 'Not supported operation was requested.';
+
     public const string ERROR_AUTHENTICATION_FAILED = 'Authentication failed';
+
+    public const string ERROR_SESSION_NOT_FOUND = 'Valid session was not found.';
+
+    public const string ERROR_QUOTE_NOT_FOUND_FOR_SESSION = 'Quote was not found for this session.';
+
+    public const string ERROR_MISSING_CXML_SETUP_REQUEST = 'PunchoutSession must carry punchoutData.cxmlSetupRequest to build PunchOutOrderMessage.';
+
+    public const string ERROR_OCI_FORM_DATA_INVALID = 'Form data is missing or wrong';
+
+    public const string ERROR_FORM_PLUGIN_NOT_FOUND = 'Form builder is failed to find a plugin for the quote.';
+
+    public const string ERROR_FIELD_MAPPING_MISSING_DOT_SEPARATOR = 'Field mapping expression "%s" is missing a dot separator.';
+
+    public const string ERROR_FIELD_MAPPER_PLUGIN_NOT_REGISTERED = 'Field mapper plugin "%s" is not registered.';
 
     public const string ERROR_CONNECTION_NOT_FOUND = 'No active connection was found.';
 
@@ -79,7 +101,7 @@ interface PunchoutGatewayConfig
     /**
      * @var array<string>
      */
-    public const array EXTRINSIC_BLACKLIST = [
+    public const array EXTRINSIC_DENY_LIST = [
         'User',
         'UniqueUsername',
         'UniqueName',
@@ -93,7 +115,7 @@ interface PunchoutGatewayConfig
         'UserPhoneNumber',
     ];
 
-    public const string EXTRINSIC_PREFIX = 'ItemDetail.Extrinsic.';
+    public const string EXTRINSIC_PREFIX = 'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.Extrinsic.';
 
     public const string CONFIGURATION_KEY_SENDER_SHARED_SECRET = 'senderSharedSecret';
 
@@ -108,4 +130,6 @@ interface PunchoutGatewayConfig
     public const string CONFIGURATION_KEY_CXML_SESSION_START_URL_VALIDITY_IN_SECONDS = 'punchout_gateway:cxml:session:start_url_validity_in_seconds';
 
     public const string CONFIGURATION_KEY_CXML_SESSION_TOKEN_LENGTH = 'punchout_gateway:cxml:session:token_length';
+
+    public const string DIRECTIVE_FRAME_ANCESTORS = 'frame-ancestors';
 }

@@ -23,29 +23,36 @@ trait TransferPathTraversalTrait
      */
     abstract public function getConfig();
 
-    protected function traversePath(?AbstractTransfer $objectTransfer, string $path): mixed
+    /**
+     * @param \Spryker\Shared\Kernel\Transfer\AbstractTransfer|array<string, mixed>|string|int $object
+     */
+    protected function traversePath(AbstractTransfer|array|string|int|null $object, string $path): mixed
     {
-        if ($objectTransfer === null) {
+        if ($object === null) {
             return null;
         }
 
         $segments = explode('.', $path);
 
         foreach ($segments as $segment) {
-            if ($objectTransfer === null) {
+            if ($object === null) {
                 return null;
+            }
+
+            if (is_array($object)) {
+                return $object[$segment] ?? null;
             }
 
             $getter = sprintf('get%s', ucfirst($segment));
 
-            if (!method_exists($objectTransfer, $getter)) {
+            if (!method_exists($object, $getter)) {
                 return null;
             }
 
-            $objectTransfer = $objectTransfer->$getter();
+            $object = $object->$getter();
         }
 
-        return $objectTransfer;
+        return $object;
     }
 
     /**
@@ -145,13 +152,7 @@ trait TransferPathTraversalTrait
     protected function resolveFromDocBlock(string $docBlock, string $fieldPath, array $visited, int $depth): array
     {
         if (preg_match('/@return\s+\\\\?ArrayObject<[^>]*\\\\?Generated\\\\Shared\\\\Transfer\\\\(\w+Transfer)/i', $docBlock, $matches)) {
-            $elementClass = sprintf('Generated\Shared\Transfer\%s', $matches[1]);
-
-            if (in_array($elementClass, $visited, true)) {
-                return [];
-            }
-
-            return $this->collectFromClass($elementClass, sprintf('%s.*', $fieldPath), $visited, $depth + 1);
+            return [];
         }
 
         if (preg_match('/@return\s+\\\\?Generated\\\\Shared\\\\Transfer\\\\(\w+Transfer)/i', $docBlock, $matches)) {
@@ -164,7 +165,7 @@ trait TransferPathTraversalTrait
             return $this->collectFromClass($transferClass, $fieldPath, $visited, $depth + 1);
         }
 
-        if (preg_match('/@return\s+array/i', $docBlock)) {
+        if (preg_match('/@return\s+array\n/i', $docBlock)) {
             return [sprintf('%s.*', $fieldPath)];
         }
 

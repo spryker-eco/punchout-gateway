@@ -37,8 +37,6 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
 
     public const string FACADE_PRICE = 'FACADE_PRICE';
 
-    public const string FACADE_CART = 'FACADE_CART';
-
     public const string PLUGINS_PROCESSORS = 'PLUGINS_PROCESSORS';
 
     public function provideBusinessLayerDependencies(Container $container): Container
@@ -52,7 +50,6 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
         $container = $this->addCalculationFacade($container);
         $container = $this->addPriceFacade($container);
         $container = $this->addPunchoutGatewayService($container);
-        $container = $this->addCartFacade($container);
 
         return $container;
     }
@@ -163,15 +160,6 @@ class PunchoutGatewayDependencyProvider extends AbstractBundleDependencyProvider
     {
         $container->set(static::SERVICE_PUNCHOUT_GATEWAY, function (Container $container) {
             return $container->getLocator()->punchoutGateway()->service();
-        });
-
-        return $container;
-    }
-
-    protected function addCartFacade(Container $container): Container
-    {
-        $container->set(static::FACADE_CART, function (Container $container) {
-            return $container->getLocator()->cart()->facade();
         });
 
         return $container;

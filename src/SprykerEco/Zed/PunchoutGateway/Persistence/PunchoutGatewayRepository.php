@@ -103,7 +103,7 @@ class PunchoutGatewayRepository extends AbstractRepository implements PunchoutGa
 
         $query = $this->getFactory()->createSpyPunchoutCredentialQuery();
 
-        if ($criteriaTransfer->getIdPunchoutConnection()) {
+        if ($criteriaTransfer->getIdPunchoutConnection() !== null) {
             $query->filterByFkPunchoutConnection($criteriaTransfer->getIdPunchoutConnection());
         }
 
