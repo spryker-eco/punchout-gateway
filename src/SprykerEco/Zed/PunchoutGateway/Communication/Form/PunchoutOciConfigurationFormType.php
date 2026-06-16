@@ -16,6 +16,8 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -31,6 +33,8 @@ class PunchoutOciConfigurationFormType extends AbstractType
     public const string OPTION_OCI_FIELD_CHOICES = 'oci_field_choices';
 
     public const string OPTION_SOURCE_SUGGESTIONS_URL = 'source_suggestions_url';
+
+    public const string OPTION_SOURCE_FIELD_NAMES = 'source_field_names';
 
     public const string MAPPING_FIELDS = 'mappingFields';
 
@@ -52,6 +56,19 @@ class PunchoutOciConfigurationFormType extends AbstractType
         }
 
         $builder->addModelTransformer(new PunchoutOciMappingDataTransformer());
+
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($options) {
+            if ($options[static::OPTION_IS_CREATE]) {
+                return;
+            }
+
+            $this->getFactory()->createMappingCollectionValidator()->validate(
+                $event,
+                static::MAPPING_FIELDS,
+                PunchoutFieldMappingRowFormType::FIELD_FIELD,
+                'This field is already mapped in another row.',
+            );
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -60,6 +77,7 @@ class PunchoutOciConfigurationFormType extends AbstractType
             static::OPTION_IS_CREATE => false,
             static::OPTION_OCI_FIELD_CHOICES => [],
             static::OPTION_SOURCE_SUGGESTIONS_URL => '',
+            static::OPTION_SOURCE_FIELD_NAMES => [],
         ]);
     }
 
@@ -120,6 +138,7 @@ class PunchoutOciConfigurationFormType extends AbstractType
             'entry_options' => [
                 PunchoutFieldMappingRowFormType::OPTION_FIELD_CHOICES => $options[static::OPTION_OCI_FIELD_CHOICES],
                 PunchoutFieldMappingRowFormType::OPTION_SOURCE_SUGGESTIONS_URL => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
+                PunchoutFieldMappingRowFormType::OPTION_SOURCE_FIELD_NAMES => $options[static::OPTION_SOURCE_FIELD_NAMES],
             ],
             'allow_add' => true,
             'allow_delete' => true,

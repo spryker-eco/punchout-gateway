@@ -86,6 +86,7 @@ class PunchoutConnectionFormDataProvider
             PunchoutConnectionFormType::OPTION_ID_PUNCHOUT_CONNECTION => $punchoutConnectionTransfer?->getIdPunchoutConnection(),
             PunchoutCxmlConfigurationFormType::OPTION_CXML_FIELD_CHOICES => $this->getCxmlFieldChoices(),
             PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL => ZedPunchoutGatewayConfig::URL_SOURCE_FIELD_SUGGESTIONS,
+            PunchoutCxmlConfigurationFormType::OPTION_SOURCE_FIELD_NAMES => $this->punchoutGatewayService->getSourceFieldSuggestionNames(),
             PunchoutOciConfigurationFormType::OPTION_OCI_FIELD_CHOICES => $this->getOciFieldChoices(),
         ];
     }

@@ -22,8 +22,6 @@ class SourceFieldSuggestionsController extends AbstractController
 {
     protected const string PARAM_TERM = 'term';
 
-    protected const string SEPARATOR = '&';
-
     public function indexAction(Request $request): JsonResponse
     {
         $term = (string)$request->query->get(static::PARAM_TERM, '');
@@ -32,41 +30,10 @@ class SourceFieldSuggestionsController extends AbstractController
             ->getPunchoutGatewayService()
             ->getSourceFieldSuggestions();
 
-        $suggestions = $this->filterSuggestionsByTerm($suggestions, $term);
+        $suggestions = $this->getFactory()
+            ->createSourceFieldSuggestionFilter()
+            ->filterByTerm($suggestions, $term);
 
         return new JsonResponse($suggestions);
-    }
-
-    /**
-     * @param array<string> $suggestions
-     *
-     * @return array<string>
-     */
-    protected function filterSuggestionsByTerm(array $suggestions, string $term): array
-    {
-        if ($term === '') {
-            return $suggestions;
-        }
-
-        $separatorPosition = strrpos($term, static::SEPARATOR);
-
-        if ($separatorPosition !== false) {
-            $prefix = substr($term, 0, $separatorPosition + 1);
-
-            $term = substr($term, $separatorPosition + 1);
-        }
-
-        $suggestions = array_values(
-            array_filter(
-                $suggestions,
-                static fn (string $suggestion): bool => stripos($suggestion, $term) !== false,
-            ),
-        );
-
-        if ($separatorPosition !== false) {
-            $suggestions = substr_replace($suggestions, $prefix, 0, 0);
-        }
-
-        return $suggestions;
     }
 }

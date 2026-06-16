@@ -36,8 +36,6 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
 {
     protected const string CLASSIFICATION_UNIT_OF_MEASURE = 'UNSPSC';
 
-    protected const string ITEM_DETAIL_EXTRINSIC_PREFIX = 'cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.Extrinsic.';
-
     public function __construct(
         protected CxmlEncoderInterface $cxmlEncoder,
         protected PunchoutLoggerInterface $punchoutLogger,
@@ -239,11 +237,11 @@ class CxmlPunchoutOrderMessageMapper implements CxmlPunchoutOrderMessageMapperIn
         $result = $sessionExtrinsics;
 
         foreach ($fieldMap as $cxmlKey => $expression) {
-            if (!str_starts_with($cxmlKey, static::ITEM_DETAIL_EXTRINSIC_PREFIX)) {
+            if (!str_starts_with($cxmlKey, SharedPunchoutGatewayConfig::EXTRINSIC_PREFIX)) {
                 continue;
             }
 
-            $extrinsicName = substr($cxmlKey, strlen(static::ITEM_DETAIL_EXTRINSIC_PREFIX));
+            $extrinsicName = substr($cxmlKey, strlen(SharedPunchoutGatewayConfig::EXTRINSIC_PREFIX));
 
             if ($expression === null || $expression === '') {
                 unset($result[$extrinsicName]);

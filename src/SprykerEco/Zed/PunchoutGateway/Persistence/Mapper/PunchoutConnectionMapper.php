@@ -18,8 +18,6 @@ use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
 
 class PunchoutConnectionMapper
 {
-    protected const string CONFIGURATION_KEY_MAPPING = 'mapping';
-
     public function __construct(protected UtilEncodingServiceInterface $utilEncodingService)
     {
     }
@@ -52,7 +50,7 @@ class PunchoutConnectionMapper
             );
         }
 
-        $punchoutConnectionTransfer->setMappings($protocolConfiguration[static::CONFIGURATION_KEY_MAPPING] ?? []);
+        $punchoutConnectionTransfer->setMappings($protocolConfiguration[PunchoutGatewayConfig::CONFIGURATION_KEY_MAPPING] ?? []);
 
         return $punchoutConnectionTransfer;
     }
@@ -101,7 +99,7 @@ class PunchoutConnectionMapper
 
         $mapping = $punchoutConnectionTransfer->getMappings();
 
-        $configuration[static::CONFIGURATION_KEY_MAPPING] = $mapping;
+        $configuration[PunchoutGatewayConfig::CONFIGURATION_KEY_MAPPING] = $mapping;
 
         if ($punchoutConnectionTransfer->getProtocolType() === PunchoutGatewayConfig::PROTOCOL_TYPE_CXML) {
             $this->applyCxmlConfiguration($punchoutConnectionTransfer, $punchoutConnectionEntity, $configuration);
