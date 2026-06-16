@@ -132,4 +132,6 @@ interface PunchoutGatewayConfig
     public const string CONFIGURATION_KEY_CXML_SESSION_TOKEN_LENGTH = 'punchout_gateway:cxml:session:token_length';
 
     public const string DIRECTIVE_FRAME_ANCESTORS = 'frame-ancestors';
+
+    public const string CONFIGURATION_KEY_MAPPING = 'mapping';
 }

@@ -33,6 +33,8 @@ class PunchoutFieldMappingRowFormType extends AbstractType
 
     public const string OPTION_SOURCE_SUGGESTIONS_URL = 'source_suggestions_url';
 
+    public const string OPTION_SOURCE_FIELD_NAMES = 'source_field_names';
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -48,8 +50,9 @@ class PunchoutFieldMappingRowFormType extends AbstractType
                 'required' => true,
                 AutosuggestType::URL => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
                 'attr' => [
-                    'placeholder' => 'e.g. item.sku or "" to force an empty value',
+                    'placeholder' => 'type %sources% or "string"',
                 ],
+                'attr_translation_parameters' => ['%sources%' => implode(', ', $options[static::OPTION_SOURCE_FIELD_NAMES])],
                 'constraints' => [
                     new NotBlank(),
                     new Regex([
@@ -65,6 +68,7 @@ class PunchoutFieldMappingRowFormType extends AbstractType
         $resolver->setDefaults([
             static::OPTION_FIELD_CHOICES => [],
             static::OPTION_SOURCE_SUGGESTIONS_URL => '',
+            static::OPTION_SOURCE_FIELD_NAMES => [],
         ]);
     }
 }

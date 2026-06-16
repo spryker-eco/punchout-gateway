@@ -100,6 +100,7 @@ class PunchoutConnectionFormType extends AbstractType
             static::OPTION_ID_PUNCHOUT_CONNECTION => null,
             PunchoutCxmlConfigurationFormType::OPTION_CXML_FIELD_CHOICES => [],
             PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL => '',
+            PunchoutCxmlConfigurationFormType::OPTION_SOURCE_FIELD_NAMES => [],
             PunchoutOciConfigurationFormType::OPTION_OCI_FIELD_CHOICES => [],
         ]);
     }
@@ -223,6 +224,7 @@ class PunchoutConnectionFormType extends AbstractType
                 PunchoutCxmlConfigurationFormType::OPTION_ID_PUNCHOUT_CONNECTION => $excludeId,
                 PunchoutCxmlConfigurationFormType::OPTION_CXML_FIELD_CHOICES => $options[PunchoutCxmlConfigurationFormType::OPTION_CXML_FIELD_CHOICES] ?? [],
                 PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL => $options[PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL] ?? '',
+                PunchoutCxmlConfigurationFormType::OPTION_SOURCE_FIELD_NAMES => $options[PunchoutCxmlConfigurationFormType::OPTION_SOURCE_FIELD_NAMES] ?? [],
             ]);
         }
 
@@ -235,6 +237,7 @@ class PunchoutConnectionFormType extends AbstractType
                 PunchoutOciConfigurationFormType::OPTION_IS_CREATE => $isCreate,
                 PunchoutOciConfigurationFormType::OPTION_OCI_FIELD_CHOICES => $options[PunchoutOciConfigurationFormType::OPTION_OCI_FIELD_CHOICES] ?? [],
                 PunchoutOciConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL => $options[PunchoutCxmlConfigurationFormType::OPTION_SOURCE_SUGGESTIONS_URL] ?? '',
+                PunchoutOciConfigurationFormType::OPTION_SOURCE_FIELD_NAMES => $options[PunchoutCxmlConfigurationFormType::OPTION_SOURCE_FIELD_NAMES] ?? [],
             ]);
         }
     }

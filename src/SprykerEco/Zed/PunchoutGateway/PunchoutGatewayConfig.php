@@ -98,6 +98,14 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
 
     /**
      * @api
+     */
+    public function getSourceFieldSuggestionLimit(): int
+    {
+        return 20;
+    }
+
+    /**
+     * @api
      *
      * @return list<string>
      */

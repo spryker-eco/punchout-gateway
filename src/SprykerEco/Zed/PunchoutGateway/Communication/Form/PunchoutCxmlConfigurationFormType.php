@@ -39,6 +39,8 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
 
     public const string OPTION_SOURCE_SUGGESTIONS_URL = 'source_suggestions_url';
 
+    public const string OPTION_SOURCE_FIELD_NAMES = 'source_field_names';
+
     public const string FIELD_SENDER_IDENTITY = 'senderIdentity';
 
     protected const string FIELD_SENDER_SHARED_SECRET = 'senderSharedSecret';
@@ -60,12 +62,27 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
         $builder->addModelTransformer(new PunchoutCxmlMappingDataTransformer());
 
         $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($options) {
-            if (!$options[static::OPTION_IS_CXML]) {
+            if ($options[static::OPTION_IS_CXML]) {
+                $this->validateSenderIdentityUniqueness($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+                $this->validateSharedSecret($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+            }
+
+            if ($options[static::OPTION_IS_CREATE]) {
                 return;
             }
 
-            $this->validateSenderIdentityUniqueness($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
-            $this->validateSharedSecret($event, $options[static::OPTION_ID_PUNCHOUT_CONNECTION]);
+            $this->getFactory()->createMappingCollectionValidator()->validate(
+                $event,
+                static::MAPPING_EXTRINSICS,
+                PunchoutExtrinsicMappingRowFormType::FIELD_EXTRINSIC_NAME,
+                'Extrinsic name "%s" is already mapped in another row.',
+            );
+            $this->getFactory()->createMappingCollectionValidator()->validate(
+                $event,
+                static::MAPPING_FIELDS,
+                PunchoutFieldMappingRowFormType::FIELD_FIELD,
+                'This field is already mapped in another row.',
+            );
         });
     }
 
@@ -77,6 +94,7 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
             static::OPTION_ID_PUNCHOUT_CONNECTION => null,
             static::OPTION_CXML_FIELD_CHOICES => [],
             static::OPTION_SOURCE_SUGGESTIONS_URL => '',
+            static::OPTION_SOURCE_FIELD_NAMES => [],
         ]);
     }
 
@@ -138,6 +156,7 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
             'entry_options' => [
                 PunchoutFieldMappingRowFormType::OPTION_FIELD_CHOICES => $options[static::OPTION_CXML_FIELD_CHOICES],
                 PunchoutFieldMappingRowFormType::OPTION_SOURCE_SUGGESTIONS_URL => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
+                PunchoutFieldMappingRowFormType::OPTION_SOURCE_FIELD_NAMES => $options[static::OPTION_SOURCE_FIELD_NAMES],
             ],
             'allow_add' => true,
             'allow_delete' => true,
@@ -159,6 +178,7 @@ class PunchoutCxmlConfigurationFormType extends AbstractType
             'entry_type' => PunchoutExtrinsicMappingRowFormType::class,
             'entry_options' => [
                 PunchoutExtrinsicMappingRowFormType::OPTION_SOURCE_SUGGESTIONS_URL => $options[static::OPTION_SOURCE_SUGGESTIONS_URL],
+                PunchoutExtrinsicMappingRowFormType::OPTION_SOURCE_FIELD_NAMES => $options[static::OPTION_SOURCE_FIELD_NAMES],
             ],
             'allow_add' => true,
             'allow_delete' => true,

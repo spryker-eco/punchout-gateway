@@ -19,6 +19,10 @@ use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataProvider\PunchoutConne
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\DataProvider\PunchoutCredentialFormDataProvider;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutConnectionFormType;
 use SprykerEco\Zed\PunchoutGateway\Communication\Form\PunchoutCredentialFormType;
+use SprykerEco\Zed\PunchoutGateway\Communication\Form\Validator\MappingCollectionValidator;
+use SprykerEco\Zed\PunchoutGateway\Communication\Form\Validator\MappingCollectionValidatorInterface;
+use SprykerEco\Zed\PunchoutGateway\Communication\SourceFieldSuggestion\SourceFieldSuggestionFilter;
+use SprykerEco\Zed\PunchoutGateway\Communication\SourceFieldSuggestion\SourceFieldSuggestionFilterInterface;
 use SprykerEco\Zed\PunchoutGateway\Communication\Table\PunchoutConnectionTable;
 use SprykerEco\Zed\PunchoutGateway\Communication\Table\PunchoutCredentialTable;
 use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig;
@@ -33,6 +37,18 @@ use Symfony\Component\Form\FormInterface;
  */
 class PunchoutGatewayCommunicationFactory extends AbstractCommunicationFactory
 {
+    public function createMappingCollectionValidator(): MappingCollectionValidatorInterface
+    {
+        return new MappingCollectionValidator();
+    }
+
+    public function createSourceFieldSuggestionFilter(): SourceFieldSuggestionFilterInterface
+    {
+        return new SourceFieldSuggestionFilter(
+            $this->getConfig(),
+        );
+    }
+
     public function createPunchoutConnectionTable(): PunchoutConnectionTable
     {
         return new PunchoutConnectionTable(
