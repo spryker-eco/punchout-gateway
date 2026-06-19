@@ -6,8 +6,6 @@
 
 The PunchOut Gateway module provides a basic implementation of OCI and cXML PunchOut flows for Spryker shops. It lets eProcurement systems log a buyer into the shop, build a cart, and transfer that cart back to the buyer's procurement system.
 
-> **Early Access.** This module is part of the [Spryker Early Access program](https://docs.spryker.com/docs/about/all/releases/early-access-program.html). Functionality may be incomplete and is subject to change.
-
 ## Supported use cases
 
 - Any number of simultaneously active OCI and cXML connections in a single shop.
