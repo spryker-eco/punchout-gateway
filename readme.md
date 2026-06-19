@@ -1,54 +1,74 @@
-# Punchout Gateway
+# PunchOut Gateway
 
 [![Latest Stable Version](https://poser.pugx.org/spryker-eco/punchout-gateway/v/stable.svg)](https://packagist.org/packages/spryker-eco/punchout-gateway)
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.3-8892BF.svg)](https://php.net/)
 [![Documentation](https://img.shields.io/badge/spryker-documentation-cyan)](https://docs.spryker.com/docs/pbc/all/punchout-gateway/integrate-punchout-gateway)
 
+The PunchOut Gateway module provides a basic implementation of OCI and cXML PunchOut flows for Spryker shops. It lets eProcurement systems log a buyer into the shop, build a cart, and transfer that cart back to the buyer's procurement system.
 
-PunchOut Gateway module enables projects to handle eProcurement requests and build a cart for customers.
+> **Early Access.** This module is part of the [Spryker Early Access program](https://docs.spryker.com/docs/about/all/releases/early-access-program.html). Functionality may be incomplete and is subject to change.
 
-## 1. Install the module
+## Supported use cases
 
-Install the Punchout Gateway module using Composer:
+- Any number of simultaneously active OCI and cXML connections in a single shop.
+- **OCI:** every login creates a fresh `Punchout` cart.
+- **cXML:** a single cart is created or reused per `BuyerCookie` value, so a buyer can resume an in-progress cart.
+- iframe embedding (global, opt-in — see [Support iframe embedding](#support-iframe-embedding)).
+
+## Architecture at a glance
+
+A PunchOut **connection** (stored in `spy_punchout_connection`) defines one buyer integration: its protocol, store, processor plugin, and field mapping. Connections are managed in the Back Office UI. Each inbound request resolves a **processor plugin** at runtime by the FQCN stored on the connection. The flow:
+
+1. Buyer's system authenticates (OCI credential or cXML shared secret).
+2. The shop resolves a customer and a quote, logs the buyer in, and persists a `spy_punchout_session`.
+3. Buyer shops; the **Transfer Cart** widget posts the cart back to the buyer's procurement system.
+
+---
+
+## Installation
+
+### 1. Install the module
 
 ```bash
-composer require spryker-eco/punchout-gateway:^0.4.0
+composer require spryker-eco/punchout-gateway:^1.0.0
 ```
 
-## 2. Configure the module
+### 2. Configure the module
 
-To control logging through the AWS Parameter Store, add the following optional configuration:
+Optional logging via AWS Parameter Store.
 
-``config/Shared/config_default.php``
+`config/Shared/config_default.php`
 
 ```php
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConstants;
 
-$config[PunchoutGatewayConstants::ENABLE_LOGGING] = getenv('PUNCHOUT_GATEWAY_ENABLE_LOGGING');
+$config[PunchoutGatewayConstants::ENABLE_LOGGING] = getenv('PUNCHOUT_GATEWAY_ENABLE_LOGGING') ?: false;
 ```
 
-### Configuration constants
+| Constant | Description | Default |
+|----------|-------------|---------|
+| `ENABLE_LOGGING` | Enables or disables logging for PunchOut Gateway. | `false` |
 
-| Constant | Description                                                                                                                                     | Default  |
-|----------|-------------------------------------------------------------------------------------------------------------------------------------------------|----------|
-| `ENABLE_LOGGING` | Enables or disables logging for Punchout Gateway. Check \SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLogger to learn what is being logged. | `false` |
+When enabled, the module emits structured entries through `PunchoutLoggerInterface` (request reception/parsing, authentication, response generation, quote/session creation, uncaught throwables). When disabled, the resolver returns `NullPunchoutLogger` and all calls are no-ops.
 
-## 3. Additional module configuration
+### 3. Additional module configuration
 
-`src/Pyz/Zed/PunchoutGateway/PunchoutGatewayConfig.php` provides the following configuration methods:
+`src/Pyz/Zed/PunchoutGateway/PunchoutGatewayConfig.php`:
 
 | Method | Default | Description |
 |--------|---------|-------------|
-| `isLoggingEnabled()` | `true` | Enables or disables Punchout Gateway logging. |
-| `getCxmlSessionStartUrlValidityInSeconds()` | `600` | Validity period of the cXML session start URL in seconds. |
+| `isLoggingEnabled()` | `false` | Enables or disables PunchOut Gateway logging. |
+| `getCxmlSessionStartUrlValidityInSeconds()` | `600` | Validity (s) of the cXML session start URL. Bounds 0–3600. |
 | `getOciDefaultStartUrl()` | `'/'` | Default redirect URL after OCI session start. |
-| `getCxmlSessionTokenLength()` | `32` | Length of the generated cXML session token. |
+| `getCxmlSessionTokenLength()` | `32` | Length of the generated cXML session token. Bounds 16–128. |
 
-## 4. Update Quote configuration
+These values can also be changed at runtime in the Back Office under *Configuration > Punchout Gateway*.
 
-Update `QuoteConfig` to allow the PunchOut session field to be saved with the quote.
+### 4. Update Quote configuration
 
-``src/Pyz/Zed/Quote/QuoteConfig.php``
+Allow the PunchOut session field to be saved with the quote.
+
+`src/Pyz/Zed/Quote/QuoteConfig.php`
 
 ```php
 use Generated\Shared\Transfer\QuoteTransfer;
@@ -62,37 +82,29 @@ public function getQuoteFieldsAllowedForSaving(): array
 }
 ```
 
-## 5. Set up the database schema
-
-Install the database schema:
+### 5. Set up the database schema
 
 ```bash
 vendor/bin/console propel:install
 ```
 
-This creates the following tables:
+Creates:
 
 | Table | Description |
 |-------|-------------|
-| `spy_punchout_connection` | Stores Punchout connection configuration per store. |
-| `spy_punchout_credential` | Stores credentials (username/password) linked to a connection and customer. |
-| `spy_punchout_session` | Stores active Punchout sessions linked to a quote. |
+| `spy_punchout_connection` | PunchOut connection configuration per store. |
+| `spy_punchout_credential` | Credentials (username/password) linked to a connection and customer. |
+| `spy_punchout_session` | Active PunchOut sessions linked to a quote. |
 
-## 6. Generate transfer objects
-
-Generate transfer objects for the module:
+### 6. Generate transfer objects
 
 ```bash
 vendor/bin/console transfer:generate
 ```
 
-## 7. Register plugins
+### 7. Register plugins
 
-### Register the Quote expander plugin
-
-Add the Punchout session expander plugin:
-
-``src/Pyz/Zed/Quote/QuoteDependencyProvider.php``
+**Quote expander** — `src/Pyz/Zed/Quote/QuoteDependencyProvider.php`
 
 ```php
 use SprykerEco\Zed\PunchoutGateway\Communication\Plugin\Quote\PunchoutSessionQuoteExpanderPlugin;
@@ -106,11 +118,7 @@ protected function getQuoteExpanderPlugins(): array
 }
 ```
 
-### Register the route provider plugin
-
-Add the route provider plugin:
-
-``src/Pyz/Yves/Router/RouterDependencyProvider.php``
+**Route provider** — `src/Pyz/Yves/Router/RouterDependencyProvider.php`
 
 ```php
 use SprykerEco\Yves\PunchoutGateway\Plugin\Router\PunchoutGatewayRouteProviderPlugin;
@@ -124,11 +132,7 @@ protected function getRouteProvider(): array
 }
 ```
 
-### Register the security header expander plugin
-
-Add the security header expander plugin:
-
-``src/Pyz/Yves/Application/ApplicationDependencyProvider.php``
+**Security header expander** — `src/Pyz/Yves/Application/ApplicationDependencyProvider.php`
 
 ```php
 use SprykerEco\Yves\PunchoutGateway\Plugin\Application\PunchoutSecurityHeaderExpanderPlugin;
@@ -142,11 +146,21 @@ protected function getSecurityHeaderExpanderPlugins(): array
 }
 ```
 
-## 8. Register the cart widget
+#### Support iframe embedding
 
-Add the PunchOut cart widget:
+If your eProcurement system embeds the shop in an iframe, set this in the deploy file for each environment:
 
-``src/Pyz/Yves/ShopApplication/ShopApplicationDependencyProvider.php``
+```yml
+image:
+  environment:
+    SPRYKER_YVES_SESSION_COOKIE_SAMESITE: 'none'
+```
+
+iframe headers are emitted per connection via the **Allow iFrame** flag (or whenever a `~TARGET` form field is sent).
+
+### 8. Register the cart widget
+
+`src/Pyz/Yves/ShopApplication/ShopApplicationDependencyProvider.php`
 
 ```php
 use SprykerEco\Yves\PunchoutGateway\Widget\PunchoutCartWidget;
@@ -160,9 +174,7 @@ protected function getGlobalWidgets(): array
 }
 ```
 
-If you have custom Yves templates or your own frontend, add `PunchoutCartWidget` to your cart template. The core template is located at `SprykerShop/Yves/CartPage/Theme/default/templates/page-layout-cart/page-layout-cart.twig`.
-
-The following example shows `PunchoutCartWidget` usage:
+Embed the widget in the cart template (stock `spryker-shop/cart-page`: `SprykerShop/Yves/CartPage/Theme/default/templates/page-layout-cart/page-layout-cart.twig`, or your override) so the **Transfer Cart** button shows on the cart page:
 
 ```twig
 {% raw %}
@@ -170,128 +182,220 @@ The following example shows `PunchoutCartWidget` usage:
 {% endraw %}
 ```
 
-## 9. Import glossary data
-
-The module provides translation data for tax validation messages.
-
-**Option 1: Import using the module's configuration file**
+### 9. Import glossary data
 
 ```bash
+# Option 1 — module config file
 vendor/bin/console data:import --config=vendor/spryker-eco/punchout-gateway/data/import/punchout-gateway.yml
-```
 
-**Option 2: Copy file content and import individually**
-
-Copy content from `vendor/spryker-eco/punchout-gateway/data/import/*.csv` to the corresponding files in `data/import/common/common/`. Then run:
-
-```bash
+# Option 2 — copy vendor/spryker-eco/punchout-gateway/data/import/*.csv into
+# data/import/common/common/, then:
 vendor/bin/console data:import glossary
 ```
 
-## 10. PunchOut connection configuration
+Back Office Zed translations ship in `data/translation/Zed/en_US.csv` and `de_DE.csv` and are picked up by the standard Zed translator — no separate import. Override a label by adding the same key to your project's Zed translation file.
 
-Since the UI for connection setup is not yet ready, we provide these two console commands to create a demo configuration:
+### Verify the integration
 
-- OCI flow:
-
-```bash
-  vendor/bin/console punchout-gateway:oci:demo-connection:create
-```
-
-- cXML flow:
+- Open *Punchout Connections* in the Back Office — the grid renders empty until you create a connection.
+- Run the demo command and confirm `spy_punchout_connection` and the grid reflect the demo cXML and OCI connections for store `DE`:
 
 ```bash
-  vendor/bin/console punchout-gateway:cxml:demo-connection:create
+vendor/bin/console punchout-gateway:demo-connection:create
 ```
 
-To configure a connection, create a row in the `spy_punchout_connection` table:
+Do not use demo data in production.
 
-| Column | Value                                    | Comments                                                                                                                                                 |
-|--------|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `fk_store` | Store ID (e.g. DE)                       | ID of the store the customer must be logged in to.                                                                                                       |
-| `name` | Human-readable label                     | Used only for readability                                                                                                                                |
-| `is_active` | `true`                                   | Determines whether the connection can be used.                                                                                                           |
-| `allow_iframe` | `true` / `false`                         | Enforces iframe-specific headers when the PunchOut session is active. If **~TARGET** is sent during the request, the headers are sent regardless of this value. |
-| `protocol_type` | `'oci'` or `'cxml'`                      | Flow type.                                                                                                                                               |
-| `processor_plugin_class` | Full class name of the processor plugin. | Processor to be used.                                                                                                                                    |
+---
 
-### 10.1 OCI connection configuration
+## Manage connections (Back Office)
 
-OCI-specific configuration
+Open *Punchout Connections*. The grid lists every connection across all stores with *View*, *Edit*, *Activate*/*Deactivate*, and *Delete* actions.
 
-| Column | Value                                    | Comments                                                                                                                                                                                                          |
-|--------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `request_url` | `'/punchout-gateway/oci/my-company'`     | Endpoint path the buyer posts the OCI login form to. This URL without a domain is the unique identifier of each connection, and can be anything that starts with ``https://<shop-domain>/punchout-gateway/oci/``. |
-| `configuration` | JSON configuration                       | See below `OCI Login configuration`                                                                                                                                                                               |
-| `protocol_type` | `'oci'`                       | Flow type.                                                                                                                                               |
-| `processor_plugin_class` | Full class name of the processor plugin. | `\SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultOciProcessorPlugin` or a project's implementation,                                                                                   |
+### Create a connection
 
-The triplet `protocol_type`, `fk_store` and `request_url` must be unique.
+Common fields:
 
-Column `configuration` contains JSON with the following optional keys. Override only when the value differs from the default.
+| Field | Notes |
+|-------|-------|
+| **Connection Name** | Human-readable label. Required, up to 255 chars, not unique. |
+| **Store** | Store the buyer must be logged in to. |
+| **Protocol Type** | `oci` or `cxml`. Cannot be changed after creation. |
+| **Processor Plugin Class** | FQCN of a processor plugin. The dropdown only offers plugins whose `getType()` matches the protocol. |
+| **Active** | When unchecked, requests to this connection are rejected. |
+| **Allow iFrame** | When checked, the Storefront emits iframe-friendly CSP headers while the session is active. |
 
-| Key | Default | Purpose                                                     |
-|-----|---------|-------------------------------------------------------------|
-| `usernameField` | `USERNAME` | Form field name carrying the username during login request. |
-| `passwordField` | `PASSWORD` | Form field name carrying the password during login request. |
+Protocol-specific fields appear dynamically:
 
-Additionally, configure credentials for customers who will access the shop.
-To do this, create rows in the `spy_punchout_credential` table:
+**cXML**
 
-| Column                 | Value           | Comment                                                                                                                                                       |
-|------------------------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `fk_punchout_connection` | integer         | ID of the connection                                                                                                                                          |
-| `fk_customer`            | int             | ID of the customer                                                                                                                                            |
-| `username`               | string          | Username, that's sent in the `username` field                                                                                                                 |
-| `password_hash`          | hashed password | Hashed password, that's sent in the `password` field. Validation happens using [password_verify](https://www.php.net/manual/en/function.password-verify.php). |
-| `is_active`              | `true`/`false`  | Active flag of this customer                                                                                                                                  |
+| Field | Notes |
+|-------|-------|
+| **Sender Identity** | Must be unique. Matched against the buyer's `Header/Sender/Credential/Identity`. |
+| **Sender Shared Secret** | Stored hashed (`password_hash()`); incoming `SharedSecret` verified with `password_verify()`. |
 
-Customers used for an OCI connection are expected to be fully configured in the shop so that only permitted products and prices are accessible.
+cXML request URL is fixed at `/punchout-cxml-setup`, optionally followed by a slug — post to `/punchout-cxml-setup/<slug>` to target a specific connection.
 
-### 10.2 cXML connection configuration
+**OCI**
 
-cXML-specific configuration columns:
+| Field | Notes |
+|-------|-------|
+| **Request URL** | Slug appended to `/punchout-gateway/oci/`. Only `_`, `-`, letters, digits allowed. |
+| **Form Method** | `POST` or `GET` — method the buyer uses to submit the login form. |
+| **Username Field Name** | Form field carrying the username. Default `USERNAME`. |
+| **Password Field Name** | Form field carrying the password. Default `PASSWORD`. |
 
-| Column | Value                                    | Comments                                                                                                                                                                                                          |
-|--------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `request_url` | `'/punchout-gateway/cxml/my-company'`    | Endpoint path the cXML request is posted to. This URL without a domain is the unique identifier of each connection, and can be anything that starts with ``https://<shop-domain>/punchout-gateway/cxml/``.        |
-| `configuration` | JSON configuration                       | See below `cXML configuration`                                                                                                                                                                                    |
-| `protocol_type` | `'cxml'`                                 | Flow type.                                                                                                                                                                                                        |
-| `processor_plugin_class` | Full class name of the processor plugin. | `\SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultCxmlProcessorPlugin` or a project's implementation,                                                                                  |
+### Edit / activate / delete
 
-Uniqueness: `sender_identity` MUST be globally unique — each cXML system maps to exactly one connection.
+On *Edit*, **Protocol Type** is read-only; for cXML the **Sender Shared Secret** is blank — leave blank to keep, type to rotate. Use *Activate*/*Deactivate* to toggle without opening the form. *Delete* cascades — it removes every credential and session of the connection, ending in-flight carts.
 
-Column `configuration` contains JSON with the following keys:
+### Manage credentials (OCI only)
 
-| Key | Required | Purpose                                          |
-|-----|----------|--------------------------------------------------|
-| `senderSharedSecret` | yes | Shared secret used to authenticate the request. Validation happens using [password_verify](https://www.php.net/manual/en/function.password-verify.php). |
+Credentials map a username/password pair to a Spryker customer. On the connection's *View* page, select *Add credential*:
 
-For a cXML connection, no additional PunchOut-related configuration is required.
-The logged-in customer is identified by the `UserEmail` extrinsic field.
-Customers used for a cXML connection are expected to be fully configured in the shop so that only permitted products and prices are accessible.
+| Field | Notes |
+|-------|-------|
+| **Username** | Sent by the buyer in the `usernameField` form field. |
+| **Password** / **Repeat Password** | Stored as `password_hash()`. Leave blank on edit to keep the existing hash. |
+| **Customer ID** | The Spryker customer logged in on successful auth. |
+| **Active** | When unchecked, the credential is rejected even on matching username/password. |
 
+cXML connections need no credentials — the customer is identified by the `UserEmail` extrinsic. For both protocols, customers must be fully configured in the shop so that only permitted products and prices are accessible.
 
-## 11. PunchOut flow processor plugin
+---
 
-Each PunchOut connection resolves its processor plugin at runtime using the fully qualified class name stored in `spy_punchout_connection.processor_plugin_class`.
-The plugin must implement one of the following interfaces:
-- for OCI flow - `\SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutProcessorPluginInterface`
-- for cXML flow - `\SprykerEco\Zed\PunchoutGateway\Dependency\Plugin\PunchoutCxmlProcessorPluginInterface`.
+## Field mapping
 
-This module provides default functionality:
-- \SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultCxmlProcessorPlugin - for cXML flow,
-- \SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultOciProcessorPlugin - for OCI flow.
+Each connection can override how individual outbound protocol fields are populated, without a custom processor plugin. Mappings are stored in the connection's `configuration` JSON under `mapping` and edited in the Back Office connection form (available only when editing, not creating).
 
-No dependency injection registration is required. The plugin is loaded at runtime.
+`mapping` is an object of `targetField: sourceExpression` pairs. OCI example:
 
-### Creation of a custom plugin
+```json
+{
+  "mapping": {
+    "NEW_ITEM-DESCRIPTION": "item.name",
+    "NEW_ITEM-VENDORMAT": "item.sku&\"_DE\"",
+    "NEW_ITEM-LONGTEXT": "item.description"
+  }
+}
+```
 
-Place the plugin in your project's Zed communication layer, for example:
+- **Target field** — for OCI a `NEW_ITEM-*` field; for cXML a full cXML path (e.g. `cXML.Message.PunchOutOrderMessage.ItemIn.ItemDetail.Description`) or a custom extrinsic.
+- **Source expression** — where the value comes from at cart-return time. Required fields fall back to their default when unmapped; optional fields are emitted only when mapped.
 
-`src/Pyz/Zed/ProjectPunchoutGateway/Communication/Plugin/PunchoutGateway/CustomOciProcessorPlugin.php`
+### Source expression syntax
 
-The simplest approach is to extend the default OCI plugin and override only the methods you need:
+| Form | Example | Result |
+|------|---------|--------|
+| Plugin expression | `item.sku` | Value read from a field-mapper plugin keyed `item`, path `sku`. |
+| Quoted constant | `"EA"` / `'EA'` | The literal text. |
+| Concatenation | `item.sku&"_suffix"` | Segments joined with `&`, resolved individually then concatenated. |
+| Forced empty | `""` | An explicit empty value. |
+
+Expressions are evaluated at cart-return time by `FieldValueResolver`. The Back Office source input is an autosuggest served by `/punchout-gateway/source-field-suggestions/index`.
+
+### Field-mapper plugins
+
+Source roots are provided by plugins implementing `PunchoutFieldMapperPluginInterface`, registered keyed by `pluginKey` in `Service\PunchoutGateway\PunchoutGatewayDependencyProvider::getFieldMapperPlugins()`. Shipped:
+
+| Key | Plugin | Source transfer |
+|-----|--------|-----------------|
+| `item` | `ItemTransferFieldMapperPlugin` | `ItemTransfer` of the current cart item. |
+| `quote` | `QuoteTransferFieldMapperPlugin` | `QuoteTransfer` of the cart. |
+
+To add a root (e.g. `company`), implement the interface and register it under a new key:
+
+`src/Pyz/Service/PunchoutGateway/PunchoutGatewayDependencyProvider.php`
+
+```php
+namespace Pyz\Service\PunchoutGateway;
+
+use Pyz\Service\PunchoutGateway\Plugin\FieldMapper\CompanyTransferFieldMapperPlugin;
+use SprykerEco\Service\PunchoutGateway\PunchoutGatewayDependencyProvider as SprykerEcoPunchoutGatewayDependencyProvider;
+
+class PunchoutGatewayDependencyProvider extends SprykerEcoPunchoutGatewayDependencyProvider
+{
+    protected function getFieldMapperPlugins(): array
+    {
+        return [
+            ...parent::getFieldMapperPlugins(),
+            'company' => new CompanyTransferFieldMapperPlugin(),
+        ];
+    }
+}
+```
+
+### Custom extrinsics (cXML)
+
+You can map values to custom `Extrinsic` elements in each `ItemIn`. The name must match `^[A-Za-z0-9_]+$` and must not be a reserved buyer-identity name: `User`, `UniqueUsername`, `UniqueName`, `UserId`, `UserEmail`, `UserFullName`, `UserPrintableName`, `FirstName`, `LastName`, `PhoneNumber`, `UserPhoneNumber`. These are also stripped from echoed extrinsics to avoid leaking PII.
+
+---
+
+## Endpoints
+
+`PunchoutGatewayRouteProviderPlugin` registers:
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/punchout-cxml-setup` | Inbound cXML `PunchOutSetupRequest`. |
+| `GET` | `/punchout-cxml-start?session={token}` | Buyer's browser opens this with the token from the synchronous `PunchOutSetupResponse`. |
+| `POST` | `/punchout-gateway/oci/{connectionSlug}` | Inbound OCI login form (default method). |
+| `GET` | `/punchout-gateway/oci/{connectionSlug}` | Inbound OCI login when the connection uses `formMethod=GET`. |
+
+The OCI slug matches `[a-zA-Z0-9_-]+`.
+
+### cXML session start lifecycle
+
+Two-step handshake:
+
+1. Buyer `POST`s a `PunchOutSetupRequest`. The shop authenticates, resolves customer and quote, persists a `spy_punchout_session`, and replies synchronously with a `PunchOutSetupResponse` whose `StartPage/URL` carries a one-shot token: `https://<shop-domain>/punchout-cxml-start?session=<token>`.
+2. Buyer's browser follows that URL. `CxmlController::startAction` reads the token, looks up the session, logs the customer in, persists the protocol CSP fragment, and redirects to the shop.
+
+---
+
+## Protocol coverage
+
+cXML and OCI cover a broad range of features; the table below summarizes what the default flow parses and emits. Elements not listed are not interpreted by the default flow (cXML inbound extras are collected into `extrinsicFields`; OCI inbound extras are preserved in `PunchoutOciLoginRequestTransfer.formData`). Full field-by-field mapping: [PunchOut Protocols Coverage](https://docs.spryker.com/docs/pbc/all/punchout-gateway/punchout-protocol-coverage.html).
+
+### cXML — received (buyer → Spryker)
+
+`PunchOutSetupRequest` is parsed by `DefaultCxmlContentParser` into `PunchoutCxmlSetupRequestTransfer`. Key elements:
+
+- **Header:** `@payloadID`, `@timestamp`, `From/To/Sender Credential/Identity`, `Sender/Credential/SharedSecret` (verified against the connection hash).
+- **Payload:** `@operation` (`create`/`edit`), `BuyerCookie`, `BrowserFormPost/URL`, `Extrinsic` (collected as key/value map).
+- **ShipTo/Address** and, only for `operation="edit"`, the `ItemOut` list (mapped to `PunchoutItemTransfer`).
+
+### cXML — returned (Spryker → buyer)
+
+- `PunchOutSetupResponse` — synchronous reply (HTTP 200, `text/xml`) with `StartPage/URL` carrying the session token. On error, a `Status` document with a non-200 code is returned instead.
+- `PunchOutOrderMessage` — cart return, POSTed to `BrowserFormPost.URL`. Per item it emits SKU, quantity, name, unit price, `EA` unit of measure, classification, and optional fields when mapped. Header carries `BuyerCookie`, totals (currency/shipping/tax), and `ShipTo` address. Extrinsics are echoed back with the deny-list keys removed.
+
+### OCI — received (buyer → Spryker)
+
+| Field | Required | Purpose |
+|-------|----------|---------|
+| `USERNAME` | Yes | Buyer user. Field name configurable via `usernameField`. Matched against `spy_punchout_credential.username`. |
+| `PASSWORD` | Yes | Authenticates the buyer. Field name configurable via `passwordField`. Verified against the stored hash. |
+| `HOOK_URL` | Yes | Cart-return target. Must start with `https://`. Stored as `browserFormPostUrl`. |
+| `~TARGET` | No | Frame target echoed back to the buyer. |
+| `~OkCode`, `~CALLER` | No | SAP control fields. |
+
+### OCI — returned (Spryker → buyer)
+
+A `Transfer Cart` HTML form whose `action` is the received `HOOK_URL` (and `target` is `~TARGET`). Per item: `NEW_ITEM-DESCRIPTION[N]` (name), `NEW_ITEM-QUANTITY[N]`, `NEW_ITEM-UNIT[N]` (`EA`), `NEW_ITEM-PRICE[N]` (unit price), `NEW_ITEM-CURRENCY[N]`, `NEW_ITEM-VENDORMAT[N]` (SKU). `~OkCode`/`~CALLER` are echoed when present. Any `NEW_ITEM-*` source is overridable per connection via field mapping.
+
+---
+
+## Extension points
+
+### Processor plugin
+
+Each connection resolves its processor plugin at runtime by the FQCN in `spy_punchout_connection.processor_plugin_class`. No DI registration required. Implement:
+
+- OCI — `PunchoutProcessorPluginInterface`
+- cXML — `PunchoutCxmlProcessorPluginInterface`
+
+Defaults: `DefaultOciProcessorPlugin`, `DefaultCxmlProcessorPlugin`. The simplest customization is to extend a default and override only what you need, then point the connection's `processor_plugin_class` at your class:
 
 ```php
 namespace Pyz\Zed\ProjectPunchoutGateway\Communication\Plugin\PunchoutGateway;
@@ -300,109 +404,69 @@ use SprykerEco\Zed\PunchoutGateway\Communication\Plugin\PunchoutGateway\DefaultO
 
 class CustomOciProcessorPlugin extends DefaultOciProcessorPlugin
 {
-    // Override only the methods you need to customise.
+    // Override only the methods you need.
 }
 ```
 
-Set `spy_punchout_connection.processor_plugin_class` on the connection that uses this plugin to `\Pyz\Zed\ProjectPunchoutGateway\Communication\Plugin\PunchoutGateway\CustomOciProcessorPlugin`.
+Lifecycle methods:
 
-### Global plugin methods
+| Method | Called when | Functionality |
+|--------|-------------|---------------|
+| `getType` | At plugin resolution | Reports the protocol (`oci`/`cxml`) this plugin handles. |
+| `authenticate` | First login step | Finds a connection from the setup request; `null` if none. |
+| `resolveCustomer` | After connection found | Finds the customer; `null` if none. |
+| `resolveQuote` | After customer resolved | Creates or reuses a quote. |
+| `expandQuote` | After quote resolved | Adjusts the quote post-PunchOut prep. |
+| `resolveSession` | Before session persisted | Additional session validation. |
+| `parseCxmlRequest` *(cXML)* | After XML parsed, connection found | Extra mapping of cXML data onto the setup request. |
+| `expandResponse` *(cXML)* | After session creation | Expands the login response (e.g. default start URL). |
 
-| Method | Called when                                                  | Functionality                                                                                                     |
-|--------|--------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| `authenticate` | First step of the login flow                                 | Finds a connection based on the setup request. Returns `null` if no valid connection is found.                    |
-| `resolveCustomer` | After a valid connection was found                           | Finds the customer to use for the PunchOut session. Returns `null` if no valid customer is found.                 |
-| `resolveQuote` | After a valid customer is resolved                           | Creates a new quote or reuses an existing one. An empty `QuoteTransfer` can be returned.                          |
-| `expandQuote` | After the quote is resolved                                  | Allows adjusting the quote after PunchOut-specific preparations are done.                                         |
-| `resolveSession` | After the quote is expanded, before the session is persisted | Additional session validation logic can be added here.                                                            |
+### Default behavior (out of the box)
 
-#### cXML-specific plugin methods
+Both default plugins use `QuoteCreator` to stamp **Store** (from `fk_store`) and **Currency** (store default) on every new quote.
 
-| Method | Called when                                      | Functionality                                                                                           |
-|--------|--------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `parseCxmlRequest` | XML was parsed and a valid connection was found. | Additional mapping of the cXML data onto setup request.                                                 |
-| `expandResponse` | After successful session creation                | Response to the login request can be expanded, for example, with the default start URL for the customer. |
+- **OCI** — customer comes entirely from the matched credential record (`PunchoutOciAuthenticator` → `connection.idCustomer`); every login starts a fresh empty cart; items are not carried on login — they travel back via the Transfer Cart POST.
+- **cXML** — customer resolved from the `UserEmail` extrinsic; quote reused per `BuyerCookie` (recreated if it belongs to a different store); items are mapped from `ItemOut` on `operation="edit"`.
 
-## 12. Default implementations
+### Form handler plugin
 
-This section describes the behavior of the two shipped default processor plugins and the storefront "Transfer Cart" widget for each lifecycle step.
-Use it to understand what you get out-of-the-box and to identify which plugin method to override when customising.
+The Transfer Cart form is built by `PunchoutFormHandlerPluginInterface` implementations; `PunchoutFormDataBuilder::build()` returns the first whose `isApplicable()` is `true`. Defaults: `DefaultOciPunchoutFormHandlerPlugin`, `DefaultCxmlPunchoutFormHandlerPlugin`. Register a custom handler **before** the defaults so it takes precedence for its protocol:
 
-### Shared behavior
+`src/Pyz/Yves/PunchoutGateway/PunchoutGatewayDependencyProvider.php`
 
-Both `DefaultOciProcessorPlugin` and `DefaultCxmlProcessorPlugin` rely on `QuoteCreator` to stamp the following fields on every new quote:
+```php
+namespace Pyz\Yves\PunchoutGateway;
 
-- **Store** — resolved from `spy_punchout_connection.fk_store`.
-- **Currency** — set to the default currency of the resolved store.
+use Pyz\Yves\ProjectPunchoutGateway\Plugin\Form\CustomCxmlPunchoutFormHandlerPlugin;
+use SprykerEco\Yves\PunchoutGateway\PunchoutGatewayDependencyProvider as SprykerEcoPunchoutGatewayDependencyProvider;
 
-### OCI
+class PunchoutGatewayDependencyProvider extends SprykerEcoPunchoutGatewayDependencyProvider
+{
+    protected function getPunchoutFormHandlerPlugins(): array
+    {
+        return [
+            new CustomCxmlPunchoutFormHandlerPlugin(),
+            ...parent::getPunchoutFormHandlerPlugins(),
+        ];
+    }
+}
+```
 
-**Customer identification**
+The Twig template renders the form only when `formData` is non-null and `actionUrl` is non-empty. For OCI the button shows even for an empty cart (to allow empty-order return); for cXML no button renders for an empty cart (to be improved).
 
-`OciCustomerResolver` looks up the customer by the `idCustomer` that is already on the connection transfer.
-That value is stamped during authentication: `PunchoutOciAuthenticator` matches the username and password from the OCI form fields against `spy_punchout_connection_credential` and, on success, writes `connection.idCustomer`.
-The buyer identity therefore comes entirely from the credential record — nothing from the buyer's login payload is used.
-Override `resolveCustomer` on the processor plugin to source the customer differently (for example, from a custom form field).
+### Security header expander plugin
 
-**Quote identification**
+At session start, Yves applies protocol-specific CSP directives via `PunchoutSecurityHeaderExpanderPluginInterface` implementations so the Storefront can be embedded and post back. Default: `DefaultOciSecurityHeaderExpanderPlugin` (adds `frame-ancestors` for OCI sessions carrying `~TARGET`). CSP headers are included when `allow_iframe` is `true`. Register a custom expander via `getPunchoutSecurityHeaderExpanderPlugins()`.
 
-`OciPunchoutQuoteFinder` always returns a fresh empty `QuoteTransfer` with `DEFAULT_QUOTE_NAME`.
-There is no session-to-quote lookup on OCI login; every login starts a new cart.
-Store and currency are set by `QuoteCreator` as described in the shared behavior section above.
-Override `resolveQuote` to reuse a per-customer cart across sessions.
+### Session-in-quote expander plugin
 
-**Quote fill with items**
+`PunchoutQuoteExpander` runs the session through every registered `PunchoutSessionInQuoteExpanderPluginInterface` before stamping it on the `QuoteTransfer`. Use it to enrich or override session fields based on the quote before it is persisted with the cart.
 
-OCI login does not carry item data.
-`DefaultOciProcessorPlugin::expandQuote` is a pass-through and leaves the quote empty.
-Items are transferred back to the buyer's procurement system via the storefront form POST (see "Transfer Cart button" below), not populated during login.
+---
 
-**Transfer Cart button**
+## Documentation
 
-`DefaultOciPunchoutFormHandlerPlugin` (registered in `YvesPunchoutGatewayDependencyProvider`) makes the button visible when the current quote has a punchout session whose `punchoutData.ociLoginRequest` is not `null`.
-When applicable, the action URL is taken from the `HOOK_URL` form field of the OCI login request (validated to start with `https://` at session creation time).
-The hidden form fields are OCI-flat `NEW_ITEM-…` key/value pairs produced by `OciFormFieldBuilder`.
-The button is not rendered when no punchout session exists on the quote, when the session was created by a cXML login, or when no handler plugin is registered for the Yves factory.
-
-### cXML
-
-**Customer identification**
-
-`CxmlCustomerResolver` reads the `Extrinsic[name="UserEmail"]` field from the parsed `PunchOutSetupRequest` and resolves the customer via `CustomerFacade::getCustomer` by email.
-Connection authentication is a separate step that runs first: `PunchoutCxmlAuthenticator` verifies the `senderSharedSecret` from the cXML header against the connection record using `password_verify`.
-If the `UserEmail` extrinsic is absent or empty, `resolveCustomer` returns `null` and the session is rejected.
-Override `resolveCustomer` to read identity from a different extrinsic or from a custom header field.
-
-**Quote identification**
-
-`CxmlPunchoutQuoteFinder` uses `BuyerCookie` from the `PunchOutSetupRequest` to look up an existing punchout session via `PunchoutGatewayRepository::findPunchoutSessionByBuyerCookie`.
-When a session is found, the linked quote is reused — allowing the buyer to resume an in-progress cart.
-If the found quote belongs to a different store than the current connection's `idStore`, the old quote is deleted and a new empty one is created.
-When `BuyerCookie` is missing or no session matches, a new `DEFAULT_QUOTE_NAME` quote is returned.
-Store and currency are then set by `QuoteCreator`.
-Override `resolveQuote` to change cookie-matching rules or to support cross-store quote reuse.
-
-**Quote fill with items**
-
-`CxmlPunchoutQuoteExpander::expand` runs during `expandQuote` and handles three operations:
-
-- `operation=edit` — maps each `PunchoutItemTransfer` to an `ItemTransfer` (`sku` = `SupplierPartId`, `quantity` from the request, `unitGrossPrice = UnitPrice × 100` in minor currency units) and adds them to the quote via `CartFacade::addToCart`, which runs the full cart validation and expander pipeline.
-  The `ShipTo` address from the setup request is also mapped to `QuoteTransfer.shippingAddress` and propagated to each item's shipment.
-- `operation=create` — clears all existing items on the quote; `ShipTo` is still mapped if present.
-- `operation=inspect` — items and address are left untouched.
-
-Override `expandQuote` to change how SKUs are matched, how prices are converted, or to add custom item attributes.
-
-**Transfer Cart button**
-
-`DefaultCxmlPunchoutFormHandlerPlugin` makes the button visible when the current quote has a punchout session whose `punchoutData.cxmlSetupRequest` is not `null`.
-The action URL is `punchoutSession.browserFormPostUrl`, captured from the original `PunchOutSetupRequest.BrowserFormPost.URL` at login time.
-A single hidden field (`CXML_FORM_FIELD_NAME`) carries the `PunchOutOrderMessage` built by `PunchoutGatewayService::buildCxmlPunchoutOrderMessage`.
-The button is not rendered when no punchout session exists, when the session was created by an OCI login, or when no handler plugin is registered.
-
-### Widget visibility summary
-
-`PunchoutCartWidget` is always instantiated on pages where it is embedded (see §8 for wiring).
-Actual visibility is determined by `PunchoutFormDataBuilder::build()`, which iterates registered `PunchoutFormHandlerPluginInterface` implementations in order and returns the result of the first whose `isApplicable()` returns `true`.
-The Twig template renders the `<form>` and submit button only when `formData` is not `null` and `formData.actionUrl` is not empty — no empty markup is output otherwise.
-If you register a custom handler plugin, place it before the default plugins in the dependency provider so it takes precedence for the same protocol.
+- [Integrate PunchOut Gateway](https://docs.spryker.com/docs/pbc/all/punchout-gateway/integrate-punchout-gateway.html)
+- [Manage PunchOut connections](https://docs.spryker.com/docs/pbc/all/punchout-gateway/manage-punchout-connections.html)
+- [Project configuration for PunchOut Gateway](https://docs.spryker.com/docs/pbc/all/punchout-gateway/project-configuration-for-punchout-gateway.html)
+- [PunchOut Protocols Coverage](https://docs.spryker.com/docs/pbc/all/punchout-gateway/punchout-protocol-coverage.html)
