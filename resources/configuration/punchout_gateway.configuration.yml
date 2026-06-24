@@ -1,13 +1,13 @@
 # yaml-language-server: $schema=../../../../../src/Spryker/Configuration/resources/configuration/configuration-schema-v1.json
 features:
-    - key: punchout_gateway
-      name: Punchout Gateway
-      description: Punchout Gateway integration settings.
+    - key: integrations
+      name: Integrations
+      description: Third-party integrations configuration.
       enabled: true
       order: 100
       tabs:
-          - key: general
-            name: General
+          - key: punchout
+            name: Punchout Gateway
             enabled: true
             order: 0
             groups:
@@ -32,16 +32,11 @@ features:
                         scopes:
                             - global
                             - store
-          - key: cxml
-            name: cXML
-            enabled: true
-            order: 1
-            groups:
                 - key: session
-                  name: Session
+                  name: cXML Session
                   description: cXML session security and validity settings.
                   enabled: true
-                  order: 0
+                  order: 1
                   scopes:
                       - global
                       - store
