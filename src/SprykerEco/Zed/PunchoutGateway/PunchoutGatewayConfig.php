@@ -80,6 +80,14 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
     /**
      * @api
      */
+    public function getOciSessionValidityInSeconds(): int
+    {
+        return 10 * 60;
+    }
+
+    /**
+     * @api
+     */
     public function getOciDefaultStartUrl(): string
     {
         return '/';
