@@ -47,8 +47,6 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
 
     public const string URL_SOURCE_FIELD_SUGGESTIONS = '/punchout-gateway/source-field-suggestions/index';
 
-    protected const int DEFAULT_OCI_SESSION_VALIDITY_IN_SECONDS = 600;
-
     /**
      * @api
      */
@@ -77,14 +75,6 @@ class PunchoutGatewayConfig extends AbstractBundleConfig
             PunchoutGatewayPunchoutGatewayConfig::CONFIGURATION_KEY_CXML_SESSION_START_URL_VALIDITY_IN_SECONDS,
             10 * 60,
         );
-    }
-
-    /**
-     * @api
-     */
-    public function getOciSessionValidityInSeconds(): int
-    {
-        return static::DEFAULT_OCI_SESSION_VALIDITY_IN_SECONDS;
     }
 
     /**

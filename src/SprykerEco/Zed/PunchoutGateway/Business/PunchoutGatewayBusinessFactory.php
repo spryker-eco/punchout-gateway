@@ -189,7 +189,6 @@ class PunchoutGatewayBusinessFactory extends AbstractBusinessFactory
     {
         return new OciPunchoutSessionResolver(
             $this->getPunchoutLogger(),
-            $this->getConfig(),
         );
     }
 

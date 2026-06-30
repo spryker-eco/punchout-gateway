@@ -14,17 +14,13 @@ use Generated\Shared\Transfer\PunchoutSetupRequestTransfer;
 use Generated\Shared\Transfer\QuoteTransfer;
 use SprykerEco\Shared\PunchoutGateway\Logger\PunchoutLoggerInterface;
 use SprykerEco\Shared\PunchoutGateway\PunchoutGatewayConfig;
-use SprykerEco\Zed\PunchoutGateway\PunchoutGatewayConfig as PunchoutGatewayZedConfig;
 
 class OciPunchoutSessionResolver implements OciPunchoutSessionResolverInterface
 {
     protected const string REQUIRED_HOOK_URL_PREFIX = 'https://';
 
-    protected const string TIMESTAMP_FORMAT = 'c';
-
     public function __construct(
         protected PunchoutLoggerInterface $punchoutLogger,
-        protected PunchoutGatewayZedConfig $config,
     ) {
     }
 
@@ -44,9 +40,6 @@ class OciPunchoutSessionResolver implements OciPunchoutSessionResolverInterface
             return null;
         }
 
-        $punchoutSessionTransfer->setValidTo(
-            date(static::TIMESTAMP_FORMAT, time() + $this->config->getOciSessionValidityInSeconds()),
-        );
         $punchoutSessionTransfer->getPunchoutData()->setOciLoginRequest($setupRequestTransfer->getOciLoginRequest());
 
         return $punchoutSessionTransfer;
