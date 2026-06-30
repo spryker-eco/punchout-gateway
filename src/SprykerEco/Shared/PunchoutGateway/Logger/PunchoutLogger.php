@@ -147,6 +147,8 @@ class PunchoutLogger implements PunchoutLoggerInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<mixed> $context
      */
     public function logGenericErrorMessage(string $message, array $context = []): void
     {
@@ -158,6 +160,8 @@ class PunchoutLogger implements PunchoutLoggerInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<mixed> $context
      */
     public function logGenericInfoMessage(string $message, array $context = []): void
     {

@@ -22,6 +22,10 @@ class PunchoutSecurityHeaderExpander implements PunchoutSecurityHeaderExpanderIn
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<string, string> $securityHeaders
+     *
+     * @return array<string, string>
      */
     public function expand(array $securityHeaders): array
     {
