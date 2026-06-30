@@ -28,6 +28,13 @@ use SprykerEcoTest\Zed\PunchoutGateway\PunchoutGatewayPersistenceTester;
  */
 class PunchoutGatewayRepositoryTest extends Unit
 {
+    /**
+     * A non-existent id that stays within the 4-byte INTEGER range of the primary-key
+     * columns. PHP_INT_MAX overflows PostgreSQL's `integer` type and makes the lookup
+     * statement itself fail instead of returning no rows.
+     */
+    protected const int NON_EXISTENT_ID = 2147483647;
+
     protected PunchoutGatewayPersistenceTester $tester;
 
     public function testGetPunchoutConnectionCollectionReturnsConnectionsForStore(): void
@@ -200,7 +207,7 @@ class PunchoutGatewayRepositoryTest extends Unit
 
     public function testFindPunchoutConnectionByIdReturnsNullWhenNotFound(): void
     {
-        $result = (new PunchoutGatewayRepository())->findPunchoutConnectionById(PHP_INT_MAX);
+        $result = (new PunchoutGatewayRepository())->findPunchoutConnectionById(static::NON_EXISTENT_ID);
 
         $this->assertNull($result);
     }
@@ -386,7 +393,7 @@ class PunchoutGatewayRepositoryTest extends Unit
 
     public function testFindPunchoutCredentialByIdReturnsNullWhenNotFound(): void
     {
-        $result = (new PunchoutGatewayRepository())->findPunchoutCredentialById(PHP_INT_MAX);
+        $result = (new PunchoutGatewayRepository())->findPunchoutCredentialById(static::NON_EXISTENT_ID);
 
         $this->assertNull($result);
     }
