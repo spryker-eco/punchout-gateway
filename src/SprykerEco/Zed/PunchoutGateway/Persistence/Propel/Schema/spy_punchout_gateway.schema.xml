@@ -74,7 +74,6 @@
         <column name="buyer_cookie" required="false" type="VARCHAR" size="256"/>
         <column name="browser_form_post_url" required="true" type="LONGVARCHAR"/>
         <column name="operation" required="true" type="VARCHAR" size="32"/>
-<!--        <column name="extrinsics" required="false" type="LONGVARCHAR"/>-->
         <column name="session_token" required="false" type="VARCHAR" size="255"/>
         <column name="valid_to" required="false" type="TIMESTAMP"/>
         <column name="session_data" required="false" type="CLOB"/>
