@@ -31,7 +31,7 @@
     "require-dev": {
         "spryker/price-product": "*",
         "spryker/product": "*",
-        "spryker/code-sniffer": "*",
+        "spryker/code-sniffer": "dev-fix/honor-inline-inheritdoc as 0.17.32",
         "spryker/container": "*",
         "spryker/propel": "*",
         "spryker/router": "*",
@@ -51,6 +51,12 @@
             "SprykerEcoTest\\": "tests/SprykerEcoTest/"
         }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/spryker/code-sniffer.git"
+        }
+    ],
     "minimum-stability": "dev",
     "prefer-stable": true,
     "scripts": {
