@@ -71,6 +71,7 @@ class DefaultCxmlProcessorPluginTest extends Unit
             'https://test.local/supplier-setup',
             null,
             null,
+            null,
             PunchoutGatewayConfig::OPERATION_CREATE,
         );
         $cxml = CXml::forRequest(
