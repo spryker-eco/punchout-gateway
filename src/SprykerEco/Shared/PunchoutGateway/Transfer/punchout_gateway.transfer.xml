@@ -206,6 +206,9 @@
         <property name="idCustomer" type="int"/>
         <property name="email" type="string"/>
         <property name="customerReference" type="string"/>
+        <property name="storeName" type="string"/>
+        <property name="firstName" type="string"/>
+        <property name="lastName" type="string"/>
     </transfer>
 
     <transfer name="Filter">
@@ -233,6 +236,9 @@
         <property name="items" type="Item[]" singular="item"/>
         <property name="punchoutSession" type="PunchoutSession"/>
         <property name="totals" type="Totals"/>
+        <property name="name" type="string"/>
+        <property name="expenses" type="Expense[]" singular="expense"/>
+        <property name="priceMode" type="string"/>
     </transfer>
 
     <transfer name="Totals">
@@ -253,6 +259,7 @@
     <transfer name="QuoteResponse">
         <property name="quoteTransfer" type="Quote"/>
         <property name="isSuccessful" type="bool"/>
+        <property name="errors" type="QuoteError[]" singular="error"/>
     </transfer>
 
     <transfer name="Item">
@@ -260,10 +267,13 @@
         <property name="name" type="string"/>
         <property name="quantity" type="int"/>
         <property name="unitPrice" type="int"/>
+        <property name="groupKey" type="string"/>
+        <property name="shipment" type="Shipment"/>
     </transfer>
 
     <transfer name="Currency">
         <property name="code" type="string"/>
+        <property name="fractionDigits" type="int"/>
     </transfer>
 
     <transfer name="Address">
@@ -274,11 +284,15 @@
         <property name="state" type="string"/>
         <property name="zipCode" type="string"/>
         <property name="iso2Code" type="string"/>
+        <property name="region" type="string"/>
+        <property name="firstName" type="string"/>
+        <property name="lastName" type="string"/>
     </transfer>
 
     <transfer name="Store">
         <property name="idStore" type="int"/>
         <property name="name" type="string"/>
+        <property name="defaultCurrencyIsoCode" type="string" description="The ISO code of the default currency for a store."/>
     </transfer>
 
     <transfer name="AuditLoggerConfigCriteria" strict="true">
@@ -288,6 +302,39 @@
     <transfer name="MappingSource" strict="true">
         <property name="item" type="Item"/>
         <property name="quote" type="Quote"/>
+    </transfer>
+
+    <transfer name="CustomerCriteriaFilter">
+        <property name="searchTerms" type="CustomerCriteriaSearchTerms"/>
+        <property name="customerIds" type="int[]" singular="idCustomer" strict="true"/>
+        <property name="limit" type="int"/>
+    </transfer>
+
+    <transfer name="CustomerCriteriaSearchTerms" strict="true">
+        <property name="email" type="string"/>
+        <property name="firstName" type="string"/>
+        <property name="lastName" type="string"/>
+    </transfer>
+
+    <transfer name="Shipment">
+        <property name="shippingAddress" type="Address"/>
+    </transfer>
+
+    <transfer name="QuoteError">
+    </transfer>
+
+    <transfer name="Pagination">
+        <property name="limit" type="int"/>
+        <property name="offset" type="int"/>
+    </transfer>
+
+    <transfer name="CustomerCollection">
+        <property name="customers" type="Customer[]" singular="customer"/>
+    </transfer>
+
+    <transfer name="Expense">
+        <property name="type" type="string"/>
+        <property name="sumGrossPrice" type="int"/>
     </transfer>
 
 </transfers>
